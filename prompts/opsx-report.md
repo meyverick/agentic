@@ -10,15 +10,31 @@ Generate a comprehensive, self-contained, OKF-compliant report from an archived 
 
 **Steps**
 
-1. **Validate archive exists**
+1. **Find archive**
 
-   Check if `openspec/changes/archive/<name>/` exists.
-   If not found, error: "Archive '<name>' not found. Available archives: [list]"
-   
-   List available archives:
+   Archives have date prefixes (e.g., `2026-08-18-add-central-datastore`). Search intelligently:
+
+   **Step 1: Try exact match**
+   ```bash
+   ls openspec/changes/archive/<name>/ 2>/dev/null
+   ```
+
+   **Step 2: If not found, fuzzy search**
+   ```bash
+   ls openspec/changes/archive/ | grep -i "<name>"
+   ```
+
+   **Step 3: Handle results**
+   - If exactly one match → use it (strip date prefix for display)
+   - If multiple matches → show list and ask user to select
+   - If no matches → error with available archives:
    ```bash
    ls openspec/changes/archive/ 2>/dev/null || echo "No archives found"
    ```
+   
+   **Always announce which archive was found:**
+   - Exact match: "Found: <name>"
+   - Fuzzy match: "Found: <full-archive-name> (matched '<name>')"
 
 2. **Read archive metadata**
 
