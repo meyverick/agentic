@@ -74,38 +74,9 @@ Generate a comprehensive, self-contained, OKF-compliant report from an archived 
 
 8. **Generate report.md**
 
-   Create `openspec/reports/<name>/report.md` with OKF-compliant frontmatter and comprehensive sections.
+   Create `openspec/reports/<name>/report.md` using template at `assets/templates/report.md.template`.
 
-   **Frontmatter template:**
-   ```yaml
-   ---
-   type: OpenSpec Report
-   title: "Report: <change-name>"
-   description: "<one-line summary from proposal>"
-   status: stable
-   tags: [openspec, <schema-name>, <capability-path>]
-   generated:
-     by: opsx-report/1.0
-     at: <ISO-8601-timestamp>
-   sources:
-     - id: proposal
-       resource: artifacts/proposal.md
-       title: Proposal
-     - id: design
-       resource: artifacts/design.md
-       title: Design
-     - id: specs
-       resource: artifacts/specs/
-       title: Specifications
-     - id: tasks
-       resource: artifacts/tasks.md
-       title: Tasks
-     - id: archive
-       resource: "openspec/changes/archive/<name>/"
-       title: Original archive location
-   stale_after: <90-days-from-now>
-   ---
-   ```
+   Fill in template placeholders with actual values from the archive.
 
    **Report sections:**
    
