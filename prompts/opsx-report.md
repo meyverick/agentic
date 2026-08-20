@@ -1,12 +1,12 @@
 ---
-description: "Generate a comprehensive report from an archived OpenSpec change"
-argument-hint: "<change-name>"
+description: "Generate self-reflection on an archived OpenSpec change"
+argument-hint: "[<change-name>]"
 ---
 
-Generate a comprehensive, self-contained, OKF-compliant report from an archived OpenSpec change.
+Generate self-reflection (meditation) on an archived OpenSpec change.
 
-**Input**: Specify the archived change name (e.g., `/opsx-report skill-creator`).
-**Provided arguments**: $@
+**Input**: Optionally specify the archived change name. If omitted, uses the latest archived change.
+**Provided arguments**: ${@:-latest archived change}
 
 **Steps**
 
@@ -51,152 +51,87 @@ Generate a comprehensive, self-contained, OKF-compliant report from an archived 
    - `specs/**/*.md` (if exists)
    - `tasks.md` (if exists)
 
-4. **Detect implementation files**
+4. **Create report directory**
 
-   Scan archive directory for implementation files beyond planning artifacts:
-   - `scripts/` — executable code
-   - `references/` — documentation
-   - `evals/` — evaluation data
-   - `assets/` — templates, resources
-   - `templates/` — output shapes
-   - Any other directories or files that improve the report
+   Create `openspec/reports/<name>/` (no subdirectories — just report.md and assessment.md).
 
-5. **Create report directory**
-
-   Create `openspec/reports/<name>/` with subdirectories:
-   - `artifacts/` — copies of planning artifacts
-   - Implementation directories (as detected)
-
-6. **Copy planning artifacts**
-
-   Copy all planning artifacts to `artifacts/`:
-   ```bash
-   cp openspec/changes/archive/<name>/proposal.md openspec/reports/<name>/artifacts/
-   cp openspec/changes/archive/<name>/design.md openspec/reports/<name>/artifacts/
-   cp -r openspec/changes/archive/<name>/specs/ openspec/reports/<name>/artifacts/
-   cp openspec/changes/archive/<name>/tasks.md openspec/reports/<name>/artifacts/
-   ```
-
-7. **Copy implementation files**
-
-   Copy detected implementation files to report directory:
-   ```bash
-   # Example for skill/tool changes
-   cp -r openspec/changes/archive/<name>/scripts/ openspec/reports/<name>/scripts/
-   cp -r openspec/changes/archive/<name>/references/ openspec/reports/<name>/references/
-   cp -r openspec/changes/archive/<name>/evals/ openspec/reports/<name>/evals/
-   cp -r openspec/changes/archive/<name>/assets/ openspec/reports/<name>/assets/
-   ```
-
-8. **Generate report.md**
+5. **Generate report.md**
 
    Create `openspec/reports/<name>/report.md` using template at `assets/templates/report.md.template`.
 
    Fill in template placeholders with actual values from the archive.
 
-   **Report sections:**
+   **Report sections (meditation):**
    
    ```markdown
    # Report: <change-name>
    
-   ## Problem Statement
-   [From proposal.md - Why section]
+   *Self-reflection on archived change: <archive-path>*
    
-   ## Motivation
-   [From proposal.md - What Changes section]
+   ## What Happened
+   [Brief summary referencing archive - not copied content]
    
-   ## Approach
-   [From design.md - Decisions section with rationale]
+   ## What I Learned
+   [Insights, patterns, key takeaways]
    
-   ### Decision: <name>
-   **Choice**: <what was chosen>
-   **Alternatives**: <what was considered>
-   **Rationale**: <why this choice>
-   
-   ## What Changed (Specs)
-   [From specs/ - delta spec analysis]
-   
-   ### Added Requirements
-   - <requirement-name>: <summary>
-   
-   ### Modified Requirements
-   - <requirement-name>: <what changed>
-   
-   ### Removed Requirements
-   - <requirement-name>: <reason>
-   
-   ## Implementation
-   [From tasks.md - completed tasks grouped by phase]
-   
-   ### Tasks Complete (N/N)
-   - [x] <task description>
-   
-   ### Files Created
-   - `<path>`: <purpose>
-   
-   ### Files Modified
-   - `<path>`: <what changed>
-   
-   ## Validation
-   [From evals/ - if exists, otherwise "No evaluation performed"]
+   ## What I'd Do Differently
+   [Improvements, alternative approaches]
    
    ## Key Decisions
-   [Distilled from design.md]
+   [Distilled from design.md - what was decided and why]
    
    | Decision | Choice | Rationale |
    |----------|--------|-----------|
    | <name> | <choice> | <rationale> |
    
-   ## Trade-offs
-   [From design.md - Risks/Trade-offs]
+   ## Trade-offs Made
+   [From design.md - what was sacrificed]
    
    | Risk | Mitigation |
    |------|------------|
    | <risk> | <mitigation> |
    
    ## Follow-ups
-   [Any deferred work, future considerations]
+   [Deferred work, future considerations]
    
    - [ ] <follow-up item>
    
-   ## Archive Metadata
+   ## Archive Reference
    - **Location**: `<archive-path>`
    - **Date**: <YYYY-MM-DD>
    - **Schema**: <schema-name>
-   - **Root**: `<planningHome.root>`
-   
-   ## Additional Sections
-   [Freedom for change-specific content]
    ```
 
-9. **Generate assessment.md**
+6. **Generate assessment.md**
 
-   Create `openspec/reports/<name>/assessment.md` with AI agent self-reflection.
+   Create `openspec/reports/<name>/assessment.md` with AI agent meditation.
 
    **Frontmatter template:**
    ```yaml
    ---
    type: Assessment
    title: "Assessment: <change-name>"
-   description: "AI agent self-reflection on the change"
+   description: "AI agent meditation on the experience"
    generated:
      by: opsx-report/1.0
      at: <ISO-8601-timestamp>
    ---
    ```
 
-   **Assessment sections:**
+   **Assessment sections (meditation):**
    
    ```markdown
    # Assessment: <change-name>
    
-   ## Reflection
+   *Meditation on the experience of this change.*
+   
+   ## How It Felt
    
    ### What Went Well
-   <!-- Agent: List successes, smooth parts, good decisions -->
+   <!-- Agent: What was smooth, satisfying, successful -->
    
    ### What Went Poorly
-   <!-- Agent: List failures, difficulties, bad decisions -->
+   <!-- Agent: What was frustrating, difficult, problematic -->
    
    ## Difficulty Ratings
    
@@ -208,61 +143,76 @@ Generate a comprehensive, self-contained, OKF-compliant report from an archived 
    | Integration | | |
    | Time estimation | | |
    
-   ## Knowledge Gaps
+   ## What I Was Lacking
    
-   ### What knowledge and skills were you lacking?
-   <!-- Agent: Specific gaps identified during the change -->
+   ### Knowledge gaps
+   <!-- Agent: What I didn't know but needed to -->
    
-   ### What could have helped?
-   <!-- Agent: Reference materials, examples, documentation -->
+   ### Skills gaps
+   <!-- Agent: What I couldn't do well enough -->
    
-   ## Suggestions for Future Changes
+   ## What Would Help Next Time
    
    ### Process improvements
-   <!-- Agent: What to do differently next time -->
+   <!-- Agent: What to do differently -->
    
    ### Tool improvements
-   <!-- Agent: What tools/skills need improvement -->
+   <!-- Agent: What tools need to be better -->
    
    ### Documentation gaps
-   <!-- Agent: What documentation should be created -->
+   <!-- Agent: What docs would have helped -->
    ```
 
-10. **Display progress**
+7. **Validate report**
 
-   During generation, display:
-   - "Reading proposal.md..."
-   - "Reading design.md..."
-   - "Scanning specs/..."
-   - "Reading tasks.md..."
-   - "Detecting implementation files..."
-   - "Copying artifacts..."
-   - "Copying implementation files..."
-   - "Generating report.md..."
-   - "Generating assessment.md..."
+    Check generated report and assessment:
+    
+    **Report validation:**
+    - All meditation sections present (What Happened, What I Learned, What I'd Do Differently)
+    - No placeholder content (TODO/FIXME/N/A) unless legitimate
+    - Frontmatter complete (type, title, description, generated)
+    
+    **Assessment validation:**
+    - At least 2 items in "What Went Well"
+    - At least 2 items in "What Went Poorly"
+    - At least 1 knowledge gap identified
+    
+    If validation fails, auto-fix and re-validate.
 
-10. **Display completion summary**
+8. **Display progress**
+
+    During generation, display:
+    - "Reading archive..."
+    - "Generating report.md (self-reflection)..."
+    - "Generating assessment.md (meditation)..."
+    - "Validating report..."
+
+9. **Display completion summary**
 
     After generation completes:
     ```markdown
-    ## Report Generated
+    ## Self-Reflection Generated
     
     **Change:** <name>
-    **Location:** openspec/reports/<name>/report.md
-    **Sections:** 11 base + N additional
-    **Files referenced:** N
-    **Artifacts copied:** N
-    **Implementation files copied:** N
+    **Location:** openspec/reports/<name>/
+    **Archive:** <archive-path>
+    **Files:** report.md, assessment.md
     ```
 
+**Content Relevance Guidance**
+
+Populate sections based on archive content:
+- If archive has `specs/` → populate "What Changed (Specs)" with requirements analysis
+- If archive has `tasks.md` → populate "Implementation" with task completion status
+- If archive has `design.md` → populate "Approach" with decisions and rationale
+- If archive has `evals/` → populate "Validation" with test results
+
+Leave sections empty only when the source artifact doesn't exist.
+
 **Guardrails**
-- Read artifacts from archive, not from active changes
-- Preserve original content (don't rewrite proposal/design)
-- Include full spec content (not summaries)
-- No external links (self-contained)
-- No line numbers (portable)
-- Always generate all base sections (even if empty)
-- Add additional sections only when relevant content exists
-- Copy implementation files that improve understanding
+- Reference archive, don't copy content
+- Archive is source of truth, report is self-reflection
+- Report answers: What happened? What did I learn? What would I do differently?
+- Assessment answers: How did it feel? What was lacking? What would help next time?
 - Use ISO 8601 timestamps
 - Use OKF actor convention: `opsx-report/1.0`

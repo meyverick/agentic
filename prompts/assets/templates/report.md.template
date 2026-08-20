@@ -1,86 +1,27 @@
 ---
 type: OpenSpec Report
 title: "Report: {{change-name}}"
-description: "{{description}}"
-status: stable
-tags: [openspec, {{schema-name}}, {{capability-path}}]
+description: "Self-reflection on archived change"
 generated:
   by: opsx-report/1.0
   at: {{timestamp}}
-sources:
-  - id: proposal
-    resource: artifacts/proposal.md
-    title: Proposal
-  - id: design
-    resource: artifacts/design.md
-    title: Design
-  - id: specs
-    resource: artifacts/specs/
-    title: Specifications
-  - id: tasks
-    resource: artifacts/tasks.md
-    title: Tasks
-  - id: archive
-    resource: "openspec/changes/archive/{{change-name}}/"
-    title: Original archive location
-stale_after: {{stale_after}}
 ---
 
 # Report: {{change-name}}
 
-## Problem Statement
+*Self-reflection on archived change: {{archive-path}}*
 
-{{problem_statement}}
+## What Happened
 
-## Motivation
+{{what_happened}}
 
-{{motivation}}
+## What I Learned
 
-## Approach
+{{what_i_learned}}
 
-{{approach}}
+## What I'd Do Differently
 
-### Decision: {{decision_name}}
-
-**Choice**: {{choice}}
-**Alternatives**: {{alternatives}}
-**Rationale**: {{rationale}}
-
-## What Changed (Specs)
-
-{{specs_analysis}}
-
-### Added Requirements
-
-{{added_requirements}}
-
-### Modified Requirements
-
-{{modified_requirements}}
-
-### Removed Requirements
-
-{{removed_requirements}}
-
-## Implementation
-
-{{implementation_summary}}
-
-### Tasks Complete ({{tasks_complete}}/)
-
-{{tasks_list}}
-
-### Files Created
-
-{{files_created}}
-
-### Files Modified
-
-{{files_modified}}
-
-## Validation
-
-{{validation_results}}
+{{what_i_would_do_differently}}
 
 ## Key Decisions
 
@@ -88,7 +29,7 @@ stale_after: {{stale_after}}
 |----------|--------|-----------|
 {{key_decisions_table}}
 
-## Trade-offs
+## Trade-offs Made
 
 | Risk | Mitigation |
 |------|------------|
@@ -98,9 +39,8 @@ stale_after: {{stale_after}}
 
 {{followups}}
 
-## Archive Metadata
+## Archive Reference
 
-- **Location**: {{archive_location}}
+- **Location**: {{archive_path}}
 - **Date**: {{archive_date}}
 - **Schema**: {{schema_name}}
-- **Root**: {{root_path}}

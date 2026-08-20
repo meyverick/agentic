@@ -1,0 +1,80 @@
+{
+  "skill_name": "skill-creator",
+  "queries": [
+    {
+      "id": 1,
+      "query": "Build me a skill that processes PDFs and extracts text.",
+      "should_trigger": true
+    },
+    {
+      "id": 2,
+      "query": "I need a new agent skill for database queries.",
+      "should_trigger": true
+    },
+    {
+      "id": 3,
+      "query": "Create a skill-creator skill that helps build other skills.",
+      "should_trigger": true
+    },
+    {
+      "id": 4,
+      "query": "Help me extract a reusable pattern from this workflow into a skill.",
+      "should_trigger": true
+    },
+    {
+      "id": 5,
+      "query": "Set up evaluation for my existing skill.",
+      "should_trigger": true
+    },
+    {
+      "id": 6,
+      "query": "Write a Python script to analyze data.",
+      "should_trigger": false
+    },
+    {
+      "id": 7,
+      "query": "Review this code for bugs.",
+      "should_trigger": false
+    },
+    {
+      "id": 8,
+      "query": "Create a bash script that automates deployment.",
+      "should_trigger": false
+    },
+    {
+      "id": 9,
+      "query": "Help me write documentation for my API.",
+      "should_trigger": false
+    },
+    {
+      "id": 10,
+      "query": "Fix the bug in my authentication middleware.",
+      "should_trigger": false
+    },
+    {
+      "id": 11,
+      "query": "I want to build something that helps with file processing.",
+      "should_trigger": true
+    },
+    {
+      "id": 12,
+      "query": "Make a tool for converting JSON to YAML.",
+      "should_trigger": false
+    },
+    {
+      "id": 13,
+      "query": "Design a skill for handling webhook integrations.",
+      "should_trigger": true
+    },
+    {
+      "id": 14,
+      "query": "Write unit tests for my function.",
+      "should_trigger": false
+    },
+    {
+      "id": 15,
+      "query": "Create a reusable skill from this task I just did.",
+      "should_trigger": true
+    }
+  ]
+}

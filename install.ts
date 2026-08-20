@@ -156,6 +156,16 @@ function install(): void {
     console.log('   ⚠️  Not found\n');
   }
   
+  // 4. Create openspec/reports/ directory
+  const reportsDst = path.join(targetDir, 'openspec', 'reports');
+  console.log('📂 Reports directory:');
+  if (!fs.existsSync(reportsDst)) {
+    fs.mkdirSync(reportsDst, { recursive: true });
+    console.log(`   → Created ${reportsDst}\n`);
+  } else {
+    console.log(`   → ${reportsDst} (exists)\n`);
+  }
+  
   // Summary
   console.log('✅ Done!');
   console.log(`   Copied: ${copied} files`);

@@ -1,0 +1,15 @@
+{
+  "assertion_results": [
+    {
+      "text": "{{assertion_text}}",
+      "passed": true,
+      "evidence": "{{evidence}}"
+    }
+  ],
+  "summary": {
+    "passed": 0,
+    "failed": 0,
+    "total": 0,
+    "pass_rate": 0
+  }
+}

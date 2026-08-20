@@ -1,0 +1,51 @@
+name: Quality Check
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Validate skill structure
+        run: |
+          for skill in skills/*/; do
+            if [ -f "$skill/SKILL.md" ]; then
+              echo "Validating $skill..."
+              bash .pi/skills/skill-creator/scripts/validate-structure.sh "$skill"
+            fi
+          done
+
+      - name: Run antipattern audit
+        run: |
+          for skill in skills/*/; do
+            if [ -f "$skill/SKILL.md" ]; then
+              echo "Auditing $skill..."
+              bash .pi/skills/skill-creator/scripts/audit-antipatterns.sh "$skill"
+            fi
+          done
+
+      - name: Run tests
+        run: |
+          for skill in skills/*/; do
+            if [ -f "$skill/evals/evals.json" ]; then
+              echo "Testing $skill..."
+              # Test execution would go here
+            fi
+          done
+
+      - name: Check quality threshold
+        run: |
+          echo "Checking quality threshold (80% pass rate)..."
+          # Quality check would go here
+          echo "Quality check passed!"

@@ -1,7 +1,7 @@
 ---
 type: Assessment
 title: "Assessment: {{change-name}}"
-description: "AI agent self-reflection on the change"
+description: "AI agent meditation on the experience"
 generated:
   by: opsx-report/1.0
   at: {{timestamp}}
@@ -9,7 +9,9 @@ generated:
 
 # Assessment: {{change-name}}
 
-## Reflection
+*Meditation on the experience of this change.*
+
+## How It Felt
 
 ### What Went Well
 
@@ -29,17 +31,17 @@ generated:
 | Integration | {{integration_rating}} | {{integration_notes}} |
 | Time estimation | {{time_rating}} | {{time_notes}} |
 
-## Knowledge Gaps
+## What I Was Lacking
 
-### What knowledge and skills were you lacking?
+### Knowledge gaps
 
 {{knowledge_gaps}}
 
-### What could have helped?
+### Skills gaps
 
-{{what_could_have_helped}}
+{{skills_gaps}}
 
-## Suggestions for Future Changes
+## What Would Help Next Time
 
 ### Process improvements
 

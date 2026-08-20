@@ -1,0 +1,15 @@
+{
+  "skill_name": "{{skill-name}}",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "{{test_prompt}}",
+      "expected_output": "{{expected_output}}",
+      "files": [],
+      "assertions": [
+        "{{assertion_1}}",
+        "{{assertion_2}}"
+      ]
+    }
+  ]
+}

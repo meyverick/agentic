@@ -1,0 +1,38 @@
+{
+  "skill_name": "opsx-learn",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Analyze all reports in ./openspec/reports/ and generate OpenSpec proposals for improvements.",
+      "expected_output": "System scans ./openspec/reports/, processes each report, determines tool type (skill/prompt/combo), and generates OpenSpec proposals in ./openspec/changes/.",
+      "files": [],
+      "assertions": [
+        "Report directory exists at ./openspec/reports/",
+        "At least one proposal generated in ./openspec/changes/",
+        "Each proposal has proposal.md, specs/, design.md, tasks.md",
+        "Processed reports moved to ./openspec/reports/archives/"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Analyze the add-central-datastore report and generate a proposal.",
+      "expected_output": "System processes single report, determines it's a database skill, generates proposal for database-schema skill.",
+      "files": [],
+      "assertions": [
+        "Single report processed from ./openspec/reports/add-central-datastore/",
+        "Proposal generated for database-schema skill",
+        "Proposal contains relevant specs from report"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "What reports are available for analysis?",
+      "expected_output": "System lists available reports in ./openspec/reports/ directory.",
+      "files": [],
+      "assertions": [
+        "List of available reports displayed",
+        "Reports in ./openspec/reports/archives/ not shown"
+      ]
+    }
+  ]
+}

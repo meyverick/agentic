@@ -1,0 +1,36 @@
+{
+  "assertion_results": [
+    {
+      "text": "Skill directory is created at ./project/skills/<skill-name>/",
+      "passed": null,
+      "evidence": "Deferred to deployment"
+    },
+    {
+      "text": "SKILL.md exists with valid frontmatter (name, description)",
+      "passed": null,
+      "evidence": "Deferred to deployment"
+    },
+    {
+      "text": "Description is imperative and intent-driven",
+      "passed": null,
+      "evidence": "Deferred to deployment"
+    },
+    {
+      "text": "Scripts use .mjs extension and are self-contained",
+      "passed": null,
+      "evidence": "Deferred to deployment"
+    },
+    {
+      "text": "References include domain-specific content",
+      "passed": null,
+      "evidence": "Deferred to deployment"
+    }
+  ],
+  "summary": {
+    "passed": 0,
+    "failed": 0,
+    "total": 5,
+    "pass_rate": 0
+  },
+  "note": "Grading will be completed when skill is deployed and tested against real use cases"
+}

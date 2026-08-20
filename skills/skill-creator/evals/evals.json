@@ -1,0 +1,38 @@
+{
+  "skill_name": "skill-creator",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Create a skill that analyzes CSV files and generates summary statistics.",
+      "expected_output": "Skill-creator generates a new skill directory at ./project/skills/csv-analyzer/ with SKILL.md, scripts/, references/, and assets/ directories.",
+      "files": [],
+      "assertions": [
+        "Skill directory created at ./project/skills/csv-analyzer/",
+        "SKILL.md exists with valid frontmatter",
+        "Description is imperative and specific",
+        "Scripts use .mjs extension and are self-contained"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "What skills are available in the project?",
+      "expected_output": "System lists all skills in ./project/skills/ with their descriptions.",
+      "files": [],
+      "assertions": [
+        "List of skills displayed",
+        "Each skill shows name and description"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Validate the skill-creator skill structure.",
+      "expected_output": "System runs validate-structure.sh and reports pass/fail with details.",
+      "files": [],
+      "assertions": [
+        "Validation script executed",
+        "Report shows pass/fail status",
+        "Errors and warnings listed if any"
+      ]
+    }
+  ]
+}

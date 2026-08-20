@@ -1,0 +1,35 @@
+{
+  "skill_name": "skill-creator",
+  "near_misses": [
+    {
+      "id": 1,
+      "prompt": "Write a Python script that reads CSV files and generates reports.",
+      "should_trigger": false,
+      "reason": "Involves CSV but task is to write a script, not create a skill"
+    },
+    {
+      "id": 2,
+      "prompt": "Help me document my API endpoints in OpenAPI format.",
+      "should_trigger": false,
+      "reason": "Documentation task, but not creating a skill — just formatting docs"
+    },
+    {
+      "id": 3,
+      "prompt": "Review this code for antipatterns and suggest improvements.",
+      "should_trigger": false,
+      "reason": "Code review task, not skill creation"
+    },
+    {
+      "id": 4,
+      "prompt": "Create a bash script that automates testing.",
+      "should_trigger": false,
+      "reason": "Script creation, not skill creation"
+    },
+    {
+      "id": 5,
+      "prompt": "Write documentation for my existing skill.",
+      "should_trigger": false,
+      "reason": "Documentation for existing skill, not creating a new one"
+    }
+  ]
+}
