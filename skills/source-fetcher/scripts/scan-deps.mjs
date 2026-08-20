@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 /**
- * scan-deps.mjs — Scan dependencies from config files
+ * scan-deps.mjs — Scan dependencies recursively from config files
  * Usage: node scan-deps.mjs <project-dir>
  * Output: JSON with all dependencies to download
  */
 
-import { readFileSync, existsSync, readdirSync } from 'fs';
+import { readFileSync, existsSync, readdirSync, statSync } from 'fs';
 import { join } from 'path';
 
 const projectDir = process.argv[2] || process.cwd();
@@ -17,86 +17,181 @@ const deps = {
   go: []
 };
 
-// Scan package.json (Node/Bun)
-const packageJsonPath = join(projectDir, 'package.json');
-if (existsSync(packageJsonPath)) {
+// Config files to search for
+const CONFIG_FILES = {
+  node: 'package.json',
+  rust: 'Cargo.toml',
+  python: 'requirements.txt',
+  go: 'go.mod'
+};
+
+// Directories to skip
+const SKIP_DIRS = [
+  'node_modules',
+  'target',
+  'dist',
+  'build',
+  '.git',
+  'vendor',
+  '__pycache__'
+];
+
+// Recursively find config files
+function findConfigFiles(dir, depth = 0) {
+  const results = [];
+  
+  if (depth > 5) return results; // Limit recursion depth
+  
   try {
-    const pkg = JSON.parse(readFileSync(packageJsonPath, 'utf-8'));
+    const items = readdirSync(dir);
     
-    if (pkg.dependencies) {
-      deps.node.push(...Object.keys(pkg.dependencies));
-    }
-    if (pkg.devDependencies) {
-      deps.node.push(...Object.keys(pkg.devDependencies));
+    for (const item of items) {
+      if (SKIP_DIRS.includes(item)) continue;
+      
+      const itemPath = join(dir, item);
+      const stat = statSync(itemPath);
+      
+      if (stat.isDirectory()) {
+        results.push(...findConfigFiles(itemPath, depth + 1));
+      } else if (CONFIG_FILES[node]) {
+        results.push({ type: 'node', path: itemPath });
+      } else if (CONFIG_FILES.rust] && item === 'Cargo.toml') {
+        results.push({ type: 'rust', path: itemPath });
+      } else if (item === 'requirements.txt') {
+        results.push({ type: 'python', path: itemPath });
+      } else if (item === 'go.mod') {
+        results.push({ type: 'go', path: itemPath });
+      }
     }
   } catch (e) {
-    // Invalid package.json
+    // Skip unreadable directories
+  }
+  
+  return results;
+}
+
+// Parse package.json
+function parsePackageJson(filePath) {
+  try {
+    const pkg = JSON.parse(readFileSync(filePath, 'utf-8'));
+    const result = [];
+    
+    if (pkg.dependencies) {
+      result.push(...Object.keys(pkg.dependencies));
+    }
+    if (pkg.devDependencies) {
+      result.push(...Object.keys(pkg.devDependencies));
+    }
+    
+    return result;
+  } catch (e) {
+    return [];
   }
 }
 
-// Scan Cargo.toml (Rust)
-const cargoTomlPath = join(projectDir, 'Cargo.toml');
-if (existsSync(cargoTomlPath)) {
+// Parse Cargo.toml
+function parseCargoToml(filePath) {
   try {
-    const cargoContent = readFileSync(cargoTomlPath, 'utf-8');
+    const content = readFileSync(filePath, 'utf-8');
+    const result = [];
     
     // Parse [dependencies] section
-    const depsMatch = cargoContent.match(/\[dependencies\]([\s\S]*?)(?:\[|$)/);
+    const depsMatch = content.match(/\[dependencies\]([\s\S]*?)(?:\[|$)/);
     if (depsMatch) {
       const matches = depsMatch[1].match(/(\w[\w-]*)\s*=/g);
       if (matches) {
-        deps.rust.push(...matches.map(m => m.split('=')[0].trim()));
+        result.push(...matches.map(m => m.split('=')[0].trim()));
       }
     }
     
     // Parse [dev-dependencies] section
-    const devDepsMatch = cargoContent.match(/\[dev-dependencies\]([\s\S]*?)(?:\[|$)/);
+    const devDepsMatch = content.match(/\[dev-dependencies\]([\s\S]*?)(?:\[|$)/);
     if (devDepsMatch) {
       const matches = devDepsMatch[1].match(/(\w[\w-]*)\s*=/g);
       if (matches) {
-        deps.rust.push(...matches.map(m => m.split('=')[0].trim()));
+        result.push(...matches.map(m => m.split('=')[0].trim()));
       }
     }
+    
+    return result;
   } catch (e) {
-    // Invalid Cargo.toml
+    return [];
   }
 }
 
-// Scan requirements.txt (Python)
-const requirementsPath = join(projectDir, 'requirements.txt');
-if (existsSync(requirementsPath)) {
+// Parse requirements.txt
+function parseRequirementsTxt(filePath) {
   try {
-    const requirements = readFileSync(requirementsPath, 'utf-8');
-    const packages = requirements.split('\n')
+    const content = readFileSync(filePath, 'utf-8');
+    return content.split('\n')
       .filter(line => line.trim() && !line.startsWith('#'))
       .map(line => line.split('==')[0].split('>=')[0].split('<=')[0].split('[')[0].trim());
-    deps.python.push(...packages);
   } catch (e) {
-    // Invalid requirements.txt
+    return [];
   }
 }
 
-// Scan go.mod (Go)
-const goModPath = join(projectDir, 'go.mod');
-if (existsSync(goModPath)) {
+// Parse go.mod
+function parseGoMod(filePath) {
   try {
-    const goContent = readFileSync(goModPath, 'utf-8');
-    const requireMatch = goContent.match(/require\s*\(([\s\S]*?)\)/);
+    const content = readFileSync(filePath, 'utf-8');
+    const requireMatch = content.match(/require\s*\(([\s\S]*?)\)/);
     if (requireMatch) {
-      const modules = requireMatch[1].match(/(\S+)\s+v/);
+      const modules = requireMatch[1].match(/(\S+)\s+v/g);
       if (modules) {
-        deps.go.push(modules[1]);
+        return modules.map(m => m.split(' ')[0]);
       }
     }
+    return [];
   } catch (e) {
-    // Invalid go.mod
+    return [];
   }
 }
 
-// Deduplicate
-deps.node = [...new Set(deps.node)];
-deps.rust = [...new Set(deps.rust)];
-deps.python = [...new Set(deps.python)];
-deps.go = [...new Set(deps.go)];
+// Main function
+function scan() {
+  console.log(`Scanning ${projectDir} recursively...\n`);
+  
+  const configFiles = findConfigFiles(projectDir);
+  
+  console.log(`Found ${configFiles.length} config files\n`);
+  
+  for (const { type, path: filePath } of configFiles) {
+    console.log(`Processing: ${filePath}`);
+    
+    let packages = [];
+    
+    switch (type) {
+      case 'node':
+        packages = parsePackageJson(filePath);
+        deps.node.push(...packages);
+        break;
+      case 'rust':
+        packages = parseCargoToml(filePath);
+        deps.rust.push(...packages);
+        break;
+      case 'python':
+        packages = parseRequirementsTxt(filePath);
+        deps.python.push(...packages);
+        break;
+      case 'go':
+        packages = parseGoMod(filePath);
+        deps.go.push(...packages);
+        break;
+    }
+    
+    console.log(`  Found ${packages.length} packages`);
+  }
+  
+  // Deduplicate
+  deps.node = [...new Set(deps.node)];
+  deps.rust = [...new Set(deps.rust)];
+  deps.python = [...new Set(deps.python)];
+  deps.go = [...new Set(deps.go)];
+  
+  console.log(`\nTotal unique packages: ${deps.node.length + deps.rust.length + deps.python.length + deps.go.length}`);
+  
+  console.log(JSON.stringify(deps, null, 2));
+}
 
-console.log(JSON.stringify(deps, null, 2));
+scan();

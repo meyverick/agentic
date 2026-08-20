@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 /**
- * detect-stack.mjs — Detect project stack from config files
+ * detect-stack.mjs — Detect project stack recursively from config files
  * Usage: node detect-stack.mjs <project-dir>
  * Output: JSON with detected stacks and dependencies
  */
 
-import { readFileSync, existsSync, readdirSync } from 'fs';
+import { readFileSync, existsSync, readdirSync, statSync } from 'fs';
 import { join } from 'path';
 
 const projectDir = process.argv[2] || process.cwd();
@@ -16,78 +16,109 @@ const detected = {
   devDependencies: []
 };
 
-// Check for package.json (Node/Bun)
-const packageJsonPath = join(projectDir, 'package.json');
-if (existsSync(packageJsonPath)) {
-  try {
-    const pkg = JSON.parse(readFileSync(packageJsonPath, 'utf-8'));
-    detected.stacks.push('node');
-    
-    if (pkg.dependencies) {
-      detected.dependencies.push(...Object.keys(pkg.dependencies));
-    }
-    if (pkg.devDependencies) {
-      detected.devDependencies.push(...Object.keys(pkg.devDependencies));
-    }
-    
-    // Check for Bun indicators
-    if (existsSync(join(projectDir, 'bun.lockb')) || pkg.packageManager?.includes('bun')) {
-      detected.stacks.push('bun');
-    }
-  } catch (e) {
-    // Invalid package.json
-  }
-}
+// Directories to skip
+const SKIP_DIRS = ['node_modules', 'target', 'dist', 'build', '.git', 'vendor'];
 
-// Check for Cargo.toml (Rust)
-const cargoTomlPath = join(projectDir, 'Cargo.toml');
-if (existsSync(cargoTomlPath)) {
-  detected.stacks.push('rust');
+// Framework indicators
+const FRAMEWORK_INDICATORS = {
+  'svelte.config.js': 'sveltekit',
+  'vite.config.ts': 'vite',
+  'vite.config.js': 'vite',
+  'tailwind.config.js': 'tailwindcss',
+  'tailwind.config.ts': 'tailwindcss',
+  'drizzle.config.ts': 'drizzle',
+  'next.config.js': 'nextjs',
+  'nuxt.config.js': 'nuxt'
+};
+
+// Recursively scan for config files
+function scanDirectory(dir, depth = 0) {
+  if (depth > 5) return;
   
   try {
-    const cargoContent = readFileSync(cargoTomlPath, 'utf-8');
+    const items = readdirSync(dir);
     
-    // Parse dependencies section
-    const depsMatch = cargoContent.match(/\[dependencies\]([\s\S]*?)(?:\[|$)/);
-    if (depsMatch) {
-      const deps = depsMatch[1].match(/(\w[\w-]*)\s*=/g);
-      if (deps) {
-        detected.dependencies.push(...deps.map(d => d.split('=')[0].trim()));
+    for (const item of items) {
+      if (SKIP_DIRS.includes(item)) continue;
+      
+      const itemPath = join(dir, item);
+      const stat = statSync(itemPath);
+      
+      if (stat.isDirectory()) {
+        scanDirectory(itemPath, depth + 1);
+      } else {
+        // Check for package.json
+        if (item === 'package.json') {
+          try {
+            const pkg = JSON.parse(readFileSync(itemPath, 'utf-8'));
+            if (!detected.stacks.includes('node')) {
+              detected.stacks.push('node');
+            }
+            if (pkg.dependencies) {
+              detected.dependencies.push(...Object.keys(pkg.dependencies));
+            }
+            if (pkg.devDependencies) {
+              detected.devDependencies.push(...Object.keys(pkg.devDependencies));
+            }
+            if (existsSync(join(dir, 'bun.lockb')) || pkg.packageManager?.includes('bun')) {
+              if (!detected.stacks.includes('bun')) {
+                detected.stacks.push('bun');
+              }
+            }
+          } catch (e) {}
+        }
+        
+        // Check for Cargo.toml
+        if (item === 'Cargo.toml') {
+          if (!detected.stacks.includes('rust')) {
+            detected.stacks.push('rust');
+          }
+          try {
+            const cargoContent = readFileSync(itemPath, 'utf-8');
+            const depsMatch = cargoContent.match(/\[dependencies\]([\s\S]*?)(?:\[|$)/);
+            if (depsMatch) {
+              const deps = depsMatch[1].match(/(\w[\w-]*)\s*=/g);
+              if (deps) {
+                detected.dependencies.push(...deps.map(d => d.split('=')[0].trim()));
+              }
+            }
+          } catch (e) {}
+        }
+        
+        // Check for requirements.txt
+        if (item === 'requirements.txt') {
+          if (!detected.stacks.includes('python')) {
+            detected.stacks.push('python');
+          }
+          try {
+            const requirements = readFileSync(itemPath, 'utf-8');
+            const packages = requirements.split('\n')
+              .filter(line => line.trim() && !line.startsWith('#'))
+              .map(line => line.split('==')[0].split('>=')[0].split('<=')[0].trim());
+            detected.dependencies.push(...packages);
+          } catch (e) {}
+        }
+        
+        // Check for go.mod
+        if (item === 'go.mod') {
+          if (!detected.stacks.includes('go')) {
+            detected.stacks.push('go');
+          }
+        }
+        
+        // Check for framework indicators
+        if (FRAMEWORK_INDICATORS[item] && !detected.stacks.includes(FRAMEWORK_INDICATORS[item])) {
+          detected.stacks.push(FRAMEWORK_INDICATORS[item]);
+        }
       }
     }
   } catch (e) {
-    // Invalid Cargo.toml
+    // Skip unreadable directories
   }
 }
 
-// Check for requirements.txt (Python)
-const requirementsPath = join(projectDir, 'requirements.txt');
-if (existsSync(requirementsPath)) {
-  detected.stacks.push('python');
-  
-  try {
-    const requirements = readFileSync(requirementsPath, 'utf-8');
-    const packages = requirements.split('\n')
-      .filter(line => line.trim() && !line.startsWith('#'))
-      .map(line => line.split('==')[0].split('>=')[0].split('<=')[0].trim());
-    detected.dependencies.push(...packages);
-  } catch (e) {
-    // Invalid requirements.txt
-  }
-}
-
-// Check for go.mod (Go)
-const goModPath = join(projectDir, 'go.mod');
-if (existsSync(goModPath)) {
-  detected.stacks.push('go');
-}
-
-// Check for framework indicators
-const files = readdirSync(projectDir);
-if (files.includes('svelte.config.js')) detected.stacks.push('sveltekit');
-if (files.includes('vite.config.ts') || files.includes('vite.config.js')) detected.stacks.push('vite');
-if (files.includes('tailwind.config.js') || files.includes('tailwind.config.ts')) detected.stacks.push('tailwindcss');
-if (files.includes('drizzle.config.ts')) detected.stacks.push('drizzle');
+// Scan recursively
+scanDirectory(projectDir);
 
 // Deduplicate
 detected.stacks = [...new Set(detected.stacks)];

@@ -5,8 +5,9 @@
  * Output: JSON with download status
  */
 
-import { mkdirSync, existsSync, readFileSync, writeFileSync, readdirSync, statSync, rmSync, cpSync } from 'fs';
+import { mkdirSync, existsSync, readFileSync, writeFileSync, readdirSync, statSync } from 'fs';
 import { join } from 'path';
+import { execSync } from 'child_process';
 
 const packageName = process.argv[2];
 const outputDir = process.argv[3] || './references/src';
@@ -22,7 +23,7 @@ const targetDir = join(outputDir, packageName);
 const sourcesJsonPath = join(outputDir, 'sources.json');
 
 // Create output directory if needed
-if (!fs.existsSync(outputDir)) {
+if (!existsSync(outputDir)) {
   mkdirSync(outputDir, { recursive: true });
 }
 
@@ -137,9 +138,16 @@ async function downloadFromGitHub(repo, target) {
   try {
     console.log(`  Downloading from github.com/${repo}...`);
     
-    // For now, create a placeholder (real implementation would extract tarball)
-    const readme = `# ${repo}\n\nSource downloaded from https://github.com/${repo}\n`;
-    writeFileSync(join(target, 'README.md'), readme);
+    // Clone with depth 1 (shallow clone)
+    execSync(`git clone --depth 1 https://github.com/${repo}.git "${target}"`, {
+      stdio: 'ignore'
+    });
+    
+    // Remove .git directory
+    const gitDir = join(target, '.git');
+    if (existsSync(gitDir)) {
+      execSync(`rm -rf "${gitDir}"`);
+    }
     
     return true;
   } catch (e) {
@@ -158,23 +166,13 @@ async function downloadFromNpm(pkg, target) {
     
     const data = await response.json();
     
-    const info = {
-      name: data.name,
-      version: data['dist-tags']?.latest || 'unknown',
-      description: data.description,
-      repository: data.repository?.url,
-      homepage: data.homepage
-    };
-    
-    writeFileSync(join(target, 'package-info.json'), JSON.stringify(info, null, 2));
-    
     // Try to get GitHub repo
     if (data.repository?.url) {
       const repo = data.repository.url.replace('git+', '').replace('.git', '').replace('https://github.com/', '');
-      await downloadFromGitHub(repo, target);
+      return await downloadFromGitHub(repo, target);
     }
     
-    return true;
+    return false;
   } catch (e) {
     console.error(`  Failed to download from npm: ${e.message}`);
     return false;
@@ -189,7 +187,6 @@ async function download() {
   const sources = loadSourcesJson();
   if (sources[packageName]) {
     console.log(`  Found in sources.json: ${sources[packageName]}`);
-    // Use the URL from sources.json
     const success = await downloadFromGitHub(sources[packageName], targetDir);
     if (success) {
       console.log(JSON.stringify({
@@ -207,7 +204,6 @@ async function download() {
   if (githubRepo) {
     const success = await downloadFromGitHub(githubRepo, targetDir);
     if (success) {
-      // Add successful entry to sources.json
       addSourceEntry(packageName, githubRepo);
       console.log(JSON.stringify({
         status: 'downloaded',
@@ -222,7 +218,6 @@ async function download() {
   // Try npm
   const npmSuccess = await downloadFromNpm(packageName, targetDir);
   if (npmSuccess) {
-    // Add entry (npm source)
     addSourceEntry(packageName, `npm:${packageName}`);
     console.log(JSON.stringify({
       status: 'downloaded',
