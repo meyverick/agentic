@@ -1,0 +1,54 @@
+---
+type: Assessment
+title: "Assessment: {{change-name}}"
+description: "AI agent self-reflection on the change"
+generated:
+  by: opsx-report/1.0
+  at: {{timestamp}}
+---
+
+# Assessment: {{change-name}}
+
+## Reflection
+
+### What Went Well
+
+{{what_went_well}}
+
+### What Went Poorly
+
+{{what_went_poorly}}
+
+## Difficulty Ratings
+
+| Dimension | Rating (1-5) | Notes |
+|-----------|--------------|-------|
+| Overall | {{overall_rating}} | {{overall_notes}} |
+| Technical complexity | {{technical_rating}} | {{technical_notes}} |
+| Scope clarity | {{scope_rating}} | {{scope_notes}} |
+| Integration | {{integration_rating}} | {{integration_notes}} |
+| Time estimation | {{time_rating}} | {{time_notes}} |
+
+## Knowledge Gaps
+
+### What knowledge and skills were you lacking?
+
+{{knowledge_gaps}}
+
+### What could have helped?
+
+{{what_could_have_helped}}
+
+## Suggestions for Future Changes
+
+### Process improvements
+
+{{process_improvements}}
+
+### Tool improvements
+
+{{tool_improvements}}
+
+### Documentation gaps
+
+{{documentation_gaps}}
