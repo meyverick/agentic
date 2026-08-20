@@ -22,7 +22,7 @@ jobs:
           for skill in skills/*/; do
             if [ -f "$skill/SKILL.md" ]; then
               echo "Validating $skill..."
-              bash .pi/skills/skill-creator/scripts/validate-structure.sh "$skill"
+              bash skills/skill-creator/scripts/validate-structure.sh "$skill"
             fi
           done
 
@@ -31,7 +31,7 @@ jobs:
           for skill in skills/*/; do
             if [ -f "$skill/SKILL.md" ]; then
               echo "Auditing $skill..."
-              bash .pi/skills/skill-creator/scripts/audit-antipatterns.sh "$skill"
+              bash skills/skill-creator/scripts/audit-antipatterns.sh "$skill"
             fi
           done
 
