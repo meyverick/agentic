@@ -12,9 +12,42 @@
 
 import fs from 'fs';
 import path from 'path';
+import { fileURLToPath } from 'url';
 
 // Source directory (where this script lives)
-const srcDir = import.meta.dir;
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Try to find the source directory (may be in different locations depending on how script is run)
+function findSourceDir(): string {
+  // Try 1: Same directory as script
+  if (fs.existsSync(path.join(__dirname, 'skills'))) {
+    return __dirname;
+  }
+  
+  // Try 2: Parent of script directory
+  const parentDir = path.dirname(__dirname);
+  if (fs.existsSync(path.join(parentDir, 'skills'))) {
+    return parentDir;
+  }
+  
+  // Try 3: Look in node_modules/agentic (bunx installs here)
+  const nodeModulesPath = path.join(__dirname, 'node_modules', 'agentic');
+  if (fs.existsSync(nodeModulesPath) && fs.existsSync(path.join(nodeModulesPath, 'skills'))) {
+    return nodeModulesPath;
+  }
+  
+  // Try 4: Look in parent's node_modules
+  const parentNodeModules = path.join(parentDir, 'node_modules', 'agentic');
+  if (fs.existsSync(parentNodeModules) && fs.existsSync(path.join(parentNodeModules, 'skills'))) {
+    return parentNodeModules;
+  }
+  
+  // Default to script directory
+  return __dirname;
+}
+
+const srcDir = findSourceDir();
 
 // Target directory (current working directory)
 const targetDir = process.cwd();
