@@ -17,7 +17,7 @@ Create new Agent Skills from problem descriptions or instruction files. Fully au
 
 When the user wants to build a new skill:
 
-1. Run `scripts/scaffold-skill.sh <skill-name>` to create skeleton in `./project/skills/`
+1. Run `scripts/scaffold-skill.mjs <skill-name>` to create skeleton in `./project/skills/`
 2. Follow the workflow below to fill in content
 3. Skill ships when Phase 7 completes
 
@@ -79,7 +79,7 @@ Determine:
 
 ### Phase 3: Authoring
 
-1. **Scaffold**: `scripts/scaffold-skill.sh <name>` → creates directory + SKILL.md skeleton
+1. **Scaffold**: `scripts/scaffold-skill.mjs <name>` → creates directory + SKILL.md skeleton
 2. **Frontmatter**: name, description (imperative, specific, "Use when...")
 3. **SKILL.md body**: Core instructions (<500 lines)
 4. **Scripts**: Generate if clearly reusable (.mjs, self-contained)
@@ -91,7 +91,7 @@ Determine:
 
 **Step 1: Structural validation**
 ```bash
-scripts/validate-structure.sh <skill-dir>
+scripts/validate-structure.mjs <skill-dir>
 ```
 Checks: name format, description format, directory structure, file references.
 
@@ -105,7 +105,7 @@ Agent assesses:
 
 **Step 3: Antipattern self-audit**
 ```bash
-scripts/audit-antipatterns.sh <skill-dir>
+scripts/audit-antipatterns.mjs <skill-dir>
 ```
 Checks: phantom tools, duplicated invariants, passive-voice triggers, prose bloat, single-file omnibus, vague success bars.
 
@@ -134,7 +134,7 @@ Assert skill did NOT trigger on near-misses. Pass rate must be 100% for mutation
 
 **Step 5: Compute benchmarks**
 ```bash
-scripts/compute-benchmark.sh <eval-dir>
+scripts/compute-benchmark.mjs <eval-dir>
 ```
 
 **Step 6: Iterate**
@@ -159,7 +159,7 @@ If trigger rate insufficient:
 3. Repeat until acceptable
 
 **Step 4: Final validation**
-Run `scripts/validate-structure.sh` again after changes.
+Run `scripts/validate-structure.mjs` again after changes.
 
 ### Phase 7: Ship
 

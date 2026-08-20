@@ -1,0 +1,11 @@
+{
+  "_comment": "Package name → source URL. Add entries for packages not auto-detected.",
+  "bun": "github.com/oven-sh/bun",
+  "drizzle-orm": "github.com/drizzle-team/drizzle-orm",
+  "postgres": "github.com/porsager/postgres",
+  "axum": "github.com/tokio-rs/axum",
+  "rayon": "github.com/rayon-rs/rayon",
+  "svelte": "github.com/sveltejs/svelte",
+  "vite": "github.com/vitejs/vite",
+  "tailwindcss": "github.com/tailwindlabs/tailwindcss"
+}
