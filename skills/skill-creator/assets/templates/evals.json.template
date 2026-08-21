@@ -1,5 +1,6 @@
 {
   "skill_name": "{{skill-name}}",
+  "baseline_pass_rate": {{baseline_pass_rate}},
   "evals": [
     {
       "id": 1,
@@ -11,5 +12,25 @@
         "{{assertion_2}}"
       ]
     }
-  ]
+  ],
+  "anti_trigger_queries": [
+    {
+      "id": "at-1",
+      "query": "{{near_miss_query_1}}",
+      "should_trigger": false,
+      "reason": "{{why_not}}"
+    },
+    {
+      "id": "at-2",
+      "query": "{{near_miss_query_2}}",
+      "should_trigger": false,
+      "reason": "{{why_not}}"
+    }
+  ],
+  "quality_score": {
+    "d": null,
+    "m": null,
+    "score": null,
+    "ship_gate_passed": false
+  }
 }

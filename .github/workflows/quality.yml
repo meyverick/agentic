@@ -35,6 +35,15 @@ jobs:
             fi
           done
 
+      - name: Validate semantic routing
+        run: |
+          for skill in skills/*/; do
+            if [ -f "$skill/SKILL.md" ]; then
+              echo "Validating routing for $skill..."
+              node skills/skill-creator/scripts/validate-routing.mjs "$skill"
+            fi
+          done
+
       - name: Run tests
         run: |
           for skill in skills/*/; do

@@ -1,12 +1,25 @@
 ---
 name: source-fetcher
-description: Download all source code from project dependencies to ./references/src/ for AI agent reference. Use when agent needs to understand dependencies by reading source code.
+description: Download all source code from project dependencies to ./references/src/ for AI agent reference. Use when agent needs to understand dependencies by reading source code, debugging behavior, or learning API signatures. Do NOT use when executing dependencies or building projects.
 allowed-tools: Bash(*)
 license: MIT
 compatibility: Requires bun.
 metadata:
   author: agentic
   version: "1.0.0"
+positive_triggers:
+  - "download source code for project dependencies"
+  - "fetch reference source for debugging"
+  - "understand dependency behavior from source"
+anti_triggers:
+  - "install or execute project dependencies"
+  - "build or compile the project"
+runtime:
+  requires:
+    - bun >= 1.0
+    - git
+  timeout_seconds: 60
+  output_format: json
 ---
 
 # Source Fetcher

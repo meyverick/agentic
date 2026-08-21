@@ -11,5 +11,16 @@
     "failed": 0,
     "total": 0,
     "pass_rate": 0
+  },
+  "baseline_comparison": {
+    "baseline_pass_rate": {{baseline_pass_rate}},
+    "with_skill_pass_rate": {{with_skill_pass_rate}},
+    "delta": {{delta}}
+  },
+  "quality_score": {
+    "d": {{direction}},
+    "m": {{magnitude}},
+    "score": {{quality_score}},
+    "ship_gate_passed": {{ship_gate_passed}}
   }
 }

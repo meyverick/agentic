@@ -5,7 +5,7 @@
  * Output: JSON with violations and line numbers
  */
 
-import { readFileSync, existsSync } from 'fs';
+import { readFileSync, existsSync, readdirSync } from 'fs';
 import { join } from 'path';
 
 const skillDir = process.argv[2];
@@ -120,6 +120,76 @@ Object.entries(headingCounts).forEach(([heading, count]) => {
     });
   }
 });
+
+// A17: Multi-domain description detection
+const descMatch = skillMd.match(/^description:\s*([\s\S]*?)(?=\n\w+:|\n---)/m);
+if (descMatch) {
+  const desc = descMatch[1];
+  const domainMarkers = [
+    /\band also\b/i,
+    /\badditionally,*/i,
+    /\bas well as\b/i,
+    /\bmultiple.*(?:domains?|concerns?|operations?)\b/i
+  ];
+  for (const marker of domainMarkers) {
+    if (marker.test(desc)) {
+      violations.push({
+        line: 0,
+        pattern: 'A17',
+        description: `Multi-domain description detected. Single atomic intent required. Found: '${marker.source}' in description.`
+      });
+      break;
+    }
+  }
+}
+
+// A18: Missing activation boundary (no negative scope)
+if (!/do not use when|don't use when|do not trigger|anti.?trigger/i.test(skillMd)) {
+  violations.push({
+    line: 0,
+    pattern: 'A18',
+    description: 'Missing activation boundary. No "Do NOT use when" or anti_trigger scope found. Anti-triggers boost routing precision by 31.8%.'
+  });
+}
+
+// A19: Hardcoded path detection in scripts
+const scriptsDir = join(skillDir, 'scripts');
+if (existsSync(scriptsDir)) {
+  try {
+    const scriptFiles = readdirSync(scriptsDir).filter(f => f.endsWith('.mjs') || f.endsWith('.js') || f.endsWith('.py') || f.endsWith('.sh'));
+    for (const file of scriptFiles) {
+      const content = readFileSync(join(scriptsDir, file), 'utf-8');
+      const absPathPatterns = [
+        /['"]\/home\//,
+        /['"]\/root\//,
+        /['"]C:\\\\/
+      ];
+      for (const pattern of absPathPatterns) {
+        if (pattern.test(content)) {
+          violations.push({
+            line: 0,
+            pattern: 'A19',
+            description: `Hardcoded absolute path in scripts/${file}. Breaks portability across harnesses.`
+          });
+          break;
+        }
+      }
+    }
+  } catch (e) {}
+}
+
+// A20: Context budget violation (SKILL.md body exceeds ~1500 tokens)
+// Rough estimate: ~4 chars per token for English text
+const bodyStart = skillMd.indexOf('---', 3);
+const body = bodyStart !== -1 ? skillMd.slice(bodyStart + 3) : skillMd;
+const estimatedTokens = Math.ceil(body.length / 4);
+if (estimatedTokens > 1500) {
+  violations.push({
+    line: 0,
+    pattern: 'A20',
+    description: `Context budget violation: SKILL.md body ~${estimatedTokens} tokens (max 1500). Move detailed content to references/.`
+  });
+}
 
 // Build result
 console.log(JSON.stringify({

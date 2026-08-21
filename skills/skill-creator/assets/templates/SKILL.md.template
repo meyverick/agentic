@@ -1,9 +1,67 @@
 ---
 name: {{skill-name}}
-description: {{description}}
+description: >
+  {{description}} Use when {{positive_condition}}.
+  Do NOT use when {{negative_condition}}.
+allowed-tools: Bash(*)
+license: MIT
+compatibility: Requires {{runtime}}.
+metadata:
+  author: agentic
+  version: "1.0"
+positive_triggers:
+  - "{{trigger_query_1}}"
+  - "{{trigger_query_2}}"
+  - "{{trigger_query_3}}"
+anti_triggers:
+  - "{{near_miss_query_1}}"
+  - "{{near_miss_query_2}}"
+runtime:
+  requires:
+    - "{{runtime}} >= {{version}}"
+  timeout_seconds: {{timeout}}
+  output_format: json
 ---
 
 # {{skill-name}}
+
+## Activation Boundary
+
+**Triggers on:**
+- {{trigger_condition_1}}
+- {{trigger_condition_2}}
+
+**Does NOT trigger on:**
+- {{exclusion_1}}
+- {{exclusion_2}}
+
+## Pre-Flight Checks
+
+Before executing, verify:
+
+1. {{runtime}} is available: `which {{runtime}}`
+2. Required environment variables exist: {{env_vars}}
+3. If any check fails → emit structured error and halt
+
+## Output Contract
+
+All outputs MUST be valid JSON:
+
+```json
+{
+  "status": "success",
+  "data": {}
+}
+```
+
+Error format:
+```json
+{
+  "status": "error",
+  "error_type": "{{error_type}}",
+  "message": "{{error_message}}"
+}
+```
 
 ## When to Use
 
