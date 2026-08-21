@@ -53,9 +53,9 @@ function findConfigFiles(dir, depth = 0) {
       
       if (stat.isDirectory()) {
         results.push(...findConfigFiles(itemPath, depth + 1));
-      } else if (CONFIG_FILES[node]) {
+      } else if (item === 'package.json') {
         results.push({ type: 'node', path: itemPath });
-      } else if (CONFIG_FILES.rust] && item === 'Cargo.toml') {
+      } else if (item === 'Cargo.toml') {
         results.push({ type: 'rust', path: itemPath });
       } else if (item === 'requirements.txt') {
         results.push({ type: 'python', path: itemPath });

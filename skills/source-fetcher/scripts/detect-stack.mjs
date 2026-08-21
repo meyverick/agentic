@@ -60,7 +60,7 @@ function scanDirectory(dir, depth = 0) {
             if (pkg.devDependencies) {
               detected.devDependencies.push(...Object.keys(pkg.devDependencies));
             }
-            if (existsSync(join(dir, 'bun.lockb')) || pkg.packageManager?.includes('bun')) {
+            if (existsSync(join(dir, 'bun.lockb')) || existsSync(join(dir, 'bun.lock')) || pkg.packageManager?.includes('bun')) {
               if (!detected.stacks.includes('bun')) {
                 detected.stacks.push('bun');
               }
