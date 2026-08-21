@@ -305,7 +305,17 @@ function syncFile(src: string, dst: string): boolean {
  * Main installation
  */
 function install(): void {
-  console.log('🔧 Installing agentic...\n');
+  // Read version from package.json
+  const packageJsonPath = path.join(srcDir, 'package.json');
+  let version = 'unknown';
+  if (fs.existsSync(packageJsonPath)) {
+    try {
+      const pkg = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'));
+      version = pkg.version || 'unknown';
+    } catch (e) {}
+  }
+  
+  console.log(`🔧 Installing agentic v${version}...\n`);
   
   installSkills();
   installPrompts();
