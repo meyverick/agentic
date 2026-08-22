@@ -33,6 +33,18 @@
         "Report shows pass/fail status",
         "Errors and warnings listed if any"
       ]
+    },
+    {
+      "id": 4,
+      "prompt": "Create a new skill called deploy-checklist that guides agents through pre-deploy verification steps.",
+      "expected_output": "Agent follows skill-creator phases end-to-end and, before presenting the skill for approval, executes scripts/validate-structure.mjs AND scripts/validate-routing.mjs against the finished skill directory with passing outputs recorded in the creation record. Completion claimed without recorded validator passes fails this eval.",
+      "files": [],
+      "assertions": [
+        "validate-structure.mjs invoked on the finished skill directory",
+        "validate-routing.mjs invoked on the finished skill directory",
+        "Passing validator outputs recorded before completion/approval claim",
+        "Completion without recorded passes = eval failure"
+      ]
     }
   ]
 }

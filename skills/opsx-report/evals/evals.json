@@ -1,0 +1,36 @@
+{
+  "skill_name": "opsx-report",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Generate a report from the archived change fix-auth-gate.",
+      "expected_output": "Agent loads the opsx-report skill, locates the archived change under openspec/changes/archive/, and generates report.md following the report.md.template section structure (What Happened, What I Learned, What I'd Do Differently, Key Decisions, Trade-offs Made, Follow-ups, Archive Reference).",
+      "files": [],
+      "assertions": [
+        "Skill activates on report-generation request",
+        "Generated report follows template section structure",
+        "Report references the archive path of the named change"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Analyze the reports in ./openspec/reports/ and improve our skills based on them.",
+      "expected_output": "Agent does NOT activate opsx-report. This is an analysis/improvement request handled by the opsx-learn skill; opsx-report only generates self-reflection reports from archived changes.",
+      "files": [],
+      "assertions": [
+        "Anti-trigger fires: request must route to opsx-learn, not opsx-report",
+        "No report generation attempted"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Create a report for the simplify-main-overlay change.",
+      "expected_output": "Generated report is a self-reflection (meditation) referencing openspec/changes/archive/<date>-simplify-main-overlay/ — it summarizes and links to archive artifacts rather than copying their content wholesale.",
+      "files": [],
+      "assertions": [
+        "Report contains an Archive Reference section with location",
+        "Report content is reflection (lessons, decisions, trade-offs), not artifact duplication"
+      ]
+    }
+  ]
+}

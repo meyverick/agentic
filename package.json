@@ -1,6 +1,6 @@
 {
   "name": "agentic",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "AI agent skills and prompts for pi.dev",
   "bin": {
     "agentic": "./install.ts"

@@ -74,3 +74,8 @@ Error format:
 ## Gotchas
 
 {{gotchas}}
+
+## Author Self-Check (final step before declaring this skill complete)
+
+Run `scripts/validate-structure.mjs <this-skill-dir>` and `scripts/validate-routing.mjs <this-skill-dir>`.
+Both MUST report pass with outputs recorded in the creation record. Failing either = skill not complete.

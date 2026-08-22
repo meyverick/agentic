@@ -10,7 +10,7 @@ license: MIT
 compatibility: Requires openspec CLI.
 metadata:
   author: agentic
-  version: "1.0.0"
+  version: "1.0.1"
 positive_triggers:
   - "generate a report from an archived change"
   - "document what was learned from this change"
@@ -18,11 +18,6 @@ positive_triggers:
 anti_triggers:
   - "implement a proposal or apply changes"
   - "analyze reports to improve skills"
-runtime:
-  requires:
-    - openspec CLI
-  timeout_seconds: 30
-  output_format: json
 ---
 
 # Opsx Report

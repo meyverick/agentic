@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.1.0] - 2026-08-22
+
+### Added
+
+- Eval suites for `opsx-report` (3 evals: trigger routing, anti-trigger vs opsx-learn boundary, archive-reference behavior) and `source-fetcher` (3 evals: recursive scan, cleanup idempotence, sources.json override precedence)
+- skill-creator validator hard gate: Phase 7 Ship blocks approval unless validate-structure.mjs AND validate-routing.mjs pass with recorded evidence
+- Evidence-recording requirement in skill-creator Phase 4 (validator output captured in session artifacts)
+- Author Self-Check section in SKILL.md.template — gate awareness survives into generated skills
+- Gate-compliance eval (id 4): cold-agent creation must execute both validators and record passes before completion claim
+- Main specs seeded: `skill-quality-enforcement`, `skill-creation`
+
+### Fixed
+
+- opsx-report false runtime contract removed (`output_format: json` claimed but skill emits markdown; instruction-only skill needs no runtime block)
+
 ## [2.0.0] - 2026-08-20
 
 ### Added

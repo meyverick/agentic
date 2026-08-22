@@ -1,0 +1,38 @@
+{
+  "skill_name": "source-fetcher",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Download the source code of this project's dependencies for AI reference.",
+      "expected_output": "Agent loads the source-fetcher skill, scans package manifests recursively (skipping node_modules/target/dist/build), resolves each dependency, and downloads sources into ./references/src/<package>/.",
+      "files": [],
+      "assertions": [
+        "Recursive dependency scan executed",
+        "node_modules and build output directories excluded from scan",
+        "Sources downloaded under ./references/src/"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Run fetch-sources with --cleanup to remove the downloaded sources.",
+      "expected_output": "Agent invokes the skill's cleanup mode: deletes downloaded source directories under ./references/src/, preserves sources.json (the cache/override manifest) for future runs.",
+      "files": [],
+      "assertions": [
+        "Cleanup mode removes downloaded source trees",
+        "sources.json preserved after cleanup",
+        "Idempotent: second cleanup run reports nothing to remove"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Fetch dependency sources, but pin lodash to our vendored fork at github.com/us/lodash.",
+      "expected_output": "Agent consults sources.json manual overrides first; user-specified or pre-existing override entries take precedence over auto-detected registry resolution for that package.",
+      "files": [],
+      "assertions": [
+        "sources.json consulted before auto-detection",
+        "Manual override entry honored over default resolution",
+        "Non-overridden packages still auto-resolved"
+      ]
+    }
+  ]
+}

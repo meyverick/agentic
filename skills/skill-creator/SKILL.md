@@ -124,6 +124,8 @@ scripts/validate-structure.mjs <skill-dir>
 ```
 Checks: name format, description format, directory structure, file references, positive_triggers (min 3), anti_triggers (min 2), "Use when" phrasing, "Do NOT use when" phrasing, no compound intent, no hardcoded paths, runtime declared when scripts exist.
 
+**Evidence requirement**: record each validator's output (stdout or pass summary) in the creation session's tasks or summary before proceeding to the next step. An unrecorded validation counts as not performed.
+
 **Step 2: Semantic routing validation**
 ```bash
 scripts/validate-routing.mjs <skill-dir>
@@ -219,7 +221,7 @@ Run `scripts/validate-structure.mjs` and `scripts/validate-routing.mjs` again af
 
 ### Phase 7: Ship
 
-1. **Final structural validation** (validate-structure.mjs + validate-routing.mjs)
+1. **Final structural validation — HARD GATE**: run `scripts/validate-structure.mjs` and `scripts/validate-routing.mjs`; both MUST report pass with outputs recorded. If either fails, the skill is NOT presented for approval — self-correct and re-run until both pass.
 2. **Portability certificate**: verify no hardcoded paths, runtime deps declared, timeout bounds set, output contract defined
 3. **Present summary**: what skill does, tier achieved, eval results, trigger rate, quality score (d × m)
 4. **Wait for user approval**
