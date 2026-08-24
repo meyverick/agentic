@@ -10,7 +10,7 @@ license: MIT
 compatibility: Requires openspec CLI and bun.
 metadata:
   author: agentic
-  version: "1.3.0"
+  version: "1.3.1"
 positive_triggers:
   - "analyze reports and improve skills"
   - "generate proposals from report insights"
@@ -18,12 +18,6 @@ positive_triggers:
 anti_triggers:
   - "generate a report from an archived change"
   - "implement a proposal or apply changes"
-runtime:
-  requires:
-    - openspec CLI
-    - bun >= 1.0
-  timeout_seconds: 30
-  output_format: json
 ---
 
 # Opsx Learn
@@ -67,7 +61,25 @@ Extract trigger candidates from report assessment:
 
 Include as "Suggested Triggers" section in proposal.
 
-### Phase 2c: Single-Responsibility Pre-Check
+### Phase 2c: Ownership Pre-Check + Single-Responsibility Pre-Check
+
+**Ownership pre-check (MANDATORY, runs first).** Classify every candidate target skill/prompt by ownership using this precedence chain — recorded facts before conventions, conventions before residual judgment:
+
+1. Inside the agentic repo itself → `project/skills/*` and `project/prompts/*` are owned (editable)
+2. Listed in `.pi/skills/.agentic-manifest.json` → agentic-distributed → **external**
+3. Located in `~/.pi/agent/skills/` (not created by this project) → **external**
+4. Explicit verdict in `.pi/skills/.ownership.json` (`{"owned": [...], "external": [...]}`) → as declared
+5. Named `openspec-*` → OpenSpec-owned → **external**
+6. Any other skill in the project's `.pi/skills/` → project-created → editable
+7. Unresolved after all checks → unknown = **external**, ask the user
+
+Rules:
+- Proposals MUST NOT target external skills or prompts. Never edit installed/upstream files in place — the next atomic-replace install silently wipes such edits.
+- Domain-specific knowledge belongs in project-local homes (wiki, checklists, project-created skills). If no local home exists, ask the user where to place it.
+- Genuinely generic improvements to external skills: record as an upstream recommendation for the user (issue/PR), never edit directly.
+- When you ask the user about an unknown skill's ownership, record the verdict in `.ownership.json` so each question is asked once.
+
+**Single-responsibility pre-check** (only for targets that passed the ownership check):
 
 For proposed updates to existing skills:
 - Does the improvement align with the skill's atomic intent?
@@ -97,10 +109,14 @@ See [references/conflict-handling.md](references/conflict-handling.md) for mergi
 
 Generate proposal including:
 - What to build + why (from report + assessment)
-- Suggested Triggers section (from Phase 2b)
+- Suggested Triggers section (from Phase 2b) — MUST use the exact frontmatter field names `positive_triggers` and `anti_triggers` as list headers, with each value formatted for verbatim transfer into a skill's frontmatter (no prose labels like "Positive:" or "Negative:")
 - Value Justification section (from Phase 2d)
 - Collision warnings (from Phase 2a)
 - Context budget impact (from Phase 2e)
+- Evals impact statement (MANDATORY when the proposal modifies an existing skill): state whether `evals/evals.json` changes; if triggers are added or altered, include at least one matching eval entry in Impact. No trigger changes → state that existing evals remain valid.
+- Deferred signals line (when the source report/assessment contains more improvement candidates than the proposal adopts): name each unadopted candidate with a one-line reason, so deferral is explicit rather than silent
+
+**One-path rule**: every What Changes and Impact item names exactly ONE concrete target file path. Either/or targets ("X or Y") are prohibited — resolve the choice during design, before tasks are written. Task verify clauses must reference the same single path.
 
 The proposal instructs the AI agent to invoke skill-creator during `/opsx-apply`.
 

@@ -159,7 +159,8 @@ function installSkills(): void {
     created++;
   }
   
-  // Get all skills from source
+  // Get all skills from source (directories only — dotfiles like
+  // .agentic-manifest.json / .ownership.json are files and never match)
   const skills = fs.readdirSync(skillsSrc).filter(item => {
     const itemPath = path.join(skillsSrc, item);
     return fs.statSync(itemPath).isDirectory();
@@ -176,6 +177,9 @@ function installSkills(): void {
       console.log(`  + ${skill} (new)`);
     } else if (hasDifferences(srcPath, dstPath)) {
       // Skill changed - replace entirely
+      // Drift warning: existing content differs from what we ship.
+      // Atomic replacement overwrites ANY local modifications.
+      console.log(`  ⚠️  ${skill}: local modifications will be overwritten`);
       replaceSkill(srcPath, dstPath);
       console.log(`  ~ ${skill} (replaced)`);
     } else {
@@ -276,29 +280,38 @@ function syncDir(src: string, dst: string): void {
 }
 
 /**
- * Diff-based copy for single files
+ * Write provenance manifest (.pi/skills/.agentic-manifest.json)
+ *
+ * Records what this installer owns so consuming-project agents can
+ * classify skill ownership without inference. NEVER touches
+ * .ownership.json (user-owned adjudications).
  */
-function syncFile(src: string, dst: string): boolean {
-  const dstDir = path.dirname(dst);
-  
-  if (!fs.existsSync(dstDir)) {
-    fs.mkdirSync(dstDir, { recursive: true });
-    created++;
+function writeProvenanceManifest(version: string): void {
+  const skillsDst = path.join(targetDir, '.pi', 'skills');
+  if (!fs.existsSync(skillsDst)) {
+    fs.mkdirSync(skillsDst, { recursive: true });
   }
   
-  if (fs.existsSync(dst)) {
-    const srcContent = fs.readFileSync(src);
-    const dstContent = fs.readFileSync(dst);
-    
-    if (srcContent.equals(dstContent)) {
-      skipped++;
-      return false;
-    }
-  }
+  const skillsSrc = path.join(srcDir, 'skills');
+  const promptsSrc = path.join(srcDir, 'prompts');
   
-  fs.copyFileSync(src, dst);
-  copied++;
-  return true;
+  const skills = fs.existsSync(skillsSrc)
+    ? fs.readdirSync(skillsSrc).filter(item => fs.statSync(path.join(skillsSrc, item)).isDirectory())
+    : [];
+  const prompts = fs.existsSync(promptsSrc)
+    ? getAllFiles(promptsSrc)
+    : [];
+  
+  const manifest = {
+    installed_by: 'agentic',
+    version,
+    skills,
+    prompts
+  };
+  
+  const manifestPath = path.join(skillsDst, '.agentic-manifest.json');
+  fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + '\n');
+  console.log(`📑 Provenance manifest → ${manifestPath}`);
 }
 
 /**
@@ -321,6 +334,7 @@ function install(): void {
   installPrompts();
   installAgentsMd();
   createReportsDir();
+  writeProvenanceManifest(version);
   
   console.log('✅ Done!');
 }

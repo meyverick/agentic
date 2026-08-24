@@ -5,6 +5,54 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.3.0] - 2026-08-24
+
+### Added
+
+- **okf-docs skill** (`revive-okf-docs-skill`): revived as 5th distributed skill — author OKF v0.2-compliant documents (ADRs, module docs, decision records) with mandatory provenance frontmatter (`type`, `generated.by/at`, `sources`, `status` lifecycle) and mechanical validation via bundled `validate-frontmatter.mjs` (unified envelope, checks type/generated, actor convention, status enum, stale_after chronology); ships with 3 evals incl. anti-trigger vs opsx-report/opsx-learn
+- Canonical stack alignment in `project/AGENTS.md`: verbatim 5-tier high-efficiency architecture (General & UI Tier SvelteKit via svelte-adapter-bun/Drizzle/PostgreSQL, In-Browser Graphics Threlte+Three.js/PixiJS/Phaser, Compute Rust Axum+Rayon/Bevy, Event-Driven PostgreSQL LISTEN/NOTIFY with WSS/SSE, Container Hardening distroless) plus Modular Extensibility bridge — `System components communicate via strict interface contracts and stateless micro-modules, supporting runtime plugin loading and independent horizontal scaling`
+- `prototype/AGENTS.md` v2 scalable extensibility core (agnostic) — orchestrator-workers, durable state machine, stateless workers, backpressure, event-driven WSS/SSE, futureproof-by-construction pillar
+
+### Changed
+
+- `project/AGENTS.md` optimized to 215 lines (from 223) — semantic caveman density, hierarchy repaired (Summary + Must-follow flat list), boundaries consolidated; stack opinions preserved, purged legacy Go/Datastar/templ mentions (Mental Model table genericized, `Layer 1 systematic coverage`)
+- READMEs now list 5 skills (added okf-docs) and `bunx github:meyverick/agentic` provenance manifest
+
+### Fixed
+
+- Validator JSON envelope unification — `validate-routing.mjs`, `validate-structure.mjs`, `audit-antipatterns.mjs` now share `{target, pass, checks:[{id,status,detail}], summary}` for deterministic branching (previously 3 dialects)
+- `project/AGENTS.md` frontmatter cleaned to production (stable, self-contained, portable — removed workshop `draft` metadata referencing `prototype/`)
+- `project/AGENTS.md` §8 path alignment: `.agents/skills/` → `.pi/skills/` (matches installer target)
+- `.qmd/index.sqlite` now gitignored and untracked (was perpetual `M` noise)
+
+## [2.2.0] - 2026-08-23
+
+### Added
+
+- **Ownership boundary** (`harden-learn-proposal-contract`): opsx-learn Phase 2c classifies skill/prompt targets via precedence chain — provenance manifest (`.agentic-manifest.json`), user adjudications (`.ownership.json`), location and namespace checks; external skills (OpenSpec-owned, agentic-distributed elsewhere, user-global) are never edited in place; unknown → ask user once, record verdict
+- Installer writes `.pi/skills/.agentic-manifest.json` (installed_by, version, skills, prompts) and warns before atomic-replace when local modifications are detected; `.ownership.json` never touched by installer
+- Canonical trigger field names in proposals (`positive_triggers`/`anti_triggers`) — values transfer verbatim into skill frontmatter
+- One-path rule: proposal items and task verify clauses name exactly one concrete target path; either/or prohibited
+- Evals-impact statement mandatory when proposals modify existing skills
+- Deferred-signals line: unharvested report candidates named with reasons
+- Timestamp rule in opsx-report: `date -u` generated, never hand-written
+- Two-stage benchmarks: structural `benchmark.json` for all 4 skills (validator + routing + eval metrics); behavioral d×m defined as `pending_cold_agent_run`
+- Script reachability: source-fetcher phases invoke their 4 bundled scripts (detect-stack, scan-deps, download-src, cleanup-src)
+
+### Changed
+
+- Root and project READMEs rewritten to reflect the actual 4-skill product and `bunx github:meyverick/agentic` installation
+
+### Removed
+
+- opsx-learn `scripts/` directory (analyze-report.mjs duplicated Phase 2 prose; compare-skills.mjs + measure-quality.mjs duplicated skill-creator's validate pair / compute-benchmark)
+- opsx-learn stale `runtime:` frontmatter block (skill emits markdown proposals, not JSON; instruction-only skills carry no runtime contract)
+
+### Fixed
+
+- Duplicate `syncFile` definition in install.ts removed
+- False `output_format: json` claim on opsx-report removed (2.1.0 follow-through)
+
 ## [2.1.0] - 2026-08-22
 
 ### Added

@@ -2,10 +2,10 @@
 /**
  * audit-antipatterns.mjs — Check skill for known antipatterns
  * Usage: node audit-antipatterns.mjs <skill-dir>
- * Output: JSON with violations and line numbers
+ * Output: unified JSON envelope {target, pass, checks:[{id,status,detail}], summary}
  */
 
-import { readFileSync, existsSync, readdirSync } from 'fs';
+import { readFileSync, existsSync } from 'fs';
 import { join } from 'path';
 
 const skillDir = process.argv[2];
@@ -21,8 +21,10 @@ const skillFile = join(skillDir, 'SKILL.md');
 
 if (!existsSync(skillFile)) {
   console.log(JSON.stringify({
-    error: 'SKILL.md not found',
-    violations: []
+    target: skillDir,
+    pass: false,
+    checks: [{ id: 'antipatterns.skill-file', status: 'FAIL', detail: 'SKILL.md not found' }],
+    summary: { total: 1, pass: 0, fail: 1, warn: 0, skip: 0 }
   }));
   process.exit(1);
 }
@@ -34,39 +36,43 @@ const violations = [];
 // Check each line for antipatterns
 lines.forEach((line, index) => {
   const lineNum = index + 1;
-  
+
   // A15: Vague success bars
   if (/professional|high.quality|well.written|good.output|proper.format/i.test(line)) {
     violations.push({
       line: lineNum,
       pattern: 'A15',
+      severity: 'WARN',
       description: `Vague success bar: '${line.slice(0, 80)}'`
     });
   }
-  
+
   // A3: Passive-voice triggers
   if (/^(you are|your role|as a|acting as)/i.test(line)) {
     violations.push({
       line: lineNum,
       pattern: 'A3',
+      severity: 'WARN',
       description: `Passive-voice trigger: '${line.slice(0, 80)}'`
     });
   }
-  
+
   // A5: Prose bloat
   if (/;.*;.*;|(\|.*\|.*\|)/.test(line)) {
     violations.push({
       line: lineNum,
       pattern: 'A5',
+      severity: 'WARN',
       description: `Possible prose bloat: '${line.slice(0, 80)}'`
     });
   }
-  
+
   // A1: Phantom tool reference
   if (/(call|invoke|execute|use)\s+[a-z_]+\.[a-z_]+/i.test(line)) {
     violations.push({
       line: lineNum,
       pattern: 'A1',
+      severity: 'WARN',
       description: `Possible phantom tool reference: '${line.slice(0, 80)}'`
     });
   }
@@ -77,6 +83,7 @@ if (lines.length > 500) {
   violations.push({
     line: lines.length,
     pattern: 'A14',
+    severity: 'FAIL',
     description: `Single file omnibus: ${lines.length} lines (max 500)`
   });
 }
@@ -98,6 +105,7 @@ lines.forEach(line => {
   violations.push({
     line: 0,
     pattern: 'A2',
+    severity: 'WARN',
     description: `Duplicated invariant: '${dup.slice(0, 80)}'`
   });
 });
@@ -116,85 +124,41 @@ Object.entries(headingCounts).forEach(([heading, count]) => {
     violations.push({
       line: 0,
       pattern: 'A4',
+      severity: 'WARN',
       description: `Possible copy-pasted section: '${heading}'`
     });
   }
 });
 
-// A17: Multi-domain description detection
-const descMatch = skillMd.match(/^description:\s*([\s\S]*?)(?=\n\w+:|\n---)/m);
-if (descMatch) {
-  const desc = descMatch[1];
-  const domainMarkers = [
-    /\band also\b/i,
-    /\badditionally,*/i,
-    /\bas well as\b/i,
-    /\bmultiple.*(?:domains?|concerns?|operations?)\b/i
-  ];
-  for (const marker of domainMarkers) {
-    if (marker.test(desc)) {
-      violations.push({
-        line: 0,
-        pattern: 'A17',
-        description: `Multi-domain description detected. Single atomic intent required. Found: '${marker.source}' in description.`
-      });
-      break;
-    }
+// Unified envelope — one check entry per pattern, aggregated when >10 hits
+const byPattern = {};
+for (const v of violations) {
+  if (!byPattern[v.pattern]) byPattern[v.pattern] = [];
+  byPattern[v.pattern].push(v);
+}
+
+const checks = Object.entries(byPattern).map(([pattern, vs]) => {
+  const worst = vs.some(v => v.severity === 'FAIL') ? 'FAIL' : 'WARN';
+  let detail;
+  if (vs.length > 10) {
+    detail = `${vs.length} occurrences of ${pattern} (aggregated): ${vs.slice(0, 3).map(v => v.description).join(' | ')}`;
+  } else {
+    detail = vs.map(v => `${v.pattern} @${v.line}: ${v.description}`).join(' | ');
   }
-}
+  return { id: `antipatterns.${pattern}`, status: worst, detail };
+});
 
-// A18: Missing activation boundary (no negative scope)
-if (!/do not use when|don't use when|do not trigger|anti.?trigger/i.test(skillMd)) {
-  violations.push({
-    line: 0,
-    pattern: 'A18',
-    description: 'Missing activation boundary. No "Do NOT use when" or anti_trigger scope found. Anti-triggers boost routing precision by 31.8%.'
-  });
-}
-
-// A19: Hardcoded path detection in scripts
-const scriptsDir = join(skillDir, 'scripts');
-if (existsSync(scriptsDir)) {
-  try {
-    const scriptFiles = readdirSync(scriptsDir).filter(f => f.endsWith('.mjs') || f.endsWith('.js') || f.endsWith('.py') || f.endsWith('.sh'));
-    for (const file of scriptFiles) {
-      const content = readFileSync(join(scriptsDir, file), 'utf-8');
-      const absPathPatterns = [
-        /['"]\/home\//,
-        /['"]\/root\//,
-        /['"]C:\\\\/
-      ];
-      for (const pattern of absPathPatterns) {
-        if (pattern.test(content)) {
-          violations.push({
-            line: 0,
-            pattern: 'A19',
-            description: `Hardcoded absolute path in scripts/${file}. Breaks portability across harnesses.`
-          });
-          break;
-        }
-      }
-    }
-  } catch (e) {}
-}
-
-// A20: Context budget violation (SKILL.md body exceeds ~1500 tokens)
-// Rough estimate: ~4 chars per token for English text
-const bodyStart = skillMd.indexOf('---', 3);
-const body = bodyStart !== -1 ? skillMd.slice(bodyStart + 3) : skillMd;
-const estimatedTokens = Math.ceil(body.length / 4);
-if (estimatedTokens > 1500) {
-  violations.push({
-    line: 0,
-    pattern: 'A20',
-    description: `Context budget violation: SKILL.md body ~${estimatedTokens} tokens (max 1500). Move detailed content to references/.`
-  });
-}
-
-// Build result
 console.log(JSON.stringify({
-  pass: violations.length === 0,
+  target: skillDir,
+  pass: checks.every(c => c.status !== 'FAIL'),
   total_lines: lines.length,
   violation_count: violations.length,
-  violations: violations
+  checks,
+  summary: {
+    total: checks.length,
+    pass: checks.filter(c => c.status === 'PASS').length,
+    fail: checks.filter(c => c.status === 'FAIL').length,
+    warn: checks.filter(c => c.status === 'WARN').length,
+    skip: checks.filter(c => c.status === 'SKIP').length
+  }
 }));

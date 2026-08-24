@@ -24,6 +24,8 @@ anti_triggers:
 
 Generate self-reflection (meditation) on archived OpenSpec changes.
 
+**Timestamp rule**: fill the `{{timestamp}}` frontmatter placeholder by running `date -u +"%Y-%m-%dT%H:%M:%SZ"` at generation time. Never hand-write or estimate timestamps.
+
 ## Workflow
 
 ### Phase 1: Find Archive

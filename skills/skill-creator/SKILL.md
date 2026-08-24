@@ -118,6 +118,8 @@ Determine:
 
 ### Phase 4: Validation (mandatory)
 
+**Output contract**: all three validators emit one shared JSON envelope — `{target, pass, checks:[{id, status: PASS|FAIL|WARN|SKIP, detail}], summary}` — so downstream tooling branches deterministically on `pass` and `checks[].status` regardless of which script produced it.
+
 **Step 1: Structural validation**
 ```bash
 scripts/validate-structure.mjs <skill-dir>

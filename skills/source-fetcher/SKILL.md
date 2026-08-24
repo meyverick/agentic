@@ -38,7 +38,11 @@ When you need to understand project dependencies:
 
 ### Phase 1: Detect Stack
 
-Scan project for stack indicators:
+```bash
+bun scripts/detect-stack.mjs <project-dir>   # → JSON {stack, configFiles}
+```
+
+Stack indicators detected across the project tree:
 
 | Config File | Stack | Indicators |
 |-------------|-------|------------|
@@ -49,8 +53,11 @@ Scan project for stack indicators:
 
 ### Phase 2: Scan Dependencies
 
-Parse configuration files:
+```bash
+bun scripts/scan-deps.mjs <project-dir>   # → JSON dependency list (recursive, skips node_modules/target/dist)
+```
 
+Parses all matching config files, e.g.:
 **package.json:**
 ```json
 {
@@ -75,7 +82,13 @@ For each dependency:
 
 ### Phase 4: Download Source
 
-Download all source code to `./references/src/<name>/`:
+For each dependency, resolve its repository and download:
+
+```bash
+bun scripts/download-src.mjs <package-name> [output-dir]   # → JSON {status, repo, target}
+```
+
+Downloads to `./references/src/<name>/`:
 - Source files
 - README.md
 - Package metadata
@@ -91,6 +104,12 @@ Check downloaded source:
 ## Cleanup Mode
 
 Remove unused sources:
+
+```bash
+bun scripts/cleanup-src.mjs   # → JSON {removed[], kept[]}
+```
+
+Or via the prompt:
 
 ```bash
 /fetch-sources --cleanup

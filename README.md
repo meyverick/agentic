@@ -1,24 +1,49 @@
-# Agentic Skills
+# Agentic
 
-Published AI agent skills for pi.dev.
+Self-improving AI agent skills and prompts for [pi.dev](https://pi.dev). A closed-loop factory: analyze reports → generate proposals → apply improvements → reflect.
+
+## Install
+
+```bash
+bunx github:meyverick/agentic
+```
+
+Installs 5 skills + 3 prompts into your project's `.pi/skills/` and `.pi/prompts/`, writes a provenance manifest, and creates `openspec/reports/`.
 
 ## Skills
 
 | Skill | Description |
 |-------|-------------|
-| okf-docs | Generate OKF v0.2 compliant documentation |
-| adr-create | Create Architecture Decision Records |
-| sveltekit-setup | Scaffold SvelteKit projects |
-| rust-worker-setup | Create Rust compute workers |
-| docker-setup | Create Dockerfiles and docker-compose |
-| database-schema | Design Drizzle ORM schemas |
-| git-submodule-add | Add git submodules |
-| sem-impact | Analyze impact before changes |
-| semver-release | Handle version bumps and changelogs |
-| qmd-index | Index content into QMD |
-| skill-creator | Create new skills |
-| skill-auditor | Improve skills from reports |
+| opsx-learn | Analyze reports in `./openspec/reports/` and generate OpenSpec proposals for skill/prompt improvements |
+| opsx-report | Generate self-reflection (meditation) reports from archived OpenSpec changes |
+| skill-creator | Create new agent skills end-to-end: discovery, design, authoring, validation gates, evals, shipping |
+| source-fetcher | Recursively scan project dependencies and download their source code to `./references/src/` for AI reference |
+| okf-docs | Author OKF v0.2-compliant documents — ADRs, module docs, decision records — with mandatory provenance frontmatter and mechanical validation |
 
-## Usage
+## Prompts
 
-Copy the skill directory to your project's `.pi/skills/` or `~/.pi/agent/skills/`.
+| Prompt | Skill invoked |
+|--------|---------------|
+| `/opsx-learn [report]` | opsx-learn |
+| `/opsx-report [change]` | opsx-report |
+| `/fetch-sources` | source-fetcher |
+
+## The Loop
+
+```
+archived change → /opsx-report → report + assessment
+                                      ↓
+                              /opsx-learn → proposal
+                                      ↓
+                              /opsx-apply → skill-creator builds it
+                                      ↓
+                              /opsx-archive → main specs updated
+```
+
+Each cycle makes the skill set better at improving itself.
+
+## Requirements
+
+- [Bun](https://bun.sh) >= 1.0
+- [OpenSpec CLI](https://github.com/fmeum/openspec) (for the opsx-* loop)
+- pi.dev-compatible agent harness (skills install to `.pi/skills/`)

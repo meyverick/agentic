@@ -1,0 +1,22 @@
+{
+  "skill": "skill-creator",
+  "generated": { "by": "process:compute-benchmark/1.0", "at": "2026-08-23T12:42:46Z" },
+  "stage": "structural",
+  "structural": {
+    "validate_structure": {"pass":true,"warnings":[]},
+    "validate_routing": {
+      "checks_total": 6,
+      "positive_triggers": 5,
+      "anti_triggers": 3,
+      "description_body_alignment": "8/10 description keywords found in body (80% alignment)",
+      "single_responsibility": true
+    },
+    "evals": {
+      "count": 4,
+      "assertions": 13,
+      "anti_trigger_coverage": true
+    }
+  },
+  "behavioral_dxm": "pending_cold_agent_run",
+  "ship_gate": { "criterion": "d = +1 and m >= 0.2", "applies_to": "behavioral stage" }
+}

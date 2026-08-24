@@ -1,0 +1,21 @@
+{
+  "skill": "okf-docs",
+  "generated": { "by": "process:structural-stage/1.0", "at": "2026-08-23T19:45:00Z" },
+  "stage": "structural",
+  "structural": {
+    "validate_structure": { "pass": null, "note": "recorded at apply gate (task 5.1)" },
+    "validate_routing": {
+      "checks_total": 6,
+      "positive_triggers": 3,
+      "anti_triggers": 2,
+      "single_responsibility": true
+    },
+    "evals": {
+      "count": 3,
+      "assertions": 8,
+      "anti_trigger_coverage": true
+    }
+  },
+  "behavioral_dxm": "pending_cold_agent_run",
+  "ship_gate": { "criterion": "d = +1 and m >= 0.2", "applies_to": "behavioral stage" }
+}
