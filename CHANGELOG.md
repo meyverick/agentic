@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.4.0] - 2026-08-27
+
+### Added
+
+- **openspec-harden skill + `opsx-harden` prompt** (`add-proposal-improve-bridge`): harden any existing change for cold application — enriches proposal/specs/design/tasks with concrete file paths, code blocks, verify steps, and grounded codebase context (ripgrep + Read); enforces cold-readiness checklist, append-only intent preservation, store-aware handling, planning-only boundary, and idempotent re-run
+
+### Changed
+
+- **BREAKING (skill names):** `opsx-learn` → `openspec-learn`, `opsx-report` → `openspec-report` (skill directories + `name:` frontmatter); prompt files keep `opsx-*` names for muscle memory but now load `openspec-*` skills with unified `**Store handling:**` + `**Remaining args:** ${@}` footer (8 lines)
+- `openspec-harden` skill: `openspec-proposal-improve` → `openspec-harden` and `opsx-improve.md` → `opsx-harden.md`; prompt/skill now share `harden` terminology
+- `openspec-harden` guardrail: `Read-only commands and file reads need no confirmation` (mirrors upstream explore `1.11.0` clarification)
+
+### Fixed
+
+- `okf-docs` example actor `opsx-report/1.0` → `openspec-report/1.0` for naming consistency
+
 ## [2.3.0] - 2026-08-24
 
 ### Added
