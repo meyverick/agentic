@@ -1,5 +1,5 @@
 ---
-name: opsx-learn
+name: openspec-learn
 description: >
   Analyze reports from `opsx-report` to generate OpenSpec proposals for
   skill/prompt improvements. Use when analyzing reports to plan skill creation,

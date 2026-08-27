@@ -1,5 +1,5 @@
 ---
-name: opsx-report
+name: openspec-report
 description: >
   Generate self-reflection (meditation) on an archived OpenSpec change.
   Use when the user wants to create a report from an archived change,

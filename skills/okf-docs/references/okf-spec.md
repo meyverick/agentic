@@ -29,7 +29,7 @@ status: stable
 ## Actor Convention
 
 `generated.by` / `verified.by` values:
-- `<producer>/<version>` — agents (e.g. `ox-alpha/1.0`, `opsx-report/1.0`)
+- `<producer>/<version>` — agents (e.g. `ox-alpha/1.0`, `openspec-report/1.0`)
 - `human:<id>` — people (only prefix granting human-reviewed tier)
 - `process:<id>` — automation
 

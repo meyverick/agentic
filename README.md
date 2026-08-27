@@ -14,8 +14,8 @@ Installs 5 skills + 3 prompts into your project's `.pi/skills/` and `.pi/prompts
 
 | Skill | Description |
 |-------|-------------|
-| opsx-learn | Analyze reports in `./openspec/reports/` and generate OpenSpec proposals for skill/prompt improvements |
-| opsx-report | Generate self-reflection (meditation) reports from archived OpenSpec changes |
+| openspec-learn | Analyze reports in `./openspec/reports/` and generate OpenSpec proposals for skill/prompt improvements |
+| openspec-report | Generate self-reflection (meditation) reports from archived OpenSpec changes |
 | skill-creator | Create new agent skills end-to-end: discovery, design, authoring, validation gates, evals, shipping |
 | source-fetcher | Recursively scan project dependencies and download their source code to `./references/src/` for AI reference |
 | okf-docs | Author OKF v0.2-compliant documents — ADRs, module docs, decision records — with mandatory provenance frontmatter and mechanical validation |
@@ -24,8 +24,8 @@ Installs 5 skills + 3 prompts into your project's `.pi/skills/` and `.pi/prompts
 
 | Prompt | Skill invoked |
 |--------|---------------|
-| `/opsx-learn [report]` | opsx-learn |
-| `/opsx-report [change]` | opsx-report |
+| `/opsx-learn [report]` | openspec-learn |
+| `/opsx-report [change]` | openspec-report |
 | `/fetch-sources` | source-fetcher |
 
 ## The Loop
