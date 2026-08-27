@@ -120,6 +120,7 @@ Mirror `openspec-propose`/`openspec-apply-change`: discover via `openspec store 
 
 ## Guardrails
 
+- Read-only commands and file reads (`Read`, `Grep`, `Bash(openspec status/instructions)`) need no confirmation.
 - Keep the planning boundary: Do NOT edit project code. Only `openspec/changes/<name>/` is writable.
 - Preserve original intent: proposal.md Why/What Changes are append-only. Never rewrite author's Why.
 - Ground every added path with `Grep`/`Read` or mark `new file to create`. Do not hallucinate file paths.

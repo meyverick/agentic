@@ -8,7 +8,7 @@ Self-improving AI agent skills and prompts for [pi.dev](https://pi.dev). A close
 bunx github:meyverick/agentic
 ```
 
-Installs 5 skills + 3 prompts into your project's `.pi/skills/` and `.pi/prompts/`, writes a provenance manifest, and creates `openspec/reports/`.
+Installs 6 skills + 4 prompts into your project's `.pi/skills/` and `.pi/prompts/`, writes a provenance manifest, and creates `openspec/reports/`.
 
 ## Skills
 
@@ -19,6 +19,7 @@ Installs 5 skills + 3 prompts into your project's `.pi/skills/` and `.pi/prompts
 | skill-creator | Create new agent skills end-to-end: discovery, design, authoring, validation gates, evals, shipping |
 | source-fetcher | Recursively scan project dependencies and download their source code to `./references/src/` for AI reference |
 | okf-docs | Author OKF v0.2-compliant documents — ADRs, module docs, decision records — with mandatory provenance frontmatter and mechanical validation |
+| openspec-harden | Harden an existing OpenSpec change for cold application — enrich artifacts with concrete file paths, code blocks, and verify steps |
 
 ## Prompts
 
@@ -26,6 +27,7 @@ Installs 5 skills + 3 prompts into your project's `.pi/skills/` and `.pi/prompts
 |--------|---------------|
 | `/opsx-learn [report]` | openspec-learn |
 | `/opsx-report [change]` | openspec-report |
+| `/opsx-harden [change]` | openspec-harden |
 | `/fetch-sources` | source-fetcher |
 
 ## The Loop
@@ -34,6 +36,8 @@ Installs 5 skills + 3 prompts into your project's `.pi/skills/` and `.pi/prompts
 archived change → /opsx-report → report + assessment
                                       ↓
                               /opsx-learn → proposal
+                                      ↓
+                             /opsx-harden → cold-ready artifacts
                                       ↓
                               /opsx-apply → skill-creator builds it
                                       ↓
