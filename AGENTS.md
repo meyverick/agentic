@@ -3,8 +3,8 @@ okf_version: "0.2"
 type: SystemDirective
 title: Agent Directives & Architecture
 description: Foundational engineering pillars, OKF v0.2 compliance, and strict operational rules for AI agents in a multi-repo workspace.
-tags: [architecture, system-prompt, sveltekit, bun, svelte-adapter-bun, tailwindcss, drizzle, postgres, threlte, pixijs, phaser, rust, axum, rayon, bevy, okf-v0.2, qmd, context7, sem, semantic-diff, changelog, semver, documentation, wiki, dokku, git-submodule, execution-workflow, exploration, idempotency, agent-skills, token-optimized]
-generated: { by: human:developer, at: 2026-08-24T00:00:00Z }
+tags: [architecture, system-prompt, sveltekit, adapter-static, tailwindcss, sqlx, ts-rs, postgres, threlte, pixijs, phaser, rust, axum, rayon, bevy, okf-v0.2, qmd, context7, sem, semantic-diff, changelog, semver, documentation, wiki, dokku, git-submodule, execution-workflow, exploration, idempotency, agent-skills, token-optimized]
+generated: { by: human:developer, at: 2026-08-28T00:00:00Z }
 status: stable
 ---
 
@@ -21,7 +21,7 @@ Universal operational core for this workspace. Full read required before any cod
 - Task complete ONLY when touched module's native lane — `bun run check && bun test && bun run build` · Rust `cargo clippy -- -D warnings && cargo test` — exits 0.
 - Commands execute from owning module's directory (`./<project>-<module>/`); never pollute siblings/root.
 - Modules isolated deployables: zero `../` traversal; inter-module via API/network only.
-- Schema/migrations owned by exactly one tier (web tier via Drizzle); never modify existing migration — append new.
+- Schema/migrations owned by exactly one tier (Axum/Rust tier via SQLx); never modify existing migration — append new.
 - Heavy/async work never blocks request path — queue + worker + streaming.
 - Real-time via WebSocket/SSE push; client polling is anti-pattern.
 - Backpressure explicit: bounded concurrency, caps, rate limits — reject unbounded growth.
@@ -60,38 +60,43 @@ Identity → Systems Architect, Security-focused. Goal → maximize throughput, 
 - Naming: orchestrator remote → `<project>-project`; app module → `<project>-<module>` (e.g. `myapp-web`, `myapp-compute`).
 - Monorepo: root `./` holds orchestrator metadata, `AGENTS.md`, global `docker-compose.yml`. All paths relative to `./`.
 - App modules = Git Submodules [CRITICAL]: each top-level folder strictly isolated, independently deployable, dedicated submodule with independent history.
-- Centralized DB [CRITICAL]: PostgreSQL is THE datastore → Docker network or managed service. Web tier (`<project>-web`) owns schema & migrations via Drizzle ORM. Compute workers → pooled connections or queue/API/RPC.
-- Deployment asymmetry: Web/Job Manager → Bun distroless VPS/PaaS; Compute → Rust static distroless VPS; Native Sims → Desktop/WASM.
+- Centralized DB [CRITICAL]: PostgreSQL is THE datastore → Docker network or managed service. Axum backend (`crates/api`) owns schema & migrations via SQLx (`crates/api/migrations/`). Compute workers → pooled connections or queue/API/RPC.
+- Deployment asymmetry: Collapsed to single static distroless binary (`gcr.io/distroless/static-debian13:nonroot`) serving SvelteKit static build + Axum API/WSS/gRPC; Native Sims → Desktop/WASM.
 - Context boundaries [CRITICAL]: modules fully self-contained. Zero horizontal coupling. Block `../sibling/` → HTTP/gRPC/WebSocket only.
 - Execution context [CRITICAL]: `bun`/`cargo`/`git`/`sem` MUST target specific module path. Set CWD to `./<project>-<module>/` before execution.
 
 ## 4. Tech Stack Preferences
 
-- Default 3-tier: SvelteKit via `svelte-adapter-bun` on Bun + Tailwind v4 (web & job manager) + Drizzle ORM (PostgreSQL) + In-Browser Graphics + Standalone Compute (pure Rust: Axum+Rayon, Bevy ECS). Velocity + type safety in Bun/SvelteKit; bare-metal parallel compute in Rust/Bevy.
+- Default 3-tier: SvelteKit via `@sveltejs/adapter-static` with `fallback: 'index.html'` served by Axum `tower-http` + Tailwind v4 + SQLx (PostgreSQL) + `ts-rs` type bindings + In-Browser Graphics + Standalone Compute (pure Rust: Axum+Rayon, Bevy ECS). Velocity + type safety in SvelteKit/ts-rs; bare-metal parallel compute in Rust/Tokio.
+- Architecture & Performance: Native Tokio multi-threaded work-stealing, sub-millisecond async I/O, Rayon worker pools, and unblocked 60+ FPS client rendering.
 
 - Mental model rewiring:
 
   | Stop thinking (old) | Start thinking (our 3-tier) |
   |---|---|
-  | Monolithic server-side rendering | SvelteKit on Bun (`svelte-adapter-bun` + Tailwind v4) + Drizzle ORM |
-  | HTML-over-SSE fragmentation | Fine-grained Svelte 5 UI + WebSocket streaming |
-  | Embedded SQLite per container | Central PostgreSQL with Drizzle schema |
+  | Monolithic server-side rendering | SvelteKit static SPA served by Axum (`@sveltejs/adapter-static` + Tailwind v4) + SQLx + ts-rs |
+  | HTML-over-SSE fragmentation | Fine-grained Svelte 5 UI + WebSocket/SSE streaming |
+  | Embedded SQLite per container | Central PostgreSQL with SQLx migrations in `crates/api/migrations/` |
   | Heavy CPU simulation in request handlers | Bare-metal Rust workers (Axum+Rayon/Bevy) |
   | CSS tables for spatial sims | In-browser Threlte (3D), PixiJS/Phaser (2D) |
 
-- General & UI Tier (Full-Stack Web & Job Manager): SvelteKit via svelte-adapter-bun on Bun with Tailwind CSS, Drizzle, and PostgreSQL delivers native Bun.serve execution, utility-first styling, end-to-end type safety, and fine-grained UI reactivity inside a minimal distroless runtime.
+- General & UI Tier (Full-Stack Web & Job Manager): SvelteKit via `@sveltejs/adapter-static` with `fallback: 'index.html'` served by Axum `tower-http`, Tailwind CSS, and PostgreSQL delivers native Axum static hosting, utility-first styling, end-to-end type safety via `ts-rs`, and fine-grained UI reactivity inside a minimal distroless runtime.
 
-- In-Browser Graphics & Gaming Layer: Embedded directly into SvelteKit using Threlte + Three.js for declarative 3D scenes, PixiJS for high-performance UI-adjacent 2D rendering and custom canvas mechanics, or Phaser when requiring a turnkey 2D game engine with built-in physics, audio, and tilemap managers.
+- In-Browser Graphics & Gaming Layer: Embedded directly into SvelteKit using Threlte + Three.js for declarative 3D scenes, PixiJS for high-performance UI-adjacent 2D rendering and custom canvas mechanics, or Phaser when requiring a turnkey 2D game engine with built-in physics, audio, and tilemap managers. Keep Tailwind v4, Threlte, PixiJS, Phaser, grammY, and Capacitor as-is inside the SvelteKit static build (@sveltejs/adapter-static).
 
-- Compute & Native Systems Tier (Standalone Worker & Native Games): Pure Rust with Axum and Rayon provides bare-metal, multi-core execution for heavy background workloads, while Bevy provides a native, ECS-driven engine for high-performance 2D/3D game binaries and client simulations.
+- Compute & Native Systems Tier (Standalone Worker & Native Games): Pure Rust with Tokio work-stealing, Axum, and Rayon provides bare-metal, multi-core execution for heavy background workloads, while Bevy provides a native, ECS-driven engine for high-performance 2D/3D game binaries and client simulations.
 
-- Event-Driven & Real-Time Transport Layer: Eliminates polling by utilizing PostgreSQL LISTEN/NOTIFY or pub/sub queues for immediate push-based worker dispatch, paired with native Bun.serve WebSockets (WSS) and Server-Sent Events (SSE) for real-time state streaming to the web UI and Telegram Mini App.
+- Event-Driven & Real-Time Transport Layer: Eliminates polling by utilizing PostgreSQL LISTEN/NOTIFY or pub/sub queues with Tokio broadcast channels and Axum WebSockets/SSE for real-time state streaming to the web UI and Telegram Mini App, plus gRPC via tonic/Protobuf for backend inter-module worker communication.
 
-- Container Hardening: The web tier runs on oven/bun:distroless (or Chainguard Bun), while the compute and native Rust services compile to statically linked binaries targeting gcr.io/distroless/static-debian13:nonroot for minimal image footprints and attack surfaces.
+- Container Hardening: Collapse dual-tier deployment into a single multi-stage build (Vite static build -> Rust musl static compile -> gcr.io/distroless/static-debian13:nonroot runtime), eliminating Bun from production entirely.
 
-- Modular Extensibility & Scalability: System components communicate via strict interface contracts and stateless micro-modules, supporting runtime plugin loading and independent horizontal scaling
+- Type Bindings & Offline CI: Export `ts-rs` (`TS` derive only) to gitignored `frontend/src/lib/types/bindings/`; commit `sqlx-data.json` via `cargo sqlx prepare` for hermetic CI checks.
 
-- Web tier: `svelte-adapter-bun` → standalone `Bun.serve` entrypoints (`Bun.WebSocketHandler`), `oven/bun:distroless`. Styling: Tailwind v4 via `@tailwindcss/vite` + Svelte 5 Runes.
+- Dev DX & Fallback Guardrail: Use `vite dev` proxying `/api` and `/ws` to `cargo watch -x run`, ensuring Axum mounts all API, WS, and gRPC routes strictly before the tower-http static SPA fallback.
+
+- Modular Extensibility & Scalability: System components communicate via strict interface contracts and stateless micro-modules, supporting runtime plugin loading and independent horizontal scaling.
+
+- Web tier: `@sveltejs/adapter-static` with `fallback: 'index.html'` served by Axum `tower-http`. Styling: Tailwind v4 via `@tailwindcss/vite` + Svelte 5 Runes.
 
 - Graphics granularity matrix (autonomous selection):
   - Standard DOM: Svelte+Tailwind → forms, admin tables, metrics, static dashboards. Never WebGL for text/CRUD.
@@ -101,12 +106,12 @@ Identity → Systems Architect, Security-focused. Goal → maximize throughput, 
   - Headless compute: pure Rust+Axum+Rayon → CPU-bound parallel workloads, Monte Carlo, batch solvers, high-throughput RPCs. Never in request handlers.
   - Native ECS: Bevy → standalone 2D/3D binaries, client sims, ECS, exportable WASM.
 
-- Database: PostgreSQL dedicated (Drizzle migrations in web tier).
+- Database: Port existing Drizzle migrations verbatim to `crates/api/migrations/` under `sqlx migrate`; Axum/Tokio becomes the sole state coordinator.
 - Telegram/TMA ONLY when required: grammY on Bun + `@telegram-apps/sdk`.
 - Mobile ONLY when required: Capacitor WebView → hosted SvelteKit.
 - Secrets: `envx` → env management → KISS.
-- Container hardening: Web `oven/bun:distroless` (or Chainguard Bun), nonroot, minimal attack surface. Compute/Native: multi-stage Rust `musl` static → `gcr.io/distroless/static-debian13:nonroot`, zero glibc, minimal surface. GHCR image deploys. Strict HTTPS/TLS.
-- Containerization dual-tier: Module level → each module owns `Dockerfile` (multi-stage Bun/Rust→distroless) + optional isolated `docker-compose.yml` (app+local PostgreSQL test). Root level → orchestrator `docker-compose.yml` mounts module Dockerfiles, unified bridge networks, prevents `../` traversal.
+- Container hardening: Multi-stage Rust `musl` static → `gcr.io/distroless/static-debian13:nonroot`, zero glibc, minimal surface. GHCR image deploys. Strict HTTPS/TLS.
+- Containerization dual-tier: Module level → each module owns `Dockerfile` (multi-stage Rust/musl→distroless) + optional isolated `docker-compose.yml` (app+local PostgreSQL test). Root level → orchestrator `docker-compose.yml` mounts module Dockerfiles, unified bridge networks, prevents `../` traversal.
 
 ## 5. Resilience & Security
 
@@ -117,16 +122,17 @@ Identity → Systems Architect, Security-focused. Goal → maximize throughput, 
 ## 6. Scalability & Queuing Architecture
 
 - Heavy/async work never synchronous in request path. Queue+worker+streaming — **orchestrator-workers**: coordinator delegates, stateless workers execute, results synthesize.
-- Coordinator (SvelteKit Job Manager on Bun) = single state owner: persisted PostgreSQL records, state machine `queued → running → succeeded | failed | cancelled`, stable unique IDs, per-actor scoping where required. Hub-and-spoke (coordinator→workers→coordinator); emergent meshes drift.
+- Coordinator (Axum/Tokio on Rust) = single state owner: persisted PostgreSQL records via SQLx, state machine `queued → running → succeeded | failed | cancelled`, stable unique IDs, per-actor scoping where required. Hub-and-spoke (coordinator→workers→coordinator); emergent meshes drift.
 - Workers (stateless Rust/Axum+Rayon): disposable, horizontally scalable — register, pull via RPC/queue, report progress+results, heartbeat. Lost worker → re-queue or fail (at-least-once+idempotent).
 - Realtime progress/results → WebSocket/SSE; client polling anti-pattern.
 - Backpressure explicit: bounded concurrency, queue caps, rate limits — reject unbounded growth.
-- Defaults: PostgreSQL queue table (Drizzle), WebSocket/SSE streaming, lightweight Rust workers — platform primitives over new brokers. Default for heavy/async/batch/rate-limited; trivial sync stays in request path (KISS/YAGNI).
+- Defaults: PostgreSQL queue table (SQLx), WebSocket/SSE streaming, lightweight Rust workers — platform primitives over new brokers. Default for heavy/async/batch/rate-limited; trivial sync stays in request path (KISS/YAGNI).
 - Anti-patterns: stateful workers · multiple state owners · cron-as-scheduler · unbounded queues · blocking request path · peer-to-peer meshes.
 - WebSocket/SSE: default real-time sync for live Svelte stores.
 
 ## 6a. Realtime & Event-Driven
 
+- Maintain strict event-driven push via PostgreSQL LISTEN/NOTIFY and Tokio broadcast channels; use WebSockets/SSE for frontend UI streaming and gRPC (tonic/Protobuf) for backend inter-module worker communication.
 - Every control loop fires on the event (state change, inbound message, threshold crossed), not blind interval.
 - Defaults: `WebSocket`/`SSE` push for live state; background jobs use queue+worker (§6) with at-least-once idempotency+dedup keys; platform primitives over new brokers.
 - Polling = fallback only — upstream offers no webhook/SSE → coarsest interval tolerated, gated `single-flight+timeout+dedup` (batch/fan-out `N×` sequential RPCs).
@@ -160,8 +166,8 @@ stale_after: 2027-08-15
 
 - **sem** (Semantic Git): Impact Analysis [CRITICAL] `sem impact <entity> --json` → BFS blast radius before touching shared/core entities. Graph `sem graph --entity <name> --format json` for explores/complex refactors. Verification `sem diff --format json` post-mutation/pre-commit (structural vs cosmetic). Blame `sem blame <file> --json` for investigations.
 - **QMD** (Hybrid Search & Local Memory): Pre-flight `qmd query "<intent>" --json -n 10` (hybrid) || `qmd search "<keywords>" --json` (BM25) → `qmd get <docid>`. Batch [CRITICAL] `qmd query "<intent>" --all --files --min-score 0.4` → `qmd multi-get "<ids>" --json`. Indexing `qmd collection add <path> --name <name>`. Context `qmd context add qmd://<name> "<desc>"`. Maintenance [CRITICAL] file mutations → `qmd update && qmd embed --chunk-strategy auto`.
-- **Context7** (External Framework Intelligence): Trigger [CRITICAL] generating third-party setup/config or touching frameworks/packages (SvelteKit, svelte-adapter-bun, Tailwind, Drizzle, Threlte, Three.js, PixiJS, Phaser, Axum, Rayon, Bevy, grammY, `@telegram-apps/sdk`) → autonomous Context7 → prevent hallucinated outdated training data. Flow: `resolve-library-id(name, query)` → `/org/project` ID → `query-docs(id, full_query)` → SOTA patterns. Append explicit versions to queries. Priority Context7 > web search. Bypass for internal business logic.
-- **Skill Engineering** (`./.pi/skills/`): Utilization [CRITICAL] task initiation → scan `./.pi/skills/` → evaluate `description` frontmatters → load `SKILL.md` if relevant. Creation: extract recurring gotchas/workflows into `skills/<name>/SKILL.md` (action gerund, Validation Loops, Plan-Validate-Execute, `references/` offload for progressive disclosure). Anatomy [CRITICAL] OKF v0.2 frontmatter (`type: Skill`, `generated: {by, at}`), `description` <1024 chars imperative "Use this skill when...". Script bundling: self-contained (Bun `.mjs`/Go single-file/PEP 723), idempotent, structured JSON/CSV, ZERO prompts. Ad-hoc spikes [CRITICAL] candid debug scripts / pre-implementation endpoint tests / quick API validation → self-contained `.mjs` via `bun <file>.mjs` (native top-level await+fetch, zero setup). Eval-driven evolution: generate `evals/evals.json`, measure baseline vs with-skill (pass rate/tokens/duration) → optimize `SKILL.md`.
+- **Context7** (External Framework Intelligence): Trigger [CRITICAL] generating third-party setup/config or touching frameworks/packages (SvelteKit, Tailwind, SQLx, ts-rs, Threlte, Three.js, PixiJS, Phaser, Axum, Rayon, Bevy, grammY, `@telegram-apps/sdk`) → autonomous Context7 → prevent hallucinated outdated training data. Flow: `resolve-library-id(name, query)` → `/org/project` ID → `query-docs(id, full_query)` → SOTA patterns. Append explicit versions to queries. Priority Context7 > web search. Bypass for internal business logic.
+- **Skill Engineering** (`./.pi/skills/`): Utilization [CRITICAL] task initiation → scan `./.pi/skills/` → evaluate `description` frontmatters → load `SKILL.md` if relevant. Creation: extract recurring gotchas/workflows into `skills/<name>/SKILL.md` (action gerund, Validation Loops, Plan-Validate-Execute, `references/` offload for progressive disclosure). Anatomy [CRITICAL] OKF v0.2 frontmatter (`type: Skill`, `generated: {by, at}`), `description` <1024 chars imperative "Use this skill when...". Script bundling: self-contained (Bun `.mjs`/single-file Go/PEP 723), idempotent, structured JSON/CSV, ZERO prompts. Ad-hoc spikes [CRITICAL] candid debug scripts / pre-implementation endpoint tests / quick API validation → self-contained `.mjs` via `bun <file>.mjs` (native top-level await+fetch, zero setup). Eval-driven evolution: generate `evals/evals.json`, measure baseline vs with-skill (pass rate/tokens/duration) → optimize `SKILL.md`.
 
 ## 9. Exploration & Discovery Stance
 
@@ -174,7 +180,7 @@ stale_after: 2027-08-15
 
 - Pre-computation: feature request || exploration crystallized → strategy (Why, How, Steps) as dense bullets/JSON BEFORE mutation. Output to user chat → shared understanding.
 - Momentum threshold: reasonable decisions autonomously; HALT+prompt ONLY on critical domain ambiguity.
-- Mutation topological sort [CRITICAL]: cross-module scaffolding in strict order: 1) DB Schema → PostgreSQL+Drizzle (`schema.ts`, `drizzle-kit`) 2) Compute & Simulation → Rust/Axum/Rayon/Bevy 3) Full-Stack API & State → SvelteKit `+server.ts`, form actions, WebSocket handlers 4) UI & Graphics → Svelte/Threlte/PixiJS/Phaser views. Never build UI before data contracts.
+- Mutation topological sort [CRITICAL]: cross-module scaffolding in strict order: 1) DB Schema → PostgreSQL+SQLx (`crates/api/migrations/*.sql`, `sqlx migrate`) 2) Compute & Backend Coordinator → Rust/Axum/Rayon/Bevy/Tokio 3) Full-Stack State & Route Handlers → Axum WSS/SSE/gRPC + `ts-rs` bindings (`#[ts(export)]`) 4) UI & Graphics → Svelte/Threlte/PixiJS/Phaser static views. Never build UI before data contracts.
 - Contextual baseline: ingest QMD/ADRs/`sem impact`/context files/upstream event sources (webhook/SSE availability) → explicit baseline.
 - Vibe coding loop: focused mutation → validate locally (`bun run check`, `cargo clippy`, `bun test`, `cargo test`) immediately → verify step → proceed. No YOLO.
 - Surgical mutations [CRITICAL]: SEARCH/REPLACE blocks. Preserve untargeted content. Zero whole-file overwrites. Idempotent.

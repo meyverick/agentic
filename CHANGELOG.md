@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [3.0.0] - 2026-08-28
+
+### Changed
+
+- **BREAKING**: Stack migration `rust-axum-svelte-sqlx-tsrs` — `svelte-adapter-bun` → `@sveltejs/adapter-static` (`fallback: 'index.html'`) with `tower-http` ServeDir/ServeFile; Axum/Tokio becomes sole coordinator (migrations in `crates/api/migrations/` via `sqlx migrate`, pool via `sqlx`); `ts-rs` `#[ts(export)]` via `cargo test` to `frontend/src/lib/types/bindings/` (gitignored) with `sqlx-data.json` hermetic CI; single multi-stage build `Vite → Rust musl → gcr.io/distroless/static-debian13:nonroot` (eliminate `oven/bun:distroless` from prod); `vite dev` proxies `/api`+`/ws` to `cargo watch -x run` with route-precedence guard
+- `project/AGENTS.md` §4/§6/§10, `prototype/AGENTS.proto.md` aligned to canonical Axum+SQLx+ts-rs 5-tier; Drizzle (`drizzle-orm`/`drizzle-kit`) removed from web tier; tags `drizzle`+`svelte-adapter-bun`+`bun` → `adapter-static`+`sqlx`+`ts-rs`
+
+### Added
+
+- `ts-rs-bindings` capability — TS generation + offline `sqlx-data.json` via `cargo sqlx prepare`
+- `tonic`/`Protobuf` gRPC for backend inter-module worker communication
+
+### Fixed
+
+- Container hardening collapsed to single distroless runtime
+
 ## [2.4.0] - 2026-08-27
 
 ### Added

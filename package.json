@@ -1,10 +1,16 @@
 {
   "name": "agentic",
-  "version": "2.4.0",
+  "version": "3.0.0",
   "description": "AI agent skills and prompts for pi.dev",
   "bin": {
     "agentic": "./install.ts"
   },
-  "keywords": ["ai", "agents", "skills", "prompts", "pi"],
+  "keywords": [
+    "ai",
+    "agents",
+    "skills",
+    "prompts",
+    "pi"
+  ],
   "license": "MIT"
 }
