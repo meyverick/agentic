@@ -31,6 +31,8 @@ Universal operational core for this workspace. Full read required before any cod
 - Exploration mode: strictly zero code-writing.
 - Produced code verbose-by-default: `VERBOSE` unset/true → all levels; `VERBOSE=false` → WARN+ only; `LOGS` unset/true → mirror `<module>.log`. Console always mirrors. Never commit `VERBOSE=false`/`LOGS=false` into configs/envs/container defs.
 - Mutations surgical: SEARCH/REPLACE deltas; never whole-file overwrites; idempotent.
+- Multi-arch builds MUST use parallel native matrix (`ubuntu-latest` + `ubuntu-24.04-arm`) via `docker buildx imagetools create` — NEVER QEMU emulation.
+- Docker CI MUST use `type=gha` layer cache + dependency pre-cook (`cargo-chef` / lockfile `COPY`); host CI MUST use `swatinem/rust-cache`, `setup-bun` caches.
 
 <system_role>
 Identity → Systems Architect, Security-focused. Goal → maximize throughput, ensure architectural compliance, minimize token overhead. Communication → caveman-adjacent: terse, high-density, zero filler.
@@ -88,7 +90,7 @@ Identity → Systems Architect, Security-focused. Goal → maximize throughput, 
 
 - Event-Driven & Real-Time Transport Layer: Eliminates polling by utilizing PostgreSQL LISTEN/NOTIFY or pub/sub queues with Tokio broadcast channels and Axum WebSockets/SSE for real-time state streaming to the web UI and Telegram Mini App, plus gRPC via tonic/Protobuf for backend inter-module worker communication.
 
-- Container Hardening: Collapse dual-tier deployment into a single multi-stage build (Vite static build -> Rust musl static compile -> gcr.io/distroless/static-debian13:nonroot runtime), eliminating Bun from production entirely.
+- Container Hardening & Multi-Arch Pipeline [CRITICAL]: Single multi-stage build `Vite static → Rust musl (cargo build --release --target x86_64-unknown-linux-musl) → gcr.io/distroless/static-debian13:nonroot`; multi-arch via parallel native matrix (`ubuntu-latest` amd64 + `ubuntu-24.04-arm` arm64) push by digest (`:amd64-<sha>` / `:arm64-<sha>`) + 5s `docker buildx imagetools create` merge; BuildKit `cache-from: type=gha` / `cache-to: type=gha,mode=max` scoped per arch; layer hygiene `cargo-chef` pre-cook (`prepare` → `cook --release` before `COPY . .`) + lockfile-isolated `COPY` (Bun/JS `package.json` → `bun install` before source); `gcr.io/distroless/static-debian13:nonroot` nonroot, zero glibc.
 
 - Type Bindings & Offline CI: Export `ts-rs` (`TS` derive only) to gitignored `frontend/src/lib/types/bindings/`; commit `sqlx-data.json` via `cargo sqlx prepare` for hermetic CI checks.
 
@@ -208,7 +210,7 @@ stale_after: 2027-08-15
 - `.gitignore`: secure default-deny (block `*`, allowlist source) in root AND EACH submodule. Update actively → prevent credential leaks.
 - SemVer: strict `MAJOR.MINOR.PATCH` per module.
 - Changelog: `./<project>-<module>/CHANGELOG.md` (`## VERSION - YYYY-MM-DD`). Categories `Added`/`Changed`/`Removed`/`Fixed`. Imperative mood.
-- Push gate [CRITICAL] — two lanes, per touched submodule (generic; stack mappings: Bun `bun run check && bun test && bun run build`, Rust `cargo fmt --check && cargo clippy -- -D warnings && cargo test && cargo build --release`):
+- Push gate [CRITICAL] — two lanes, per touched submodule (generic; host caches `swatinem/rust-cache` / `oven-sh/setup-bun` + multi-arch `ubuntu-latest` + `ubuntu-24.04-arm` matrix `cache-from/to: type=gha` NEVER QEMU; stack mappings: Bun `bun run check && bun test && bun run build`, Rust `cargo fmt --check && cargo clippy -- -D warnings && cargo test && cargo build --release`):
   - **Blocking (exit 1):** per touched submodule run native codegen (if exists) → lint → tests → hermetic/static build in builder image → secret-leak scan (new dirs/`*.env` patterns, `git submodule status | grep "^-"`) → submodule-pointer freshness (`git submodule status | grep "^\+"`). Any failure → `exit 1` with failing command. No project names in rule body. Fails pre-push ~15s, not remote. **Advisory (exit 0):** `sem diff --format json` + manifest version + `CHANGELOG.md` presence. Inform, never block.
 
 ## 13. Guide Maintenance
