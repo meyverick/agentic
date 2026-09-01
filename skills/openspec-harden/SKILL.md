@@ -129,8 +129,8 @@ Mirror `openspec-propose`/`openspec-apply-change`: discover via `openspec store 
 
 ## Reference
 
-- Thin prompt: `project/prompts/opsx-harden.md` resolves store and loads this skill with `${@:-<change-name>}` passthrough.
-- Install: `project/install.ts` copies `project/skills/*` → `.pi/skills/` atomically and `project/prompts/*` → `.pi/prompts/` — no manual wiring needed.
+- Direct triggering: harnesses invoke this skill directly via `/openspec-harden <change-name>` (no prompt shim needed).
+- Install: `project/install.ts` copies `project/skills/*` → `.agents/skills/` atomically — no manual wiring needed.
 
 ## Related Skills
 

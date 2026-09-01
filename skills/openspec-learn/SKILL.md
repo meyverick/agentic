@@ -48,7 +48,7 @@ ls ./openspec/reports/ | grep -v archives
 Scan existing skills for description overlap with proposed tool:
 
 ```bash
-grep -r "description:" .pi/skills/*/SKILL.md ./project/skills/*/SKILL.md 2>/dev/null
+grep -r "description:" .agents/skills/*/SKILL.md ./project/skills/*/SKILL.md 2>/dev/null
 ```
 
 Compare proposed tool's domain keywords against existing descriptions. If overlap detected → flag collision in proposal, suggest updating existing skill instead of creating new one.
@@ -66,11 +66,11 @@ Include as "Suggested Triggers" section in proposal.
 **Ownership pre-check (MANDATORY, runs first).** Classify every candidate target skill/prompt by ownership using this precedence chain — recorded facts before conventions, conventions before residual judgment:
 
 1. Inside the agentic repo itself → `project/skills/*` and `project/prompts/*` are owned (editable)
-2. Listed in `.pi/skills/.agentic-manifest.json` → agentic-distributed → **external**
+2. Listed in `.agents/skills/.agentic-manifest.json` → agentic-distributed → **external**
 3. Located in `~/.pi/agent/skills/` (not created by this project) → **external**
-4. Explicit verdict in `.pi/skills/.ownership.json` (`{"owned": [...], "external": [...]}`) → as declared
+4. Explicit verdict in `.agents/skills/.ownership.json` (`{"owned": [...], "external": [...]}`) → as declared
 5. Named `openspec-*` → OpenSpec-owned → **external**
-6. Any other skill in the project's `.pi/skills/` → project-created → editable
+6. Any other skill in the project's `.agents/skills/` → project-created → editable
 7. Unresolved after all checks → unknown = **external**, ask the user
 
 Rules:

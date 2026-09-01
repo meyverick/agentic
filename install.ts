@@ -5,8 +5,7 @@
  * Usage: bunx github:meyverick/agentic-project
  * 
  * Installs to current directory:
- *   - project/skills/* → .pi/skills/ (atomic replacement)
- *   - project/prompts/* → .pi/prompts/
+ *   - project/skills/* → .agents/skills/ (atomic replacement)
  *   - project/AGENTS.md → AGENTS.md
  */
 
@@ -144,7 +143,7 @@ function syncFile(src: string, dst: string): boolean {
  */
 function installSkills(): void {
   const skillsSrc = path.join(srcDir, 'skills');
-  const skillsDst = path.join(targetDir, '.pi', 'skills');
+  const skillsDst = path.join(targetDir, '.agents', 'skills');
   
   console.log('📦 Skills:');
   
@@ -196,27 +195,7 @@ function installSkills(): void {
 /**
  * Install prompts (diff-based)
  */
-function installPrompts(): void {
-  const promptsSrc = path.join(srcDir, 'prompts');
-  const promptsDst = path.join(targetDir, '.pi', 'prompts');
-  
-  console.log('📝 Prompts:');
-  
-  if (!fs.existsSync(promptsSrc)) {
-    console.log('  ⚠️  Source not found\n');
-    return;
-  }
-  
-  // Reset counters
-  copied = 0;
-  skipped = 0;
-  created = 0;
-  
-  syncDir(promptsSrc, promptsDst);
-  
-  console.log(`   → ${promptsDst}`);
-  console.log(`   Copied: ${copied} | Skipped: ${skipped}\n`);
-}
+
 
 /**
  * Install AGENTS.md (diff-based)
@@ -254,40 +233,14 @@ function createReportsDir(): void {
 }
 
 /**
- * Sync directory recursively (for prompts)
- */
-function syncDir(src: string, dst: string): void {
-  if (!fs.existsSync(src)) return;
-  
-  if (!fs.existsSync(dst)) {
-    fs.mkdirSync(dst, { recursive: true });
-    created++;
-  }
-  
-  const items = fs.readdirSync(src);
-  
-  for (const item of items) {
-    const srcPath = path.join(src, item);
-    const dstPath = path.join(dst, item);
-    const stat = fs.statSync(srcPath);
-    
-    if (stat.isDirectory()) {
-      syncDir(srcPath, dstPath);
-    } else {
-      syncFile(srcPath, dstPath);
-    }
-  }
-}
-
-/**
- * Write provenance manifest (.pi/skills/.agentic-manifest.json)
+ * Write provenance manifest (.agents/skills/.agentic-manifest.json)
  *
  * Records what this installer owns so consuming-project agents can
  * classify skill ownership without inference. NEVER touches
  * .ownership.json (user-owned adjudications).
  */
 function writeProvenanceManifest(version: string): void {
-  const skillsDst = path.join(targetDir, '.pi', 'skills');
+  const skillsDst = path.join(targetDir, '.agents', 'skills');
   if (!fs.existsSync(skillsDst)) {
     fs.mkdirSync(skillsDst, { recursive: true });
   }
@@ -331,7 +284,6 @@ function install(): void {
   console.log(`🔧 Installing agentic v${version}...\n`);
   
   installSkills();
-  installPrompts();
   installAgentsMd();
   createReportsDir();
   writeProvenanceManifest(version);

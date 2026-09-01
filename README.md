@@ -8,7 +8,7 @@ Self-improving AI agent skills and prompts for [pi.dev](https://pi.dev). A close
 bunx github:meyverick/agentic
 ```
 
-Installs 6 skills + 4 prompts into your project's `.pi/skills/` and `.pi/prompts/`, writes a provenance manifest, and creates `openspec/reports/`.
+Installs 6 skills into your project's `.agents/skills/`, writes a provenance manifest, and creates `openspec/reports/`.
 
 ## Skills
 
@@ -21,27 +21,18 @@ Installs 6 skills + 4 prompts into your project's `.pi/skills/` and `.pi/prompts
 | okf-docs | Author OKF v0.2-compliant documents — ADRs, module docs, decision records — with mandatory provenance frontmatter and mechanical validation |
 | openspec-harden | Harden an existing OpenSpec change for cold application — enrich artifacts with concrete file paths, code blocks, and verify steps |
 
-## Prompts
-
-| Prompt | Skill invoked |
-|--------|---------------|
-| `/opsx-learn [report]` | openspec-learn |
-| `/opsx-report [change]` | openspec-report |
-| `/opsx-harden [change]` | openspec-harden |
-| `/fetch-sources` | source-fetcher |
-
 ## The Loop
 
 ```
-archived change → /opsx-report → report + assessment
+archived change → /openspec-report → report + assessment
                                       ↓
-                              /opsx-learn → proposal
+                              /openspec-learn → proposal
                                       ↓
-                             /opsx-harden → cold-ready artifacts
+                             /openspec-harden → cold-ready artifacts
                                       ↓
-                              /opsx-apply → skill-creator builds it
+                              /openspec-apply → skill-creator builds it
                                       ↓
-                              /opsx-archive → main specs updated
+                              /openspec-archive → main specs updated
 ```
 
 Each cycle makes the skill set better at improving itself.
@@ -49,5 +40,5 @@ Each cycle makes the skill set better at improving itself.
 ## Requirements
 
 - [Bun](https://bun.sh) >= 1.0
-- [OpenSpec CLI](https://github.com/fmeum/openspec) (for the opsx-* loop)
-- pi.dev-compatible agent harness (skills install to `.pi/skills/`)
+- [OpenSpec CLI](https://github.com/fmeum/openspec) (for the openspec-* loop)
+- pi.dev-compatible agent harness (skills install to `.agents/skills/`)
