@@ -38,9 +38,10 @@ Universal operational core for this workspace. Full read required before any cod
 - Must-read: `project/skills/guardrails/SKILL.md` before any code touching `deps/Docker/HTML/auth` — cross-cutting hardening lives there, not in `AGENTS.md` body.
 - Submodule CI/CD Contract [CRITICAL]: Each submodule MUST own `.github/workflows/quality.yml` (native lane: `bun check && bun test && bun build` or `cargo fmt --check && cargo clippy -- -D warnings && cargo test && cargo build --release`); orchestrator MUST own `.github/workflows/deploy.yml` (unified multi-stage `Dockerfile → Rust musl → distroless` + `git:from-image` Dokku); never build/push submodules from orchestrator quality lane.
 - Deploy Path Allowlist [CRITICAL]: Orchestrator `deploy.yml` MUST use explicit `paths:` allowlist watching deployable submodule dirs + `Dockerfile` + `deploy.yml` (not `paths-ignore`); `workflow_dispatch` always allowed.
-- Private Submodule CI Access [CRITICAL]: Orchestrator `deploy.yml` `actions/checkout@v4` MUST use `token: ${{ secrets.SUBMODULE_TOKEN }}` (`repo` read) + `submodules: recursive` + `fetch-depth: 0`; `GITHUB_TOKEN` alone insufficient.
+- Private Submodule & GHCR CI Access [CRITICAL]: Orchestrator `deploy.yml` `actions/checkout@v4` MUST use `token: ${{ secrets.SUBMODULE_TOKEN }}` (`repo` read) + `submodules: recursive` + `fetch-depth: 0`; `docker/login-action` for `ghcr.io` MUST use `password: ${{ secrets.SUBMODULE_TOKEN }}` (`write:packages` scope) because container image namespace (`<project>`) differs from orchestrator repo (`<project>-project`); `GITHUB_TOKEN` alone insufficient.
 - Submodule Git Allowlist: Submodule default-deny `/*` `.gitignore` MUST explicitly allow `!/.github/` and `!/wiki/` (plus `!/.gitignore` + source dirs) so `quality.yml`/`wiki/index.md` are not silently ignored.
 - Dokku Proxy Tuning: All Dokku apps MUST `proxy-read-timeout 3600s` + `proxy-buffering off` + `client-max-body-size 50m` via `proxy:build-config <app>` (modern, not `nginx.conf`).
+- Dokku Deploy Action SSH Port: Orchestrator `deploy.yml` `appleboy/ssh-action` MUST explicitly specify `port: ${{ secrets.DOKKU_SSH_PORT }}` (or target host daemon port); omitting defaults to port 22 which is blocked on firewalled VPS hosts, causing silent connection timeouts.
 - Submodule Pointer Sync [CRITICAL]: Commits inside a submodule MUST be immediately followed by committing the updated pointer in the orchestrator root (`git add <submodule> && git commit`); task incomplete if `git submodule status` contains `+` (stale) or `-` (uninitialized).
 
 <system_role>
@@ -216,6 +217,7 @@ stale_after: 2027-08-15
 ## 12. Version Control, Releases & Scaffolding
 
 - Module scaffolding [CRITICAL]: new app module → `git init` inside `./<project>-<module>/` → remote → `git submodule add` to parent orchestrator + `mkdir -p .github/workflows` with per-module `quality.yml` (native lint/test/build lane; standalone microservices add `deploy.yml`); orchestrator owns unified `deploy.yml` (multi-stage `Dockerfile → musl → distroless` + `SUBMODULE_TOKEN` + `paths:` allowlist).
+- Orchestrator deploy pipeline [CRITICAL]: `deploy.yml` watches deployable submodule dirs + `Dockerfile` + `deploy.yml` via `paths:`. Uses `secrets.SUBMODULE_TOKEN` for both checkout and GHCR login (`write:packages`). Dokku deployment step uses `appleboy/ssh-action` with explicit `port: ${{ secrets.DOKKU_SSH_PORT }}` and triggers `dokku git:from-image <project> ghcr.io/<owner>/<project>:<version>`.
 - `.gitignore`: secure default-deny (block `*`, allowlist source) in root AND EACH submodule. Update actively → prevent credential leaks.
 - SemVer: strict `MAJOR.MINOR.PATCH` per module.
 - Changelog: `./<project>-<module>/CHANGELOG.md` (`## VERSION - YYYY-MM-DD`). Categories `Added`/`Changed`/`Removed`/`Fixed`. Imperative mood.
