@@ -36,7 +36,11 @@ Universal operational core for this workspace. Full read required before any cod
 - After tasks with difficulty ≥3/5, surprise, or time cost >30m → suggest to user: `Want /opsx-report?` (never auto-run; manual only).
 - Learned negatives live in skills as `Contrast`/`Anti-examples`; never autonomously edit `project/AGENTS.md` — human-owned only.
 - Must-read: `project/skills/guardrails/SKILL.md` before any code touching `deps/Docker/HTML/auth` — cross-cutting hardening lives there, not in `AGENTS.md` body.
-- Each submodule MUST own its own `.github/workflows/` (lint/test/build/deploy for that module) — orchestrator MUST NOT build/push submodules; orchestrator workflows only orchestrate (submodule-pointer freshness, cross-module checks).
+- Submodule CI/CD Contract [CRITICAL]: Each submodule MUST own `.github/workflows/quality.yml` (native lane: `bun check && bun test && bun build` or `cargo fmt --check && cargo clippy -- -D warnings && cargo test && cargo build --release`); orchestrator MUST own `.github/workflows/deploy.yml` (unified multi-stage `Dockerfile → Rust musl → distroless` + `git:from-image` Dokku); never build/push submodules from orchestrator quality lane.
+- Deploy Path Allowlist [CRITICAL]: Orchestrator `deploy.yml` MUST use explicit `paths:` allowlist watching deployable submodule dirs + `Dockerfile` + `deploy.yml` (not `paths-ignore`); `workflow_dispatch` always allowed.
+- Private Submodule CI Access [CRITICAL]: Orchestrator `deploy.yml` `actions/checkout@v4` MUST use `token: ${{ secrets.SUBMODULE_TOKEN }}` (`repo` read) + `submodules: recursive` + `fetch-depth: 0`; `GITHUB_TOKEN` alone insufficient.
+- Submodule Git Allowlist: Submodule default-deny `/*` `.gitignore` MUST explicitly allow `!/.github/` and `!/wiki/` (plus `!/.gitignore` + source dirs) so `quality.yml`/`wiki/index.md` are not silently ignored.
+- Dokku Proxy Tuning: All Dokku apps MUST `proxy-read-timeout 3600s` + `proxy-buffering off` + `client-max-body-size 50m` via `proxy:build-config <app>` (modern, not `nginx.conf`).
 
 <system_role>
 Identity → Systems Architect, Security-focused. Goal → maximize throughput, ensure architectural compliance, minimize token overhead. Communication → caveman-adjacent: terse, high-density, zero filler.
@@ -65,7 +69,7 @@ Identity → Systems Architect, Security-focused. Goal → maximize throughput, 
 
 - Naming [CRITICAL]: orchestrator folder `<name>` (e.g., `myapp`) → GitHub private `<name>-project` (e.g., `myapp-project`); subproject folder `<subproject>` (or `project` for mono, e.g., `web`, `bot`, `api`) → GitHub `<project>-<subproject>` (e.g., `myapp-web`, `myapp-bot`) → Dokku app `<project>-<subproject>` (e.g., `myapp-web`) → Dokku URL `https://<project>-<subproject>.example.com` (also `https://<project>.<subproject>.example.com`, e.g., `myapp.web.example.com`). Never invent names — derive from folder + project prefix.
 - Monorepo: root `./` holds orchestrator metadata, `AGENTS.md`, global `docker-compose.yml`. All paths relative to `./`.
-- App modules = Git Submodules [CRITICAL]: each top-level folder strictly isolated, independently deployable, dedicated submodule with independent history and its own `.github/workflows/` (lint/test/build/deploy for that module).
+- App modules = Git Submodules [CRITICAL]: each top-level folder strictly isolated, independently deployable, dedicated submodule with independent history and its own `.github/workflows/quality.yml` (web: `bun check && bun test && bun build`; api: `cargo fmt --check && cargo clippy -- -D warnings && cargo test && cargo build --release`); orchestrator owns `deploy.yml` (unified `Dockerfile → distroless` + `SUBMODULE_TOKEN`, `paths:` allowlist, `proxy:build-config`).
 - Centralized DB [CRITICAL]: PostgreSQL is THE datastore → Docker network or managed service. Axum backend (`crates/api`) owns schema & migrations via SQLx (`crates/api/migrations/`). Compute workers → pooled connections or queue/API/RPC.
 - Deployment asymmetry: Collapsed to single static distroless binary (`gcr.io/distroless/static-debian13:nonroot`) serving SvelteKit static build + Axum API/WSS/gRPC; Native Sims → Desktop/WASM.
 - Context boundaries [CRITICAL]: modules fully self-contained. Zero horizontal coupling. Block `../sibling/` → HTTP/gRPC/WebSocket only.
@@ -210,7 +214,7 @@ stale_after: 2027-08-15
 
 ## 12. Version Control, Releases & Scaffolding
 
-- Module scaffolding [CRITICAL]: new app module → `git init` inside `./<project>-<module>/` → remote → `git submodule add` to parent orchestrator + `mkdir -p .github/workflows` with per-module `quality.yml` + `deploy.yml` (lint/test/build/deploy for that module).
+- Module scaffolding [CRITICAL]: new app module → `git init` inside `./<project>-<module>/` → remote → `git submodule add` to parent orchestrator + `mkdir -p .github/workflows` with per-module `quality.yml` (native lint/test/build lane; standalone microservices add `deploy.yml`); orchestrator owns unified `deploy.yml` (multi-stage `Dockerfile → musl → distroless` + `SUBMODULE_TOKEN` + `paths:` allowlist).
 - `.gitignore`: secure default-deny (block `*`, allowlist source) in root AND EACH submodule. Update actively → prevent credential leaks.
 - SemVer: strict `MAJOR.MINOR.PATCH` per module.
 - Changelog: `./<project>-<module>/CHANGELOG.md` (`## VERSION - YYYY-MM-DD`). Categories `Added`/`Changed`/`Removed`/`Fixed`. Imperative mood.
