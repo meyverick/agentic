@@ -1,41 +1,40 @@
 {
-  "skill": "skill-creator",
+  "skill": "guardrails",
   "generated": {
-    "by": "process:compute-benchmark/1.0",
-    "at": "2026-08-23T12:42:46Z"
+    "by": "process:structural-stage/1.0",
+    "at": "2026-09-02T10:56:00Z"
   },
   "stage": "behavioral",
   "structural": {
     "validate_structure": {
       "pass": true,
-      "warnings": []
+      "note": "recorded at apply gate (task 6.1)"
     },
     "validate_routing": {
       "checks_total": 6,
-      "positive_triggers": 5,
-      "anti_triggers": 3,
-      "description_body_alignment": "8/10 description keywords found in body (80% alignment)",
+      "positive_triggers": 4,
+      "anti_triggers": 2,
       "single_responsibility": true
     },
     "evals": {
       "count": 4,
-      "assertions": 13,
+      "assertions": 9,
       "anti_trigger_coverage": true
     }
   },
-  "behavioral_dxm": "1×0.31",
+  "behavioral_dxm": "1×0.33",
   "ship_gate": {
     "criterion": "d = +1 and m >= 0.2",
     "applies_to": "behavioral stage"
   },
   "behavioral": {
-    "at": "2026-09-02T08:56:18.533Z",
+    "at": "2026-09-02T08:59:00.285Z",
     "evals": 4,
-    "assertions": 13,
-    "baseline": 0.5385,
-    "with_skill": 0.8462,
+    "assertions": 12,
+    "baseline": 0.5,
+    "with_skill": 0.8333,
     "d": 1,
-    "m": 0.3077,
+    "m": 0.3333,
     "ship": "pass"
   }
 }

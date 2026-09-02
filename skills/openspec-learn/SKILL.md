@@ -92,10 +92,37 @@ If scope expansion detected → propose splitting into separate skill instead of
 Estimate whether creating/updating a skill improves outcomes by >= 20%:
 - Assessment difficulty >= 3/5 OR knowledge gaps identified → justified
 - All difficulty <= 2/5 AND no gaps → flag as low value in proposal
+- **Frequency × cost heuristic (new):** Read `Re-use Score` (high=3, medium=2, low=1) and `Time Cost` from report/assessment; prioritize `frequency × cost` — a `high` re-use gap that cost 60m and recurs ≥2 times outranks a singleton `low` gap even if its difficulty was 5/5
 
 ### Phase 2e: Context Budget Impact
 
 Estimate Tier 1 + Tier 2 token cost of proposed skill based on similar skills. Warn if >2000 tokens in proposal.
+
+### Phase 2f: Recurring Gap Clustering (compound learning)
+
+Before proposing, cluster gaps and gotchas across ALL reports in `openspec/reports/*` (excluding `archives/`):
+
+```bash
+# Collect knowledge gaps, skills gaps, Concrete Gotcha, and Before→After signals
+for f in openspec/reports/*/report.md openspec/reports/*/assessment.md; do [ -f "$f" ] && echo "== $f ==" && grep -E "Knowledge gaps|Skills gaps|Concrete Gotcha|Before \\(old|After \\(new|Re-use Score|Time Cost" "$f" | head -n 20; done
+```
+
+Group by keyword (e.g., `Option`, `lifetime`, `borrow`, `Result`) and count occurrences. Prioritize a keyword cluster that recurs in ≥2 reports over a singleton, even if the singleton's difficulty was higher. Record the cluster table (keyword → count → representative gap) in the proposal's Analysis section; this drives `Deferred:` decisions in Phase 5.
+
+**Dashboard generation (human curation view):** After clustering, write/overwrite `openspec/reports/dashboard.md` (never archived, never auto-loaded at agent startup):
+```bash
+# Header: generated at $(date -u +"%Y-%m-%dT%H:%M:%SZ") from N reports
+# Table: keyword | count | avg Time Cost | avg Re-use (high=3/med=2/low=1) | owning skill | m  sorted by frequency×cost desc
+# Source: grep Re-use Score + Time Cost + keyword + owning skill from clustered reports + benchmark.json m
+# If no reports, write: No reports yet — run /opsx-report after a hard task
+```
+Header `generated at <timestamp> from N reports`; table sorted `frequency × cost` desc (count × Re-use weight × avg Time Cost). Overwrite on each learn run; human reads it to curate manual reports.
+
+**Lifecycle check (prune/merge/split):** After clustering, also evaluate:
+- **Prune:** If a skill's usage count is 0 in last 10 reports OR its `benchmark.json` `behavioral.m < 0.2`, mark `Prune: <skill> — 0/10 or low m`
+- **Merge:** If ≥3 shared gaps under same keyword across 2 skills, mark `Merge: <target> ← <a> + <b> — shared keyword`
+- **Split:** If a skill's description would need `and`, mark `Split: <skill> → <a> + <b> — single-responsibility`
+Each emits one-path `What Changes: Remove project/skills/<skill>/` or `Merge: ...` with `Deferred:` for rejected lifecycle candidates.
 
 ### Phase 3: Tool Type Determination
 
@@ -110,9 +137,14 @@ See [references/conflict-handling.md](references/conflict-handling.md) for mergi
 Generate proposal including:
 - What to build + why (from report + assessment)
 - Suggested Triggers section (from Phase 2b) — MUST use the exact frontmatter field names `positive_triggers` and `anti_triggers` as list headers, with each value formatted for verbatim transfer into a skill's frontmatter (no prose labels like "Positive:" or "Negative:")
-- Value Justification section (from Phase 2d)
+- **Contrast and Anti-example hints (from report's Mental Model Shift / Concrete Gotcha):** Carry `Contrast: Before X → After Y` (1–2 lines) and `Anti-example: Do NOT: <before code> → Do: <after code>` verbatim into What Changes so `skill-creator` can generate contrast tables and anti-examples as first-class content
+- **Layer-aware decision note:** State `Layer: 1 (always) vs 2 (on-demand skill) vs 3 (gate)` — for `Re-use Score: high` + `Time Cost >30m` + recurring cluster, suggest `Layer 1/3` promotion (e.g., `guardrails` skill or `AGENTS.md` Must-read pointer); otherwise `Layer 2` new/updated skill; no gate is implemented in this change, only the hint
+- **Lifecycle What Changes (when applicable):** Emit `What Changes: Remove project/skills/<skill>/` for prune, `What Changes: Merge project/skills/<target>/ ← <a> + <b>` for merge, or `Split` with two one-path creates; each with `Impact: evals + manifest updated` and `Deferred:` for rejected lifecycle candidates; cap 8 enforced here (see Gotchas)
+- Value Justification section (from Phase 2d, now including frequency × cost)
 - Collision warnings (from Phase 2a)
 - Context budget impact (from Phase 2e)
+- Clustering summary (from Phase 2f) — keyword → count → representative gap
+- **Dashboard citation (MANDATORY when lifecycle or create):** Each `create`/`prune`/`merge`/`split` in `What Changes` MUST cite `Source: dashboard.md#<keyword> — <count>× <Re-use> <time> (avg)` with verification path `openspec/reports/dashboard.md` — e.g., `Source: dashboard.md#lifetime — 4× high 45m avg`
 - Evals impact statement (MANDATORY when the proposal modifies an existing skill): state whether `evals/evals.json` changes; if triggers are added or altered, include at least one matching eval entry in Impact. No trigger changes → state that existing evals remain valid.
 - Deferred signals line (when the source report/assessment contains more improvement candidates than the proposal adopts): name each unadopted candidate with a one-line reason, so deferral is explicit rather than silent
 
@@ -125,6 +157,7 @@ The proposal instructs the AI agent to invoke skill-creator during `/opsx-apply`
 ```bash
 mkdir -p ./openspec/reports/archives
 mv ./openspec/reports/<name> ./openspec/reports/archives/
+# dashboard.md never moves — it stays at openspec/reports/dashboard.md (human curation view, not a report)
 ```
 
 ### Phase 7: Display Summary
@@ -138,6 +171,9 @@ Report count, proposal count, archive count, next steps.
 - **Low-value skills waste context**: If difficulty <= 2/5 and no gaps, don't create a skill — the agent handles it fine already.
 - **Context budget matters**: Every skill costs tokens on every activation. Estimate before creating.
 - **Single-responsibility**: If improvement adds new domain to existing skill, split instead of updating.
+- **Deferred is explicit (clustering-driven):** When clustering finds 4 candidates and proposal adopts 2, the remaining 2 MUST appear under `Deferred:` with one-line reasons — populated from Phase 2f cluster table, not silently dropped.
+- **Lifecycle: prune/merge/split:** `Prune` when 0/10 or `m<0.2`, `Merge` when ≥3 shared gaps same keyword, `Split` when description needs `and` — emit one-path `What Changes` with `Deferred:` for rejected
+- **Cap 8: create must pair with prune/merge at cap:** When 8 skills exist, any `create` proposal MUST also include a `prune` or `merge` in same proposal; never silently exceed cap
 
 ## Error Handling
 

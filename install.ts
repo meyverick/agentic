@@ -246,20 +246,16 @@ function writeProvenanceManifest(version: string): void {
   }
   
   const skillsSrc = path.join(srcDir, 'skills');
-  const promptsSrc = path.join(srcDir, 'prompts');
   
   const skills = fs.existsSync(skillsSrc)
     ? fs.readdirSync(skillsSrc).filter(item => fs.statSync(path.join(skillsSrc, item)).isDirectory())
-    : [];
-  const prompts = fs.existsSync(promptsSrc)
-    ? getAllFiles(promptsSrc)
     : [];
   
   const manifest = {
     installed_by: 'agentic',
     version,
     skills,
-    prompts
+    prompts: []
   };
   
   const manifestPath = path.join(skillsDst, '.agentic-manifest.json');

@@ -19,6 +19,52 @@ generated:
 
 {{what_i_learned}}
 
+## Mental Model Shift
+
+<!-- 1-2 lines: Before (old model) → After (new model). ex: Before: C# null check (if x != null) → After: Rust Option (if let Some(x) = x) — absence is type-level, not runtime value -->
+
+Before (old model): {{mental_model_before}}
+
+After (new model): {{mental_model_after}}
+
+## Surprise vs Expectation
+
+<!-- 1-2 lines: what you expected vs what actually happened -->
+
+Expected: {{expected}}
+
+Surprise: {{surprise}}
+
+## Concrete Gotcha
+
+<!-- Single before/after code snippet with signal. ex: before (wrong): if (user != null) → after (right): if let Some(u) = user — signal: compiler forces None handling -->
+
+Before (wrong):
+
+```{{gotcha_lang_before}}
+{{gotcha_before}}
+```
+
+After (right):
+
+```{{gotcha_lang_after}}
+{{gotcha_after}}
+```
+
+Signal: {{gotcha_signal}}
+
+## Time Cost
+
+<!-- Where time went. ex: 60m borrow checker, 10m logic -->
+
+{{time_cost}}
+
+## Re-use Score
+
+<!-- high/medium/low + one-line why. ex: high — every Rust task touches Option -->
+
+{{reuse_score}} — {{reuse_reason}}
+
 ## What I'd Do Differently
 
 {{what_i_would_do_differently}}

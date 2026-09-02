@@ -41,6 +41,14 @@ generated:
 
 {{skills_gaps}}
 
+### Before → After Model
+
+<!-- 1-2 lines complementing report's Mental Model Shift: what model did you hold before vs after. ex: Before: C# null is runtime value → After: Rust Option is type-level -->
+
+Before: {{before_model}}
+
+After: {{after_model}}
+
 ## What Would Help Next Time
 
 ### Process improvements
@@ -54,3 +62,23 @@ generated:
 ### Documentation gaps
 
 {{documentation_gaps}}
+
+### Re-use Score
+
+<!-- high/medium/low + one-line why — feeds learn's frequency×cost prioritization. ex: high — every Rust task touches Option -->
+
+{{reuse_score}} — {{reuse_reason}}
+
+## Time Cost
+
+<!-- Where time went — mirrors report's Time Cost for learn clustering. ex: 60m borrow checker, 10m logic -->
+
+{{time_cost}}
+
+## Surprise vs Expectation
+
+<!-- 1-2 lines mirroring report; helps learn prioritize surprises -->
+
+Expected: {{expected}}
+
+Surprise: {{surprise}}

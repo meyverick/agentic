@@ -89,12 +89,12 @@ Ask the user (open-ended, no presets):
 Determine:
 
 1. **Scope**: Single atomic intent. One sentence, no "and". If compound → split into multiple skills.
-2. **Fragility**: Mutation = strict, read-only = loose, creative = low specificity.
+2. **Fragility**: Mutation = strict, read-only = loose, creative = low — see `references/fragility-matching.md` (Level 2).
 3. **Progressive disclosure**: SKILL.md vs references/ with context budget per tier:
    - Tier 1 (frontmatter): <50 tokens
    - Tier 2 (SKILL.md body): <1500 tokens
    - Tier 3 (references/): on-demand only
-4. **Components**: Persona / instructions / templates / data (not omnibus)
+4. **Components**: Persona / instructions / templates / data (not omnibus) — see `references/component-decomposition.md` (Level 2).
 5. **Scripts**: Reusable logic to bundle (.mjs, cold/isolated, relative paths only)
 6. **Eval strategy**: Test cases, assertions, near-miss negatives, baseline comparison
 7. **Activation boundary**: Define what triggers and what does NOT trigger
@@ -110,8 +110,11 @@ Determine:
    - Pre-Flight Checks: environment probes before execution
    - Output Contract: JSON schema for success/error
    - Core instructions (<500 lines, <1500 tokens)
+   - Contrast: `| Before (old) | After (new) | Why different |` table when proposal carries `Contrast:` hint (e.g., `C# null → Rust Option`); keep distinct from routing
+   - Anti-examples: `Do NOT: <before>` → `Do: <after>` with Why, when proposal carries `Anti-example:` hint from report's Concrete Gotcha; body content, NOT frontmatter `anti_triggers`
+   - Tiered depth: Level 1 basics inline, Level 2 advanced behind `references/<topic>.md` (cap one file per skill)
 4. **Scripts**: Generate if clearly reusable (.mjs, self-contained, relative paths via import.meta.url, JSON output only)
-5. **References**: Domain-specific docs, loaded on-demand
+5. **References**: Domain-specific docs, loaded on-demand — **Tiered depth:** Level 1 basics inline in SKILL.md, Level 2 advanced behind `references/<topic>.md`; cap at one `references/` file per skill; link explicitly from SKILL.md
 6. **Templates**: Output shapes, examples
 7. **Single source**: Define each rule ONCE, reference everywhere else
 8. **Portability**: No absolute paths (/home/, /root/, C:\), no harness-specific dirs (.pi/, .agents/) in executable code
@@ -153,33 +156,18 @@ Self-correct any issues before proceeding.
 
 ### Phase 5: Evaluation (mandatory)
 
-**Step 1: Create test cases**
-- 2-3 test cases minimum
-- Varied phrasing (formal, casual, terse)
-- Edge cases, realistic context
-
-**Step 2: Create near-miss negatives**
-- Prompts that look similar but should NOT trigger
-- Critical for catching over-firing
-
-**Step 3: Measure baseline (no skill)**
-Run all test cases WITHOUT the skill loaded. Record baseline_pass_rate.
-This is required for quality score calculation.
-
-**Step 4: Run eval loop WITH skill**
-For each test case:
-1. Run skill against prompt
-2. Capture output
-3. Grade assertions (PASS/FAIL with evidence)
-4. Record timing
-
-**Step 5: Near-miss grading**
-Assert skill did NOT trigger on near-misses. Pass rate must be 100% for mutation tools.
+**Step 1-5: Eval loop** — 2-3 cases + near-miss negatives; measure baseline (no skill) then with-skill (grade PASS/FAIL, record timing); near-miss 100% for mutation.
 
 **Step 6: Compute benchmarks**
 ```bash
 scripts/compute-benchmark.mjs <eval-dir>
 ```
+
+**Step 6b: Cold-agent behavioral proof (mandatory)**
+```bash
+scripts/run-cold-eval.mjs <skill-dir>
+```
+Runs `evals/evals.json` cold A/B (without vs with skill), computes `d = sign(with - baseline)`, `m = |with - baseline|`, emits unified envelope `{target, pass, checks, summary}` + `behavioral: {at, baseline, with_skill, d, m, ship}` (30s timeout, JSON only). Writes `evals/benchmark.json` with `stage: behavioral` block (`{at, baseline, with_skill, d, m, ship}`) replacing `pending_cold_agent_run`; record outputs in creation session. Reuses `compute-benchmark.mjs` logic; no network, deterministic.
 
 **Step 7: Calculate quality score**
 ```
@@ -187,7 +175,7 @@ d = direction (+1 if with_skill > baseline, -1 if lower, 0 if equal)
 m = magnitude = |with_skill_pass_rate - baseline_pass_rate|
 quality_score = d × m
 ```
-Ship gate: d must be +1 AND m must be >= 0.2 (20% improvement over baseline).
+Ship gate: d must be +1 AND m must be >= 0.2 (20% improvement over baseline) — now proven by `run-cold-eval.mjs` behavioral block.
 
 **Step 8: Iterate**
 If quality insufficient:
@@ -224,10 +212,11 @@ Run `scripts/validate-structure.mjs` and `scripts/validate-routing.mjs` again af
 ### Phase 7: Ship
 
 1. **Final structural validation — HARD GATE**: run `scripts/validate-structure.mjs` and `scripts/validate-routing.mjs`; both MUST report pass with outputs recorded. If either fails, the skill is NOT presented for approval — self-correct and re-run until both pass.
-2. **Portability certificate**: verify no hardcoded paths, runtime deps declared, timeout bounds set, output contract defined
-3. **Present summary**: what skill does, tier achieved, eval results, trigger rate, quality score (d × m)
-4. **Wait for user approval**
-5. **Save to `./project/skills/<skill-name>/`**
+2. **Behavioral proof — HARD GATE (fail-closed)**: run `scripts/run-cold-eval.mjs <skill-dir>`; `d == +1 AND m >= 0.2` required with outputs recorded. If fails, emit `FAIL: m < 0.2 — not worth context cost` with validator + behavioral outputs, loop to Optimization (revise description/instructions) and re-run; never present for approval without behavioral pass.
+3. **Portability certificate**: verify no hardcoded paths, runtime deps declared, timeout bounds set, output contract defined
+4. **Present summary**: what skill does, tier achieved, eval results, trigger rate, quality score (d × m) + behavioral `d×m`
+5. **Wait for user approval**
+6. **Save to `./project/skills/<skill-name>/`**
 
 ## Frontmatter Schema Reference
 
@@ -263,81 +252,31 @@ runtime:
 
 ## Gotchas
 
-- **Description is king**: Only thing agents see before loading. Make it specific, imperative, intent-driven.
-- **Anti-triggers boost precision by 31.8%**: Without them, similar-domain queries falsely activate your skill.
-- **Frontmatter-only indexing loses 29-44% recall**: Ensure description keywords appear in SKILL.md body.
-- **Progressive disclosure budgets**: Tier 1 <50 tokens, Tier 2 <1500 tokens, Tier 3 on-demand. Exceeding budgets degrades attention.
-- **Single-responsibility is measurable**: If you can't describe the skill in one sentence without "and", split it.
-- **Start from real expertise**: Extract from working conversations, don't generate from nothing.
-- **Validation non-negotiable**: Always run structural validation, routing validation, content review, and antipattern audit.
-- **Near-miss negatives are critical**: Without them, over-firing passes silently.
-- **Match fragility**: Mutation = strict. Read-only = loose. Creative = low specificity.
-- **Single source**: Define each rule ONCE. Never copy-paste across files.
-- **Component decomposition**: Persona / instructions / templates / data. Never omnibus.
-- **Auto-fix and retry**: Most failures are fixable. Don't stop on first error.
-- **.mjs for scripts**: ES modules, cold/isolated, standalone execution.
-- **No hardcoded paths**: Use relative paths resolved via import.meta.url. Absolute paths break portability across harnesses.
-- **Pre-flight probes prevent failures**: Check runtime availability before executing scripts.
-- **Structured output contracts**: Scripts MUST output valid JSON. Unstructured output can't be deterministically parsed.
-- **Quality score measures real value**: A skill with 90% pass rate but 88% baseline has m=0.02 — not worth the context cost.
+- **Description is king**: Specific, imperative, intent-driven — see `references/description-optimization.md`.
+- **Anti-triggers +31.8% precision**: Frontmatter `anti_triggers` min 2, plus body `Anti-examples` distinct from routing.
+- **Progressive disclosure**: Tier 1 <50, Tier 2 <1500, Tier 3 on-demand — see `references/component-decomposition.md`.
+- **Single-responsibility**: One sentence without `and`, else split.
+- **Validation + behavioral gate is fail-closed**: `validate-structure` + `validate-routing` + `run-cold-eval.mjs` (`d=+1,m≥0.2`) mandatory; `m<0.2` blocks Ship.
+- **Fragility**: Mutation strict, read-only loose, creative low — see `references/fragility-matching.md`.
+- **No hardcoded paths**: Relative via `import.meta.url`; no `.pi`/`.agents` in scripts.
 
 ## Examples
 
-### Example 1: Create Skill from Problem Description
+### Example: Create Skill from Problem Description
 
 ```bash
 /skill-create csv-analyzer
+# 1. Discovery: Q "analyze CSV" → positive_triggers 3, anti_triggers 2
+# 2. Design: scope atomic, fragility read-only=loose (see fragility-matching.md)
+# 3. Scaffold: scripts/scaffold-skill.mjs csv-analyzer
+# 4. Author SKILL.md with Contrast/Anti-examples, Tiered depth
+# 5. Validate routing+structure + run-cold-eval (d×m≥0.2)
+# 6. Ship when both gates pass
 ```
-
-1. System asks discovery questions (including trigger questions)
-2. User provides: "Analyze CSV files, compute statistics, generate charts"
-3. User provides positive_triggers: "analyze CSV", "compute stats from CSV", "chart from CSV data"
-4. User provides anti_triggers: "write CSV to database", "edit Excel spreadsheet"
-5. System designs: scope, fragility (read-only = loose), components, activation boundary
-6. System scaffolds: `./project/skills/csv-analyzer/`
-7. System writes SKILL.md with instructions, activation boundary, pre-flight checks, output contract
-8. System validates structure, routing, and antipatterns
-9. System runs evals (baseline + with-skill, calculates quality score)
-10. System presents summary for approval
-11. Skill saved to `./project/skills/csv-analyzer/`
-
-### Example 2: Create Skill from Instruction File
-
-```bash
-/skill-create database-schema
-```
-
-1. System reads `./skills-todo/database-schema.md`
-2. System skips Phase 1 (Discovery) — instructions have answers
-3. System starts at Phase 2 (Design) with provided decisions
-4. System follows standard workflow from there
-
-### Example 3: Create Minimal Skill (Quick Prototyping)
-
-```bash
-/skill-create quick-helper
-```
-
-1. User requests Minimal tier
-2. System scaffolds directory
-3. System writes minimal SKILL.md
-4. System validates structure
-5. System presents summary
-6. Skill saved (no evals, no optimization)
 
 ## Error Handling
 
-| Error | Action |
-|-------|--------|
-| Invalid skill name | Ask for valid name (lowercase, hyphens, 1-64 chars) |
-| Instruction file missing | Ask for problem description (Phase 1) |
-| Validation fails | Auto-fix and retry |
-| Routing validation fails | Revise triggers/description, re-validate |
-| Portability check fails | Fix hardcoded paths, re-check |
-| Antipattern detected | Auto-fix and re-audit |
-| Evals fail | Analyze failures, fix instructions, re-run |
-| Quality score below threshold | Improve skill or increase baseline gap |
-| User rejects | Discard skill, start over if requested |
+Validation/evals fail → auto-fix and retry; quality <0.2 → loop to Optimization; invalid name → ask for valid (lowercase, hyphens, 1-64); user rejects → discard.
 
 ## References
 
