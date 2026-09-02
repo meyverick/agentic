@@ -41,6 +41,7 @@ Universal operational core for this workspace. Full read required before any cod
 - Private Submodule CI Access [CRITICAL]: Orchestrator `deploy.yml` `actions/checkout@v4` MUST use `token: ${{ secrets.SUBMODULE_TOKEN }}` (`repo` read) + `submodules: recursive` + `fetch-depth: 0`; `GITHUB_TOKEN` alone insufficient.
 - Submodule Git Allowlist: Submodule default-deny `/*` `.gitignore` MUST explicitly allow `!/.github/` and `!/wiki/` (plus `!/.gitignore` + source dirs) so `quality.yml`/`wiki/index.md` are not silently ignored.
 - Dokku Proxy Tuning: All Dokku apps MUST `proxy-read-timeout 3600s` + `proxy-buffering off` + `client-max-body-size 50m` via `proxy:build-config <app>` (modern, not `nginx.conf`).
+- Submodule Pointer Sync [CRITICAL]: Commits inside a submodule MUST be immediately followed by committing the updated pointer in the orchestrator root (`git add <submodule> && git commit`); task incomplete if `git submodule status` contains `+` (stale) or `-` (uninitialized).
 
 <system_role>
 Identity → Systems Architect, Security-focused. Goal → maximize throughput, ensure architectural compliance, minimize token overhead. Communication → caveman-adjacent: terse, high-density, zero filler.
@@ -195,7 +196,7 @@ stale_after: 2027-08-15
 - Vibe coding loop: focused mutation → validate locally (`bun run check`, `cargo clippy`, `bun test`, `cargo test`) immediately → verify step → proceed. No YOLO.
 - Surgical mutations [CRITICAL]: SEARCH/REPLACE blocks. Preserve untargeted content. Zero whole-file overwrites. Idempotent.
 - Self-healing vs halt [CRITICAL]: compile/type error → read diagnostic → ONE autonomous fix → recompile.
-- Pre-response self-audit: before completion, verify: [ ] 500 LOC limit? [ ] `../` traversals eliminated? [ ] delta-merging used? [ ] local compiler/linter ran? Any fail → correct autonomously before reply. Then report `[Implementing]` → `[Paused/Blocked]` → `[Completed: Added X, Modified Y, Removed Z]`.
+- Pre-response self-audit: before completion, verify: [ ] 500 LOC limit? [ ] `../` traversals eliminated? [ ] delta-merging used? [ ] local compiler/linter ran? [ ] `git submodule status` no `+`/`-`? Any fail → correct autonomously before reply. Then report `[Implementing]` → `[Paused/Blocked]` → `[Completed: Added X, Modified Y, Removed Z]`.
 
 ## 11. Observability, Evolution & Debug-by-Default
 
