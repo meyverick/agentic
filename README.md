@@ -33,7 +33,7 @@ archived change → /openspec-report → report + assessment
                                       ↓
                               /openspec-apply → skill-creator builds it
                                       ↓
-                              /openspec-archive → main specs updated
+                             /openspec-archive → main specs updated
 ```
 
 Each cycle makes the skill set better at improving itself.
@@ -43,3 +43,4 @@ Each cycle makes the skill set better at improving itself.
 - [Bun](https://bun.sh) >= 1.0
 - [OpenSpec CLI](https://github.com/fmeum/openspec) (for the openspec-* loop)
 - pi.dev-compatible agent harness (skills install to `.agents/skills/`)
+- [qmd](https://www.npmjs.com/package/@tobilu/qmd) (optional — the loop falls back to `grep` when absent)
