@@ -5,8 +5,8 @@ description: >
   Use when you have just run /opsx-propose and want to enrich the proposal,
   specs, design, and tasks with concrete file paths, code blocks, verify steps,
   and grounded codebase context before handing to a cold agent for /opsx-apply.
-  Do NOT use when you want to implement code, create a new change from scratch,
-  or when no change exists yet.
+  Do NOT use when implementing changes (use openspec-apply-change), creating a
+  new change from scratch, or when no change exists yet.
 allowed-tools: Bash(openspec:*), Read, Grep
 license: MIT
 compatibility: Requires openspec CLI and ripgrep.
@@ -18,6 +18,7 @@ positive_triggers:
   - "improve change for fresh agent"
   - "enrich specs and tasks with file paths"
 anti_triggers:
+  - "implement changes from tasks or apply change"
   - "implement the change and edit project code"
   - "create a new change from scratch"
 ---

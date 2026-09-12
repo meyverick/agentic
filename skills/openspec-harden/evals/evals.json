@@ -1,0 +1,38 @@
+{
+  "skill_name": "openspec-harden",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Harden the proposal, specs, and tasks for the auth change with concrete file paths and test commands.",
+      "expected_output": "Agent loads openspec-harden skill and inspects proposal.md, design.md, specs/, and tasks.md to enrich them with grounded codebase context and exact paths.",
+      "files": [],
+      "assertions": [
+        "Skill activates on hardening request",
+        "Artifacts enriched with concrete paths",
+        "Source code is not edited"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Implement the tasks in tasks.md for the auth change and modify the codebase.",
+      "expected_output": "Agent does NOT activate openspec-harden. Implementation and code-writing are handled by openspec-apply-change; openspec-harden only enriches planning artifacts before apply.",
+      "files": [],
+      "assertions": [
+        "Anti-trigger fires: request routes to openspec-apply-change, not openspec-harden",
+        "No proposal hardening workflow executed",
+        "No planning artifacts modified"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Improve change for fresh agent by resolving either/or file paths into single targets.",
+      "expected_output": "Agent enriches tasks with single concrete paths and verify steps without implementing features.",
+      "files": [],
+      "assertions": [
+        "Single concrete paths assigned",
+        "Zero code mutations made to project files",
+        "Verify steps populated"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "description": "Retrieval benchmark for openspec-learn clustering queries",
+  "version": 1,
+  "collection": "openspec",
+  "queries": [
+    {
+      "id": "cluster-baseline-exact",
+      "query": "submodule pointer sync",
+      "type": "exact",
+      "description": "Exact keyword match baseline for submodule pointer sync",
+      "expected_files": [
+        "specs/submodule-pointer-sync/spec.md"
+      ],
+      "expected_in_top_k": 1
+    },
+    {
+      "id": "cluster-paraphrase-semantic",
+      "query": "intent: find the spec that owns submodule pointer freshness\nlex: submodule pointer sync gitlink\nvec: which capability requires committing the updated submodule pointer",
+      "type": "semantic",
+      "description": "Paraphrased query document retrieving submodule pointer spec without exact title match",
+      "expected_files": [
+        "specs/submodule-pointer-sync/spec.md"
+      ],
+      "expected_in_top_k": 1
+    }
+  ]
+}

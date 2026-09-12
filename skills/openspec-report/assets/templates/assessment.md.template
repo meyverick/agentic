@@ -3,7 +3,7 @@ type: Assessment
 title: "Assessment: {{change-name}}"
 description: "AI agent meditation on the experience"
 generated:
-  by: opsx-report/1.0
+  by: openspec-report/1.0
   at: {{timestamp}}
 ---
 

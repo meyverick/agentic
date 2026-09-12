@@ -1,0 +1,38 @@
+{
+  "skill_name": "qmd-research",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Research the specifications and architecture regarding how submodule pointer sync is enforced.",
+      "expected_output": "Agent activates qmd-research, selects hybrid query mode with authored intent/lex/vec lines, retrieves relevant documents with qmd get, and cites docid and line numbers.",
+      "files": [],
+      "assertions": [
+        "Skill activates on conceptual research request",
+        "Mode selection authors intent and lexical/semantic lines",
+        "Claims cite retrieved docids with line numbers",
+        "No index mutation commands run"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Find the exact definition of the function `writeProvenanceManifest` in `project/install.ts`.",
+      "expected_output": "Agent does NOT activate qmd-research. Exact symbol and file lookups are handled via grep or Read; qmd-research is for conceptual research and collection management.",
+      "files": [],
+      "assertions": [
+        "Anti-trigger fires: request routes to grep/Read, not qmd-research",
+        "No QMD queries executed for exact symbol lookup"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Search the archive reports for lessons learned about database migrations.",
+      "expected_output": "Agent runs read path using qmd query scoped to openspec collection, fetches document slices, and reports findings without executing index mutations.",
+      "files": [],
+      "assertions": [
+        "Search scoped with -c openspec",
+        "Document fetched before claiming",
+        "Mutation path remains gated (no embed, cleanup, or update executed)"
+      ]
+    }
+  ]
+}

@@ -4,7 +4,8 @@ description: >
   Generate self-reflection (meditation) on an archived OpenSpec change.
   Use when the user wants to create a report from an archived change,
   document lessons learned, or capture AI agent self-assessment.
-  Do NOT use when implementing changes, creating proposals, or analyzing reports for skill improvements.
+  Do NOT use when exploring ideas (use openspec-explore), implementing changes,
+  creating proposals, or analyzing reports for skill improvements.
 allowed-tools: Bash(openspec:*), Bash(ls:*), Bash(mkdir:*), Bash(mv:*)
 license: MIT
 compatibility: Requires openspec CLI.
@@ -16,11 +17,12 @@ positive_triggers:
   - "document what was learned from this change"
   - "create self-reflection on completed work"
 anti_triggers:
+  - "explore ideas and investigate problems"
   - "implement a proposal or apply changes"
   - "analyze reports to improve skills"
 ---
 
-# Opsx Report
+# Openspec Report
 
 Generate self-reflection (meditation) on archived OpenSpec changes.
 

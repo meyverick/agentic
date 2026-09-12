@@ -1,9 +1,18 @@
 {
   "skill": "opsx-report",
-  "generated": { "by": "process:compute-benchmark/1.0", "at": "2026-08-23T12:42:46Z" },
-  "stage": "structural",
+  "generated": {
+    "by": "process:compute-benchmark/1.0",
+    "at": "2026-08-23T12:42:46Z"
+  },
+  "stage": "behavioral",
   "structural": {
-    "validate_structure": {"pass":true,"warnings":["Missing scripts/ directory","Missing references/ directory"]},
+    "validate_structure": {
+      "pass": true,
+      "warnings": [
+        "Missing scripts/ directory",
+        "Missing references/ directory"
+      ]
+    },
     "validate_routing": {
       "checks_total": 6,
       "positive_triggers": 3,
@@ -17,6 +26,19 @@
       "anti_trigger_coverage": true
     }
   },
-  "behavioral_dxm": "pending_cold_agent_run",
-  "ship_gate": { "criterion": "d = +1 and m >= 0.2", "applies_to": "behavioral stage" }
+  "behavioral_dxm": "1×0.33",
+  "ship_gate": {
+    "criterion": "d = +1 and m >= 0.2",
+    "applies_to": "behavioral stage"
+  },
+  "behavioral": {
+    "at": "2026-09-12T09:38:54.074Z",
+    "evals": 4,
+    "assertions": 9,
+    "baseline": 0.5556,
+    "with_skill": 0.8889,
+    "d": 1,
+    "m": 0.3333,
+    "ship": "pass"
+  }
 }

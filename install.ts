@@ -236,8 +236,11 @@ function createReportsDir(): void {
  * Write provenance manifest (.agents/skills/.agentic-manifest.json)
  *
  * Records what this installer owns so consuming-project agents can
- * classify skill ownership without inference. NEVER touches
- * .ownership.json (user-owned adjudications).
+ * classify skill ownership without inference (ownership input). Consumer
+ * agents treat installed skills as read-only (never edit .agents/skills/*
+ * in place; reroute upstream or to project-local homes). Source skills
+ * in project/skills/* are owned and editable only by the project owner
+ * and trusted session. NEVER touches .ownership.json (user-owned adjudications).
  */
 function writeProvenanceManifest(version: string): void {
   const skillsDst = path.join(targetDir, '.agents', 'skills');

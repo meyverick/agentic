@@ -1,23 +1,19 @@
 {
-  "skill": "opsx-learn",
+  "skill": "openspec-harden",
   "generated": {
-    "by": "process:compute-benchmark/1.0",
-    "at": "2026-08-23T12:42:46Z"
+    "by": "process:structural-stage/1.0",
+    "at": "2026-09-12T11:38:00Z"
   },
   "stage": "behavioral",
   "structural": {
     "validate_structure": {
       "pass": true,
-      "warnings": [
-        "Missing scripts/ directory",
-        "Missing assets/ directory"
-      ]
+      "note": "recorded at apply gate (task 3.4)"
     },
     "validate_routing": {
       "checks_total": 6,
       "positive_triggers": 3,
-      "anti_triggers": 2,
-      "description_body_alignment": "10/10 description keywords found in body (100% alignment)",
+      "anti_triggers": 3,
       "single_responsibility": true
     },
     "evals": {
@@ -26,19 +22,19 @@
       "anti_trigger_coverage": true
     }
   },
-  "behavioral_dxm": "1×0.27",
+  "behavioral_dxm": "1×0.33",
   "ship_gate": {
     "criterion": "d = +1 and m >= 0.2",
     "applies_to": "behavioral stage"
   },
   "behavioral": {
-    "at": "2026-09-12T09:38:54.002Z",
-    "evals": 4,
-    "assertions": 11,
-    "baseline": 0.5455,
-    "with_skill": 0.8182,
+    "at": "2026-09-12T09:38:54.142Z",
+    "evals": 3,
+    "assertions": 9,
+    "baseline": 0.5556,
+    "with_skill": 0.8889,
     "d": 1,
-    "m": 0.2727,
+    "m": 0.3333,
     "ship": "pass"
   }
 }

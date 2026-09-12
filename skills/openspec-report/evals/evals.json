@@ -31,6 +31,16 @@
         "Report contains an Archive Reference section with location",
         "Report content is reflection (lessons, decisions, trade-offs), not artifact duplication"
       ]
+    },
+    {
+      "id": 4,
+      "prompt": "I want to explore whether we should use Redis or Postgres for session storage.",
+      "expected_output": "Agent does NOT activate openspec-report. This is an open-ended exploration request handled by openspec-explore; openspec-report only reflects on completed/archived changes.",
+      "files": [],
+      "assertions": [
+        "Anti-trigger fires: request routes to openspec-explore, not openspec-report",
+        "No report generation attempted"
+      ]
     }
   ]
 }

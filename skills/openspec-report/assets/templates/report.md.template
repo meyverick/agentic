@@ -3,7 +3,7 @@ type: OpenSpec Report
 title: "Report: {{change-name}}"
 description: "Self-reflection on archived change"
 generated:
-  by: opsx-report/1.0
+  by: openspec-report/1.0
   at: {{timestamp}}
 ---
 

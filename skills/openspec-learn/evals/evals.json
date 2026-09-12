@@ -33,6 +33,16 @@
         "List of available reports displayed",
         "Reports in ./openspec/reports/archives/ not shown"
       ]
+    },
+    {
+      "id": 4,
+      "prompt": "I want to propose a new change to add caching to our API service.",
+      "expected_output": "Agent does NOT activate openspec-learn. This is a new change proposal request handled by openspec-propose; openspec-learn only analyzes existing reports to plan skill improvements.",
+      "files": [],
+      "assertions": [
+        "Anti-trigger fires: request routes to openspec-propose, not openspec-learn",
+        "No report scanning or skill learning workflow executed"
+      ]
     }
   ]
 }

@@ -100,6 +100,7 @@ Determine:
 7. **Activation boundary**: Define what triggers and what does NOT trigger
 8. **Runtime contract**: Required runtimes (bun/node/python), timeout_seconds, output_format (json)
 9. **Output contract**: JSON schema for success and error responses
+10. **Retrieval collision check**: Run hybrid retrieval over installed and project skills before scaffolding: `qmd query "<intent>" --json -n 10` (hybrid) per `project/AGENTS.md:180`, fetch hits via `qmd multi-get`, and evaluate description overlap. If semantic overlap is detected, flag the collision and suggest updating the existing skill instead of creating a new one.
 
 ### Phase 3: Authoring
 
