@@ -1,18 +1,18 @@
 {
-  "skill": "qmd-research",
+  "skill": "check",
   "generated": {
     "by": "process:structural-stage/1.0",
-    "at": "2026-09-12T11:38:00Z"
+    "at": "2026-09-17T14:32:00Z"
   },
   "stage": "behavioral",
   "structural": {
     "validate_structure": {
       "pass": true,
-      "note": "recorded at apply gate (task 7.2)"
+      "note": "recorded at apply gate (task 2.3)"
     },
     "validate_routing": {
       "checks_total": 6,
-      "positive_triggers": 3,
+      "positive_triggers": 4,
       "anti_triggers": 2,
       "single_responsibility": true
     },
@@ -28,7 +28,7 @@
     "applies_to": "behavioral stage"
   },
   "behavioral": {
-    "at": "2026-09-12T09:39:58.960Z",
+    "at": "2026-09-17T12:33:46.775Z",
     "evals": 3,
     "assertions": 9,
     "baseline": 0.5556,

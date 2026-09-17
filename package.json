@@ -1,9 +1,15 @@
 {
   "name": "agentic",
-  "version": "4.0.0",
+  "version": "4.1.1",
   "description": "AI agent skills and prompts for pi.dev",
+  "scripts": {
+    "check-deps": "./scripts/check-deps.mjs",
+    "git-dl": "./scripts/git-dl.mjs"
+  },
   "bin": {
-    "agentic": "./install.ts"
+    "agentic": "./install.ts",
+    "check-deps": "./scripts/check-deps.mjs",
+    "git-dl": "./scripts/git-dl.mjs"
   },
   "keywords": [
     "ai",

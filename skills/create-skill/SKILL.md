@@ -1,5 +1,5 @@
 ---
-name: skill-creator
+name: create-skill
 description: Create new Agent Skills from problem descriptions or instruction files. Walks through discovery, design, authoring, validation, evaluation, and optimization phases. Use when the user wants to build a new skill, create a skill from a workflow, extract a reusable pattern from a task, or set up evaluation for an existing skill. Do NOT use when the task involves general coding, debugging application code, writing project documentation, or any work unrelated to skill creation.
 allowed-tools: Bash(*)
 license: MIT
@@ -24,7 +24,7 @@ runtime:
   output_format: json
 ---
 
-# Skill Creator
+# Create Skill
 
 Create new Agent Skills from problem descriptions or instruction files. Fully autonomous workflow with research-informed quality standards.
 

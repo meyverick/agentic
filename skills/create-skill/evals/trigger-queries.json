@@ -1,5 +1,5 @@
 {
-  "skill_name": "skill-creator",
+  "skill_name": "create-skill",
   "queries": [
     {
       "id": 1,
@@ -13,7 +13,7 @@
     },
     {
       "id": 3,
-      "query": "Create a skill-creator skill that helps build other skills.",
+      "query": "Create a skill that helps build other skills.",
       "should_trigger": true
     },
     {

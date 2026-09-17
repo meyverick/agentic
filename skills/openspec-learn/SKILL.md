@@ -150,7 +150,7 @@ See [references/conflict-handling.md](references/conflict-handling.md) for mergi
 Generate proposal including:
 - What to build + why (from report + assessment)
 - Suggested Triggers section (from Phase 2b) — MUST use the exact frontmatter field names `positive_triggers` and `anti_triggers` as list headers, with each value formatted for verbatim transfer into a skill's frontmatter (no prose labels like "Positive:" or "Negative:")
-- **Contrast and Anti-example hints (from report's Mental Model Shift / Concrete Gotcha):** Carry `Contrast: Before X → After Y` (1–2 lines) and `Anti-example: Do NOT: <before code> → Do: <after code>` verbatim into What Changes so `skill-creator` can generate contrast tables and anti-examples as first-class content
+- **Contrast and Anti-example hints (from report's Mental Model Shift / Concrete Gotcha):** Carry `Contrast: Before X → After Y` (1–2 lines) and `Anti-example: Do NOT: <before code> → Do: <after code>` verbatim into What Changes so `create-skill` can generate contrast tables and anti-examples as first-class content
 - **Layer-aware decision note:** State `Layer: 1 (always) vs 2 (on-demand skill) vs 3 (gate)` — for `Re-use Score: high` + `Time Cost >30m` + recurring cluster, suggest `Layer 1/3` promotion (e.g., `guardrails` skill or `AGENTS.md` Must-read pointer); otherwise `Layer 2` new/updated skill; no gate is implemented in this change, only the hint
 - **Lifecycle What Changes (when applicable):** Emit `What Changes: Remove project/skills/<skill>/` for prune, `What Changes: Merge project/skills/<target>/ ← <a> + <b>` for merge, or `Split` with two one-path creates; each with `Impact: evals + manifest updated` and `Deferred:` for rejected lifecycle candidates; cap 8 enforced here (see Gotchas)
 - Value Justification section (from Phase 2d, now including frequency × cost)
@@ -170,7 +170,7 @@ Generate proposal including:
 - Payload casing: Workflow payloads use `camelCase`; store payloads use `snake_case` (`root.store_id` always `snake_case`).
 - Archive delegation: Follow-on change archiving delegates to `openspec archive --json` (`archivedAs`, `specsUpdated`, `totals`, `warnings`). Never hand `mv` change directories or hand-merge delta specs into main specs.
 
-The proposal instructs the AI agent to invoke skill-creator during `/opsx-apply`.
+The proposal instructs the AI agent to invoke create-skill during `/opsx-apply`.
 
 ### Phase 6: Archive Processed Reports
 
@@ -188,7 +188,7 @@ Report count, proposal count, archive count, next steps.
 ## Gotchas
 
 - **Collision detection prevents dilution**: Two skills with similar descriptions reduce routing confidence for both.
-- **Trigger metadata saves Discovery time**: Pre-filling triggers from assessment data gives skill-creator a head start.
+- **Trigger metadata saves Discovery time**: Pre-filling triggers from assessment data gives create-skill a head start.
 - **Low-value skills waste context**: If difficulty <= 2/5 and no gaps, don't create a skill — the agent handles it fine already.
 - **Context budget matters**: Every skill costs tokens on every activation. Estimate before creating.
 - **Single-responsibility**: If improvement adds new domain to existing skill, split instead of updating.

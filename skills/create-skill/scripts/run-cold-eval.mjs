@@ -60,7 +60,7 @@ if (!Array.isArray(evals) || evals.length === 0) {
 // Baseline: agent without skill — pass 50% of assertions (conservative)
 // With-skill: agent with skill — pass 85% of assertions (skill adds 35%)
 // This mirrors research: good skill adds +31.8% precision via anti_triggers
-// For skills with explicit gate-compliance evals (e.g., skill-creator id 4), baseline is lower (0.4) to reflect missing gate
+// For skills with explicit gate-compliance evals (e.g., create-skill id 4), baseline is lower (0.4) to reflect missing gate
 
 let totalAssertions = 0;
 for (const ev of evals) totalAssertions += (ev.assertions?.length || 0);

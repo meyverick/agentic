@@ -1,11 +1,12 @@
 #!/usr/bin/env bun
 /**
- * install.ts - Install agentic skills, prompts, and AGENTS.md
+ * install.ts - Install agentic skills, scripts, and AGENTS.md
  * 
- * Usage: bunx github:meyverick/agentic-project
+ * Usage: bunx github:meyverick/agentic
  * 
  * Installs to current directory:
  *   - project/skills/* → .agents/skills/ (atomic replacement)
+ *   - project/scripts/* → scripts/ (diff-based)
  *   - project/AGENTS.md → AGENTS.md
  */
 
@@ -193,9 +194,45 @@ function installSkills(): void {
 }
 
 /**
- * Install prompts (diff-based)
+ * Install scripts (diff-based with executable permissions)
  */
-
+function installScripts(): void {
+  const scriptsSrc = path.join(srcDir, 'scripts');
+  const scriptsDst = path.join(targetDir, 'scripts');
+  
+  console.log('📜 Scripts:');
+  
+  if (!fs.existsSync(scriptsSrc)) {
+    console.log('   ⚠️  Not found\n');
+    return;
+  }
+  
+  copied = 0;
+  skipped = 0;
+  
+  const scriptFiles = fs.readdirSync(scriptsSrc).filter(item => {
+    return fs.statSync(path.join(scriptsSrc, item)).isFile();
+  });
+  
+  for (const file of scriptFiles) {
+    const srcPath = path.join(scriptsSrc, file);
+    const dstPath = path.join(scriptsDst, file);
+    
+    const changed = syncFile(srcPath, dstPath);
+    try {
+      fs.chmodSync(dstPath, 0o755);
+    } catch (_) {}
+    
+    if (changed) {
+      console.log(`  + ${file}`);
+    } else {
+      console.log(`  = ${file} (unchanged)`);
+    }
+  }
+  
+  console.log(`\n   → ${scriptsDst}`);
+  console.log(`   Copied: ${copied} | Skipped: ${skipped}\n`);
+}
 
 /**
  * Install AGENTS.md (diff-based)
@@ -249,15 +286,21 @@ function writeProvenanceManifest(version: string): void {
   }
   
   const skillsSrc = path.join(srcDir, 'skills');
+  const scriptsSrc = path.join(srcDir, 'scripts');
   
   const skills = fs.existsSync(skillsSrc)
     ? fs.readdirSync(skillsSrc).filter(item => fs.statSync(path.join(skillsSrc, item)).isDirectory())
+    : [];
+  
+  const scripts = fs.existsSync(scriptsSrc)
+    ? fs.readdirSync(scriptsSrc).filter(item => fs.statSync(path.join(scriptsSrc, item)).isFile())
     : [];
   
   const manifest = {
     installed_by: 'agentic',
     version,
     skills,
+    scripts,
     prompts: []
   };
   
@@ -283,6 +326,7 @@ function install(): void {
   console.log(`🔧 Installing agentic v${version}...\n`);
   
   installSkills();
+  installScripts();
   installAgentsMd();
   createReportsDir();
   writeProvenanceManifest(version);

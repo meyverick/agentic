@@ -1,0 +1,38 @@
+{
+  "skill_name": "check",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "I've just finished implementing the new Axum route and migration. Verify the workspace integrity and run the check gate to ensure nothing is broken.",
+      "expected_output": "Agent activates the check skill, executes `./scripts/check.sh`, evaluates the 6-slot gate results, and reports whether the workspace passed.",
+      "files": [],
+      "assertions": [
+        "Skill activates on workspace verification and check gate request",
+        "Agent executes `./scripts/check.sh`",
+        "All 6 slots or module lanes are verified"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Can you read through `references/check-orchestrator.sh` and explain what line 29 does?",
+      "expected_output": "Agent does NOT activate the check skill. Reading, exploring, or explaining existing script code does not trigger verification gates.",
+      "files": [],
+      "assertions": [
+        "Anti-trigger fires: request is read-only exploration and explanation",
+        "Check skill does not activate",
+        "No check scripts are executed"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "The pre-push check failed with: `X src/lib.rs needs 'assets/logo.png' but git does not track it`. What is wrong and how do we resolve it?",
+      "expected_output": "Agent uses the check skill diagnostic matrix to diagnose Class 4 (untracked compile-time build input), explains that `logo.png` exists locally but is uncommitted, stages it with `git add assets/logo.png`, and re-runs the check gate.",
+      "files": [],
+      "assertions": [
+        "Agent correctly identifies Class 4 untracked compile-time build input",
+        "Autonomous self-healing action stages missing asset via `git add`",
+        "Agent instructs re-running the check gate after remediation"
+      ]
+    }
+  ]
+}

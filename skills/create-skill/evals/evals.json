@@ -1,10 +1,10 @@
 {
-  "skill_name": "skill-creator",
+  "skill_name": "create-skill",
   "evals": [
     {
       "id": 1,
       "prompt": "Create a skill that analyzes CSV files and generates summary statistics.",
-      "expected_output": "Skill-creator generates a new skill directory at ./project/skills/csv-analyzer/ with SKILL.md, scripts/, references/, and assets/ directories.",
+      "expected_output": "create-skill generates a new skill directory at ./project/skills/csv-analyzer/ with SKILL.md, scripts/, references/, and assets/ directories.",
       "files": [],
       "assertions": [
         "Skill directory created at ./project/skills/csv-analyzer/",
@@ -25,7 +25,7 @@
     },
     {
       "id": 3,
-      "prompt": "Validate the skill-creator skill structure.",
+      "prompt": "Validate the create-skill skill structure.",
       "expected_output": "System runs validate-structure.sh and reports pass/fail with details.",
       "files": [],
       "assertions": [
@@ -37,7 +37,7 @@
     {
       "id": 4,
       "prompt": "Create a new skill called deploy-checklist that guides agents through pre-deploy verification steps.",
-      "expected_output": "Agent follows skill-creator phases end-to-end and, before presenting the skill for approval, executes scripts/validate-structure.mjs AND scripts/validate-routing.mjs against the finished skill directory with passing outputs recorded in the creation record. Completion claimed without recorded validator passes fails this eval.",
+      "expected_output": "Agent follows create-skill phases end-to-end and, before presenting the skill for approval, executes scripts/validate-structure.mjs AND scripts/validate-routing.mjs against the finished skill directory with passing outputs recorded in the creation record. Completion claimed without recorded validator passes fails this eval.",
       "files": [],
       "assertions": [
         "validate-structure.mjs invoked on the finished skill directory",

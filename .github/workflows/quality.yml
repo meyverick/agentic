@@ -22,7 +22,7 @@ jobs:
           for skill in skills/*/; do
             if [ -f "$skill/SKILL.md" ]; then
               echo "Validating $skill..."
-              node skills/skill-creator/scripts/validate-structure.mjs "$skill"
+              node skills/create-skill/scripts/validate-structure.mjs "$skill"
             fi
           done
 
@@ -31,7 +31,7 @@ jobs:
           for skill in skills/*/; do
             if [ -f "$skill/SKILL.md" ]; then
               echo "Auditing $skill..."
-              node skills/skill-creator/scripts/audit-antipatterns.mjs "$skill"
+              node skills/create-skill/scripts/audit-antipatterns.mjs "$skill"
             fi
           done
 
@@ -40,7 +40,7 @@ jobs:
           for skill in skills/*/; do
             if [ -f "$skill/SKILL.md" ]; then
               echo "Validating routing for $skill..."
-              node skills/skill-creator/scripts/validate-routing.mjs "$skill"
+              node skills/create-skill/scripts/validate-routing.mjs "$skill"
             fi
           done
 

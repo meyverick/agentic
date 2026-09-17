@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [4.1.1] - 2026-09-17
+
+### Fixed
+
+- **Completed `skill-creator` → `create-skill` rename** (`finish-skill-creator-rename`): repointed CI validator invocations in `project/.github/workflows/quality.yml` to `skills/create-skill/scripts/` (previously invoked scripts from the deleted path on every run); renamed skill-name references in `openspec-learn` SKILL.md plus references; fixed README skill-table row plus loop diagram; synced 7 main specs (`skill-creation`, `learn-proposal-contract`, `learn-compound-gains`, `behavioral-proof-flywheel`, `tooling-contract-alignment`, `agent-compound-directive`, `artifact-integrity`)
+
+## [4.1.0] - 2026-09-17
+
+### Added
+
+- **check skill** (`add-check-skill`): pre-push and workspace integrity gate execution manual — instructs agents to observe the two-speed verification protocol (`--quick` vs full pre-flight), enforce the canonical 6-slot contract (submodule pointers, credential scans, native lanes, tracked compile-time assets, hermetic clean-clone sandbox, smoke tests), and apply self-healing recipes from `references/diagnostic-matrix.md` (109 lines)
+- **check-deps utility** (`project/scripts/check-deps.mjs`): lightweight, download-free dependency freshness verifier across Rust/Cargo, Bun/NPM, and active system toolchains with flexible target directory scanning
+- **git-dl utility** (`project/scripts/git-dl.mjs`): fast archive downloader streaming release tarballs from GitHub's codeload endpoint into `./references/<repo>` with automatic directory creation
+- **project scripts distribution**: `project/install.ts` now diff-synchronizes `project/scripts/*` into `<targetDir>/scripts/` with executable permissions (`0o755`), tracking scripts in `.agentic-manifest.json`
+- **package scripts and binaries**: `project/package.json` now exposes `check-deps` and `git-dl` in both `"scripts"` and `"bin"`
+
+### Changed
+
+- Total shipped skills increased from 7 to 8 with the addition of `check`
+- `project/AGENTS.md`: §12 mandates executable `./scripts/check.sh` maintenance in workspace orchestrator and submodules; §10 Pre-response self-audit requires exit 0 check gates before task completion; §8 registers `check` skill
+
 ## [4.0.0] - 2026-09-02
 
 ### Added

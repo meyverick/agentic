@@ -87,8 +87,8 @@ IF trade-offs section has items:
 
 ```
 IF report shows pattern applicable to all skills:
-  → Check if skill-creator already covers it
-  → If not, update skill-creator
+  → Check if create-skill already covers it
+  → If not, update create-skill
   → Propagate to existing skills
 ```
 

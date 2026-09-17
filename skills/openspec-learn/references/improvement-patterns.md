@@ -63,20 +63,20 @@ Common improvement types and templates.
 **Template**:
 ```
 1. Identify generalizable pattern
-2. Check if skill-creator already covers it
-3. If not, update skill-creator:
+2. Check if create-skill already covers it
+3. If not, update create-skill:
    - SKILL.md workflow
    - scripts/
    - references/
    - assets/templates/
-4. Validate skill-creator
-5. Update skill-creator changelog (MINOR)
+4. Validate create-skill
+5. Update create-skill changelog (MINOR)
 6. Optionally propagate to existing skills
 ```
 
 **Example**:
 - Pattern: "All skills should validate near-miss negatives"
-- Fix: Add to skill-creator evaluation phase
+- Fix: Add to create-skill evaluation phase
 - Changelog: `### Added - Near-miss negative evaluation`
 
 ## Pattern 5: Description Optimization
