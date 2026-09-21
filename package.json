@@ -1,6 +1,6 @@
 {
   "name": "agentic",
-  "version": "4.1.1",
+  "version": "4.2.0",
   "description": "AI agent skills and prompts for pi.dev",
   "scripts": {
     "check-deps": "./scripts/check-deps.mjs",

@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [4.2.0] - 2026-09-21
+
+### Added
+
+- **design-craft skill** (`design-craft`): ninth shipped skill — a project- and language-agnostic design syllabus with four modes (Build, Review, Polish, Motion); a thin agnostic body (8 modules, ~1350 tokens) plus six attributed Tier-3 references (`art-direction`, `design-engineering`, `motion-craft`, `anti-slop-patterns` with 24 named patterns, `review-checklist`, `process`); 7 evals / 20 assertions covering two positive routes, two anti-triggers (backend work, renderer choice), anti-slop refusal, bounded verification, and agnosticism; behavioral gate recorded `d = +1, m = 0.35`
+- **Vendored Web Interface Guidelines digest** inside `design-craft/references/review-checklist.md`: MIT, captured 2026-09-21, so a review completes with no network access while the live fetch stays available as a refresh path
+
+### Changed
+
+- Total shipped skills increased from 8 to 9
+- **`skill-lifecycle-governance` capability amended**: the hard cap of 8 became an advisory ceiling — `prune` and `merge` proposals remain available on their own evidence but are no longer forced at the boundary (owner decision to ignore the cap)
+
 ## [4.1.1] - 2026-09-17
 
 ### Fixed

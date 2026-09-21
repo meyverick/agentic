@@ -1,0 +1,41 @@
+{
+  "skill": "design-craft",
+  "generated": {
+    "by": "process:structural-stage/1.0",
+    "at": "2026-09-21T00:00:00Z"
+  },
+  "stage": "behavioral",
+  "structural": {
+    "validate_structure": {
+      "pass": true,
+      "note": "recorded at apply gate (task 5.1)"
+    },
+    "validate_routing": {
+      "checks_total": 6,
+      "positive_triggers": 4,
+      "anti_triggers": 3,
+      "single_responsibility": true
+    },
+    "evals": {
+      "count": 7,
+      "assertions": 20,
+      "anti_trigger_coverage": true,
+      "agnosticism_coverage": true
+    }
+  },
+  "behavioral_dxm": "1×0.35",
+  "ship_gate": {
+    "criterion": "d = +1 and m >= 0.2",
+    "applies_to": "behavioral stage"
+  },
+  "behavioral": {
+    "at": "2026-09-21T06:37:39.843Z",
+    "evals": 7,
+    "assertions": 20,
+    "baseline": 0.5,
+    "with_skill": 0.85,
+    "d": 1,
+    "m": 0.35,
+    "ship": "pass"
+  }
+}

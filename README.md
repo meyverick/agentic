@@ -8,7 +8,7 @@ Self-improving AI agent skills and prompts for [pi.dev](https://pi.dev). A close
 bunx github:meyverick/agentic
 ```
 
-Installs 8 skills into your project's `.agents/skills/`, distributes utility scripts into `./scripts/`, writes a provenance manifest, and creates `openspec/reports/`.
+Installs 9 skills into your project's `.agents/skills/`, distributes utility scripts into `./scripts/`, writes a provenance manifest, and creates `openspec/reports/`.
 
 ## Skills
 
@@ -16,6 +16,7 @@ Installs 8 skills into your project's `.agents/skills/`, distributes utility scr
 |-------|-------------|
 | check | Pre-push and workspace integrity gate execution — executes two-speed check scripts, diagnoses failures, and applies self-healing recipes |
 | create-skill | Create new agent skills end-to-end: discovery, design, authoring, validation gates, behavioral proof, evals, shipping |
+| design-craft | Craft intentional interface design on any stack — art direction, review, polish, and motion, agnostic of framework |
 | guardrails | Cross-cutting hardening for security, deprecated APIs, and system gotchas — loads first before domain skills |
 | okf-docs | Author OKF v0.2-compliant documents — ADRs, module docs, decision records — with mandatory provenance frontmatter and mechanical validation |
 | openspec-harden | Harden an existing OpenSpec change for cold application — enrich artifacts with concrete file paths, code blocks, and verify steps |
