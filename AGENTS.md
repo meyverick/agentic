@@ -3,7 +3,7 @@ okf_version: "0.2"
 type: SystemDirective
 title: Agent Directives & Architecture
 description: Foundational engineering pillars, OKF v0.2 compliance, and strict operational rules for AI agents in a multi-repo workspace.
-tags: [architecture, system-prompt, sveltekit, adapter-static, tailwindcss, sqlx, ts-rs, postgres, threlte, pixijs, phaser, rust, axum, rayon, bevy, okf-v0.2, qmd, context7, sem, semantic-diff, changelog, semver, documentation, wiki, dokku, git-submodule, execution-workflow, exploration, idempotency, agent-skills, token-optimized]
+tags: [architecture, system-prompt, sveltekit, adapter-static, tailwindcss, sqlx, ts-rs, postgres, miniplex, threlte, babylonjs, pixijs, phaser, rust, axum, rayon, candle, tauri, okf-v0.2, qmd, context7, sem, semantic-diff, changelog, semver, documentation, wiki, dokku, git-submodule, execution-workflow, exploration, idempotency, agent-skills, token-optimized]
 generated: { by: human:developer, at: 2026-08-28T00:00:00Z }
 status: stable
 ---
@@ -31,7 +31,7 @@ Universal operational core for this workspace. Full read required before any cod
 - Exploration mode: strictly zero code-writing.
 - Produced code verbose-by-default: `VERBOSE` unset/true → all levels; `VERBOSE=false` → WARN+ only; `LOGS` unset/true → mirror `<module>.log`. Console always mirrors. Never commit `VERBOSE=false`/`LOGS=false` into configs/envs/container defs.
 - Mutations surgical: SEARCH/REPLACE deltas; never whole-file overwrites; idempotent.
-- Multi-arch builds MUST use parallel native matrix (`ubuntu-latest` + `ubuntu-24.04-arm`) via `docker buildx imagetools create` — NEVER QEMU emulation.
+- Multi-arch builds MUST use parallel native matrix (`ubuntu-26.04` + `ubuntu-26.04-arm`) via `docker buildx imagetools create` — NEVER QEMU emulation.
 - Docker CI MUST use `type=gha` layer cache + dependency pre-cook (`cargo-chef` / lockfile `COPY`); host CI MUST use `swatinem/rust-cache`, `setup-bun` caches.
 - After tasks with difficulty ≥3/5, surprise, or time cost >30m → suggest to user: `Want /openspec-report?` (never auto-run; manual only).
 - Learned negatives live in skills as `Contrast`/`Anti-examples`; never autonomously edit `project/AGENTS.md` — human-owned only.
@@ -73,13 +73,13 @@ Identity → Systems Architect, Security-focused. Goal → maximize throughput, 
 - Monorepo: root `./` holds orchestrator metadata, `AGENTS.md`, global `docker-compose.yml`. All paths relative to `./`.
 - App modules = Git Submodules [CRITICAL]: each top-level folder strictly isolated, independently deployable, dedicated submodule with independent history and its own `.github/workflows/quality.yml` (web: `bun check && bun test && bun build`; api: `cargo fmt --check && cargo clippy -- -D warnings && cargo test && cargo build --release`); orchestrator owns `deploy.yml` (unified `Dockerfile → distroless` + `SUBMODULE_TOKEN`, `paths:` allowlist, `proxy:build-config`).
 - Centralized DB [CRITICAL]: PostgreSQL is THE datastore → Docker network or managed service. Axum backend (`crates/api`) owns schema & migrations via SQLx (`crates/api/migrations/`). Compute workers → pooled connections or queue/API/RPC.
-- Deployment asymmetry: Collapsed to single static distroless binary (`gcr.io/distroless/static-debian13:nonroot`) serving SvelteKit static build + Axum API/WSS/gRPC; Native Sims → Desktop/WASM.
+- Deployment asymmetry: Collapsed to single static distroless binary (`gcr.io/distroless/static-debian13:nonroot`) serving SvelteKit static build + Axum API/WSS/gRPC; Native Shell → Tauri v2 (Desktop/Mobile); Native Sims → Desktop/WASM.
 - Context boundaries [CRITICAL]: modules fully self-contained. Zero horizontal coupling. Block `../sibling/` → HTTP/gRPC/WebSocket only.
 - Execution context [CRITICAL]: `bun`/`cargo`/`git`/`sem` MUST target specific module path. Set CWD to `./<project>-<module>/` before execution.
 
 ## 4. Tech Stack Preferences
 
-- Default 3-tier: SvelteKit via `@sveltejs/adapter-static` with `fallback: 'index.html'` served by Axum `tower-http` + Tailwind v4 + SQLx (PostgreSQL) + `ts-rs` type bindings + In-Browser Graphics + Standalone Compute (pure Rust: Axum+Rayon, Bevy ECS). Velocity + type safety in SvelteKit/ts-rs; bare-metal parallel compute in Rust/Tokio.
+- Default 3-tier: SvelteKit via `@sveltejs/adapter-static` with `fallback: 'index.html'` served by Axum `tower-http` + Tailwind v4 + SQLx (PostgreSQL) + `ts-rs` type bindings + In-Browser Simulation & Graphics (Miniplex ECS + Threlte/Babylon.js/PixiJS/Phaser) + Standalone Compute & In-Process ML (pure Rust: Axum+Rayon+Candle). Velocity + type safety in SvelteKit/ts-rs; bare-metal parallel compute & edge ML in Rust/Tokio.
 - Architecture & Performance: Native Tokio multi-threaded work-stealing, sub-millisecond async I/O, Rayon worker pools, and unblocked 60+ FPS client rendering.
 
 - Mental model rewiring:
@@ -89,18 +89,18 @@ Identity → Systems Architect, Security-focused. Goal → maximize throughput, 
   | Monolithic server-side rendering | SvelteKit static SPA served by Axum (`@sveltejs/adapter-static` + Tailwind v4) + SQLx + ts-rs |
   | HTML-over-SSE fragmentation | Fine-grained Svelte 5 UI + WebSocket/SSE streaming |
   | Embedded SQLite per container | Central PostgreSQL with SQLx migrations in `crates/api/migrations/` |
-  | Heavy CPU simulation in request handlers | Bare-metal Rust workers (Axum+Rayon/Bevy) |
-  | CSS tables for spatial sims | In-browser Threlte (3D), PixiJS/Phaser (2D) |
+  | Heavy CPU simulation in request handlers | Bare-metal Rust workers (Axum+Rayon+Candle) |
+  | CSS tables for spatial sims | In-browser Miniplex ECS + Threlte (3D) / Babylon.js / PixiJS / Phaser |
 
-- General & UI Tier (Full-Stack Web & Job Manager): SvelteKit via `@sveltejs/adapter-static` with `fallback: 'index.html'` served by Axum `tower-http`, Tailwind CSS, and PostgreSQL delivers native Axum static hosting, utility-first styling, end-to-end type safety via `ts-rs`, and fine-grained UI reactivity inside a minimal distroless runtime.
+- General & UI Tier (Full-Stack Web & Job Manager): SvelteKit via `@sveltejs/adapter-static` with `fallback: 'index.html'` served by Axum `tower-http`, Tailwind CSS, and PostgreSQL delivers native Axum static hosting, utility-first styling, end-to-end type safety via `ts-rs`, and fine-grained UI reactivity inside a minimal distroless runtime. Cross-platform native shell: Tauri v2 packaging the static build for Desktop & Mobile.
 
-- In-Browser Graphics & Gaming Layer: Embedded directly into SvelteKit using Threlte + Three.js for declarative 3D scenes, PixiJS for high-performance UI-adjacent 2D rendering and custom canvas mechanics, or Phaser when requiring a turnkey 2D game engine with built-in physics, audio, and tilemap managers. Keep Tailwind v4, Threlte, PixiJS, Phaser, grammY, and Capacitor as-is inside the SvelteKit static build (@sveltejs/adapter-static).
+- In-Browser Simulation & Graphics Layer: Miniplex provides universal client-side ECS for dynamic polymorphic entity lifecycles and zero-allocation frame queries (`world.with(...)`). Decoupled presentation adapters: Threlte for declarative 3D scenes, Babylon.js for WebGPU/Havok physics and node shaders, PixiJS for high-performance 2D rendering (>1,000 nodes), or Phaser when requiring a turnkey 2D game engine with built-in arcade physics, audio, and tilemap managers. Keep Tailwind v4, Miniplex, Threlte, Babylon.js, PixiJS, Phaser, and grammY as-is inside the SvelteKit static build (@sveltejs/adapter-static).
 
-- Compute & Native Systems Tier (Standalone Worker & Native Games): Pure Rust with Tokio work-stealing, Axum, and Rayon provides bare-metal, multi-core execution for heavy background workloads, while Bevy provides a native, ECS-driven engine for high-performance 2D/3D game binaries and client simulations.
+- Compute, Systems & In-Process ML Tier (Standalone Worker & Native Compute): Pure Rust with Tokio work-stealing, Axum, and Rayon provides bare-metal, multi-core execution for heavy background workloads, while Candle embeds zero-Python, in-process GGUF/Safetensors vector embeddings and local LLM/SLM inference.
 
 - Event-Driven & Real-Time Transport Layer: Eliminates polling by utilizing PostgreSQL LISTEN/NOTIFY or pub/sub queues with Tokio broadcast channels and Axum WebSockets/SSE for real-time state streaming to the web UI and Telegram Mini App, plus gRPC via tonic/Protobuf for backend inter-module worker communication.
 
-- Container Hardening & Multi-Arch Pipeline [CRITICAL]: Single multi-stage build `Vite static → Rust musl (cargo build --release --target x86_64-unknown-linux-musl) → gcr.io/distroless/static-debian13:nonroot`; multi-arch via parallel native matrix (`ubuntu-latest` amd64 + `ubuntu-24.04-arm` arm64) push by digest (`:amd64-<sha>` / `:arm64-<sha>`) + 5s `docker buildx imagetools create` merge; BuildKit `cache-from: type=gha` / `cache-to: type=gha,mode=max` scoped per arch; layer hygiene `cargo-chef` pre-cook (`prepare` → `cook --release` before `COPY . .`) + lockfile-isolated `COPY` (Bun/JS `package.json` → `bun install` before source); `gcr.io/distroless/static-debian13:nonroot` nonroot, zero glibc.
+- Container Hardening & Multi-Arch Pipeline [CRITICAL]: Single multi-stage build `Vite static → Rust musl (cargo build --release --target x86_64-unknown-linux-musl) → gcr.io/distroless/static-debian13:nonroot`; multi-arch via parallel native matrix (`ubuntu-26.04` amd64 + `ubuntu-26.04-arm` arm64) push by digest (`:amd64-<sha>` / `:arm64-<sha>`) + 5s `docker buildx imagetools create` merge; BuildKit `cache-from: type=gha` / `cache-to: type=gha,mode=max` scoped per arch; layer hygiene `cargo-chef` pre-cook (`prepare` → `cook --release` before `COPY . .`) + lockfile-isolated `COPY` (Bun/JS `package.json` → `bun install` before source); `gcr.io/distroless/static-debian13:nonroot` nonroot, zero glibc.
 
 - Type Bindings & Offline CI: Export `ts-rs` (`TS` derive only) to gitignored `frontend/src/lib/types/bindings/`; commit `sqlx-data.json` via `cargo sqlx prepare` for hermetic CI checks.
 
@@ -110,17 +110,18 @@ Identity → Systems Architect, Security-focused. Goal → maximize throughput, 
 
 - Web tier: `@sveltejs/adapter-static` with `fallback: 'index.html'` served by Axum `tower-http`. Styling: Tailwind v4 via `@tailwindcss/vite` + Svelte 5 Runes.
 
-- Graphics granularity matrix (autonomous selection):
+- Graphics & simulation granularity matrix (autonomous selection):
   - Standard DOM: Svelte+Tailwind → forms, admin tables, metrics, static dashboards. Never WebGL for text/CRUD.
-  - 3D: Threlte+Three.js → declarative 3D spatial, GLTF, orbital cameras, 3D viewports. Never for 2D maps.
+  - Client ECS: Miniplex → frame-by-frame polymorphic entity state, archetypes, and zero-allocation query loops.
+  - 3D Declarative: Threlte → Svelte-native spatial scenes, GLTF, orbital cameras, 3D viewports. Never for 2D maps.
+  - 3D Engine & WebGPU: Babylon.js → native Havok physics, complex particle shaders, WebGPU compute, CAD/tooling.
   - 2D perf: PixiJS → >1,000 nodes, tactical grids, particles. Never when turnkey physics needed.
   - 2D engine: Phaser → full game loops, rigid-body/arcade physics, Tiled tilemaps, sprite trees, audio. Never for app UI.
-  - Headless compute: pure Rust+Axum+Rayon → CPU-bound parallel workloads, Monte Carlo, batch solvers, high-throughput RPCs. Never in request handlers.
-  - Native ECS: Bevy → standalone 2D/3D binaries, client sims, ECS, exportable WASM.
+  - Headless compute & ML: pure Rust+Axum+Rayon+Candle → CPU-bound parallel workloads, Monte Carlo, batch solvers, in-process GGUF/embeddings, high-throughput RPCs. Never in request handlers.
 
 - Database: Port existing Drizzle migrations verbatim to `crates/api/migrations/` under `sqlx migrate`; Axum/Tokio becomes the sole state coordinator.
 - Telegram/TMA ONLY when required: grammY on Bun + `@telegram-apps/sdk`.
-- Mobile ONLY when required: Capacitor WebView → hosted SvelteKit.
+- Native Shell ONLY when required: Tauri v2 shell packaging static SvelteKit SPA for Desktop (macOS/Linux/Windows) and Mobile (iOS/Android) via Rust IPC.
 - Secrets: `envx` → env management → KISS.
 - Container hardening: Multi-stage Rust `musl` static → `gcr.io/distroless/static-debian13:nonroot`, zero glibc, minimal surface. GHCR image deploys. Strict HTTPS/TLS.
 - Containerization dual-tier: Module level → each module owns `Dockerfile` (multi-stage Rust/musl→distroless) + optional isolated `docker-compose.yml` (app+local PostgreSQL test). Root level → orchestrator `docker-compose.yml` mounts module Dockerfiles, unified bridge networks, prevents `../` traversal.
@@ -178,7 +179,7 @@ stale_after: 2027-08-15
 
 - **sem** (Semantic Git): Impact Analysis [CRITICAL] `sem impact <entity> --json` → BFS blast radius before touching shared/core entities. Graph `sem graph --entity <name> --format json` for explores/complex refactors. Verification `sem diff --format json` post-mutation/pre-commit (structural vs cosmetic). Blame `sem blame <file> --json` for investigations.
 - **QMD** (Hybrid Search & Local Memory): Project-local index only — `qmd init` at repo root → `<repo>/.qmd/` (gitignored); NEVER create or populate a global/shared index, never fall back to one. Mode select: exact terms/titles/headings/symbols → `qmd search '"<phrase>"' --json -n 10 -c <collection>` (BM25, no LLM); concept/paraphrase → `qmd query $'intent: <goal + what to avoid>\nlex: <anchors>\nvec: <paraphrase>' --json -n 10` (author the fields yourself — never paste raw request text). Retrieve before claiming: `qmd get "#id:from:count"` / `qmd multi-get "<ids>" --json` (never pipe `sed`/`head`/`tail`). Maintenance [CRITICAL] mutations → `qmd update && qmd embed --chunk-strategy auto`; health `qmd status`; depth `.agents/skills/qmd-research/` (query grammar · filters · index upkeep).
-- **Context7** (External Framework Intelligence): Trigger [CRITICAL] generating third-party setup/config or touching frameworks/packages (SvelteKit, Tailwind, SQLx, ts-rs, Threlte, Three.js, PixiJS, Phaser, Axum, Rayon, Bevy, grammY, `@telegram-apps/sdk`) → autonomous Context7 → prevent hallucinated outdated training data. Flow: `resolve-library-id(name, query)` → `/org/project` ID → `query-docs(id, full_query)` → SOTA patterns. Append explicit versions to queries. Priority Context7 > web search. Bypass for internal business logic.
+- **Context7** (External Framework Intelligence): Trigger [CRITICAL] generating third-party setup/config or touching frameworks/packages (SvelteKit, Tailwind, SQLx, ts-rs, miniplex, Threlte, babylonjs, PixiJS, Phaser, Axum, Rayon, candle, tauri, grammY, `@telegram-apps/sdk`) → autonomous Context7 → prevent hallucinated outdated training data. Flow: `resolve-library-id(name, query)` → `/org/project` ID → `query-docs(id, full_query)` → SOTA patterns. Append explicit versions to queries. Priority Context7 > web search. Bypass for internal business logic.
 - **check** (Workspace Gate Verification): Textbook and diagnostic manual for `./scripts/check.sh` gates. Consult `.agents/skills/check/SKILL.md` when executing check-gates, configuring the 6-slot harness (pointers, secrets, native lanes, tracked compile-time assets, clean-clone sandbox, smoke), or diagnosing and self-healing gate failures.
 - **Skill Engineering** (`./.agents/skills/`): Utilization [CRITICAL] task initiation → scan `./.agents/skills/` → evaluate `description` frontmatters → load `SKILL.md` if relevant. Creation: extract recurring gotchas/workflows into `skills/<name>/SKILL.md` (action gerund, Validation Loops, Plan-Validate-Execute, `references/` offload for progressive disclosure). Anatomy [CRITICAL] frontmatter per the Agent Skills spec (`name` + `description` required; `license` · `compatibility` · `metadata` · `allowed-tools` optional — OKF provenance `type`/`generated` is for documents, §7), `description` <1024 chars imperative "Use this skill when...". Script bundling: self-contained (Bun `.mjs`/single-file Go/PEP 723), idempotent, structured JSON/CSV, ZERO prompts. Ad-hoc spikes [CRITICAL] candid debug scripts / pre-implementation endpoint tests / quick API validation → self-contained `.mjs` via `bun <file>.mjs` (native top-level await+fetch, zero setup). Eval-driven evolution: generate `evals/evals.json`, measure baseline vs with-skill (pass rate/tokens/duration) → optimize `SKILL.md`.
 
@@ -193,7 +194,7 @@ stale_after: 2027-08-15
 
 - Pre-computation: feature request || exploration crystallized → strategy (Why, How, Steps) as dense bullets/JSON BEFORE mutation. Output to user chat → shared understanding.
 - Momentum threshold: reasonable decisions autonomously; HALT+prompt ONLY on critical domain ambiguity.
-- Mutation topological sort [CRITICAL]: cross-module scaffolding in strict order: 1) DB Schema → PostgreSQL+SQLx (`crates/api/migrations/*.sql`, `sqlx migrate`) 2) Compute & Backend Coordinator → Rust/Axum/Rayon/Bevy/Tokio 3) Full-Stack State & Route Handlers → Axum WSS/SSE/gRPC + `ts-rs` bindings (`#[ts(export)]`) 4) UI & Graphics → Svelte/Threlte/PixiJS/Phaser static views. Never build UI before data contracts.
+- Mutation topological sort [CRITICAL]: cross-module scaffolding in strict order: 1) DB Schema → PostgreSQL+SQLx (`crates/api/migrations/*.sql`, `sqlx migrate`) 2) Compute & Backend Coordinator → Rust/Axum/Rayon/Candle/Tokio 3) Full-Stack State & Route Handlers → Axum WSS/SSE/gRPC + `ts-rs` bindings (`#[ts(export)]`) 4) UI & Graphics → Svelte/Miniplex/Threlte/Babylon.js/PixiJS/Phaser static views. Never build UI before data contracts.
 - Contextual baseline: ingest QMD/ADRs/`sem impact`/context files/upstream event sources (webhook/SSE availability) → explicit baseline.
 - Vibe coding loop: focused mutation → validate locally (`bun run check`, `cargo clippy`, `bun test`, `cargo test`) immediately → verify step → proceed. No YOLO.
 - Surgical mutations [CRITICAL]: SEARCH/REPLACE blocks. Preserve untargeted content. Zero whole-file overwrites. Idempotent.
@@ -222,7 +223,7 @@ stale_after: 2027-08-15
 - `.gitignore`: secure default-deny (block `*`, allowlist source) in root AND EACH submodule. Update actively → prevent credential leaks.
 - SemVer: strict `MAJOR.MINOR.PATCH` per module.
 - Changelog: `./<project>-<module>/CHANGELOG.md` (`## VERSION - YYYY-MM-DD`). Categories `Added`/`Changed`/`Removed`/`Fixed`. Imperative mood.
-- Push gate [CRITICAL] — two lanes, per touched submodule (generic; host caches `swatinem/rust-cache` / `oven-sh/setup-bun` + multi-arch `ubuntu-latest` + `ubuntu-24.04-arm` matrix `cache-from/to: type=gha` NEVER QEMU; stack mappings: Bun `bun run check && bun test && bun run build`, Rust `cargo fmt --check && cargo clippy -- -D warnings && cargo test && cargo build --release`):
+- Push gate [CRITICAL] — two lanes, per touched submodule (generic; host caches `swatinem/rust-cache` / `oven-sh/setup-bun` + multi-arch `ubuntu-26.04` + `ubuntu-26.04-arm` matrix `cache-from/to: type=gha` NEVER QEMU; stack mappings: Bun `bun run check && bun test && bun run build`, Rust `cargo fmt --check && cargo clippy -- -D warnings && cargo test && cargo build --release`):
   - **Blocking (exit 1):** per touched submodule run native codegen (if exists) → lint → tests → hermetic/static build in builder image → secret-leak scan (new dirs/`*.env` patterns, `git submodule status | grep "^-"`) → submodule-pointer freshness (`git submodule status | grep "^\+"`). Any failure → `exit 1` with failing command. No project names in rule body. Fails pre-push ~15s, not remote. **Advisory (exit 0):** `sem diff --format json` + manifest version + `CHANGELOG.md` presence. Inform, never block.
 - Check script maintenance [CRITICAL]: Workspace orchestrator root and each submodule MUST maintain an executable `./scripts/check.sh` implementing the canonical 6-slot contract (Pointers, Secrets, Native Lanes, Tracked Assets, Clean-Clone Sandbox, Smoke) and supporting `--quick` (sub-10s iteration exiting before sandbox). Root orchestrator checks submodule freshness/credentials and delegates to submodule check scripts; submodules verify native format/lint/test lanes, assert compile-time asset tracking (`git ls-files --error-unmatch`), honor `--quick`, and verify committed buildability via hermetic clean clone (`mktemp -d` + `git clone .`). Agents MUST update check scripts whenever manifests, dependencies, or compile-time assets change. Consult `check` skill for anatomy and diagnostic procedures.
 

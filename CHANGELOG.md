@@ -5,6 +5,32 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [5.0.1] - 2026-09-22
+
+### Changed
+
+- **Multi-arch runner matrix upgraded to Ubuntu 26.04** (`upgrade-runner-matrix-ubuntu-26`): explicitly pin GitHub Actions parallel native multi-arch runners to `ubuntu-26.04` (amd64) and `ubuntu-26.04-arm` (arm64) across `project/AGENTS.md` and `pipeline-multiarch-caching` spec, eliminating OS skew and preparing ahead of the `ubuntu-latest` alias migration
+
+## [5.0.0] - 2026-09-22
+
+### Added
+
+- **In-Browser Entity Simulation Layer (Miniplex ECS)** (`refine-canonical-stack-architecture`): formalize `miniplex` (with `miniplex-svelte`) as universal client-side ECS for dynamic polymorphic entity lifecycles and zero-allocation frame-by-frame archetype queries (`world.with(...)`), decoupled from downstream presentation adapters
+- **Babylon.js 3D engine support**: formalize `babylonjs` alongside Threlte for industrial WebGPU compute, node materials, and native Havok physics simulations
+- **Tauri v2 native shell**: adopt Tauri v2 as the cross-platform native shell packaging the existing SvelteKit static SPA build for Desktop (macOS, Windows, Linux) and Mobile (iOS, Android) via Rust IPC
+- **Candle in-process ML**: embed Hugging Face's `candle` into Tier 4 alongside Tokio and Rayon for zero-Python, in-process GGUF/Safetensors vector embeddings and local LLM/SLM inference
+
+### Changed
+
+- **Canonical 5-tier architecture aligned**: formalize 5 discrete tiers (Tier 1: Web & Native UI Shell via SvelteKit + Tauri v2, Tier 2: In-Browser Entity Simulation via Miniplex ECS, Tier 3: In-Browser Presentation Matrix via Threlte/Babylon.js/PixiJS/Phaser, Tier 4: Compute & Systems via Rust Axum+Tokio+Rayon+Candle, Tier 5: Event-Driven Transport & Distroless Hardening)
+- **Threlte nomenclature cleaned**: rename "Threlte+Three.js" to simply "Threlte" across directives, specifications, and Context7 triggers
+- Context7 framework intelligence triggers updated to include `miniplex`, `babylonjs`, `tauri`, and `candle`
+
+### Removed
+
+- **BREAKING: Bevy game engine purged**: completely remove Bevy from compute tier, specifications, and topological sort to eliminate heavy C-library dependencies (ALSA, udev, Vulkan) and speculative WASM bloat; compute tier standardizes on pure Tokio + Rayon + Candle
+- **Capacitor removed**: purge Capacitor in favor of Tauri v2 native desktop and mobile shell
+
 ## [4.2.0] - 2026-09-21
 
 ### Added
