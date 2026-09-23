@@ -16,7 +16,7 @@ Universal operational core for this workspace. Full read required before any cod
 
 ## Must-follow rules
 
-- Files >500 LOC: finish objective → flag ADR-tracked decomposition. Never refactor mid-task. New work stays under limit.
+- File size tiers: target ≤150 LOC (atomic/leaf), standard ≤300 LOC (cohesive domain), 300–500 LOC upper boundary (complex state machines only; raises latency/tokens); hard ceiling 500 LOC (failure-prone). Files >500 LOC: finish objective → flag ADR-tracked decomposition. Never refactor mid-task. New work stays within target.
 - Log redaction NEVER gated by verbosity — token/vid/otp/jwt/key/secret stripped at emission, every mode.
 - Task complete ONLY when touched module's native lane — `bun run check && bun test && bun run build` · Rust `cargo clippy -- -D warnings && cargo test` — exits 0.
 - Commands execute from owning module's directory (`./<project>-<module>/`); never pollute siblings/root.
@@ -65,7 +65,7 @@ Identity → Systems Architect, Security-focused. Goal → maximize throughput, 
 - KISS & YAGNI: cognitive simplicity. Explicit requirements only.
 - SoC & Demeter: isolate state/UI/data. Strict encapsulation. Serialization limits at boundaries.
 - Scalability & Granularity [CRITICAL]: expansion-warranted → queue+worker+streaming default (§6); trivial stays simple. Highly granular, loosely coupled, pluggable.
-- File architecture: small cohesive modules. Avoid >500 LOC. Touched file >500 LOC → complete objective → flag ADR-tracked decomposition. No mid-task refactor.
+- File architecture: small cohesive modules. Density tiers: ≤150 LOC target (atomic leaf/pure utils — near-zero hallucination, flawless diffs), ≤300 LOC sweet spot (balanced domain context, complete signatures), 300–500 LOC upper boundary (acceptable for complex state machines/reducers, but raises latency and token burn), >500 LOC hard ceiling (lost-in-the-middle decay, diff truncations). Touched file >500 LOC → complete objective → flag ADR-tracked decomposition. No mid-task refactor.
 
 ## 3. Workspace Topology
 
@@ -199,7 +199,7 @@ stale_after: 2027-08-15
 - Vibe coding loop: focused mutation → validate locally (`bun run check`, `cargo clippy`, `bun test`, `cargo test`) immediately → verify step → proceed. No YOLO.
 - Surgical mutations [CRITICAL]: SEARCH/REPLACE blocks. Preserve untargeted content. Zero whole-file overwrites. Idempotent.
 - Self-healing vs halt [CRITICAL]: compile/type error → read diagnostic → ONE autonomous fix → recompile.
-- Pre-response self-audit: before completion, verify: [ ] 500 LOC limit? [ ] `../` traversals eliminated? [ ] delta-merging used? [ ] local compiler/linter ran? [ ] `git submodule status` no `+`/`-`? [ ] `./scripts/check.sh` ran and exited 0 (open `check` skill for gate diagnostics)? Any fail → correct autonomously before reply. Then report `[Implementing]` → `[Paused/Blocked]` → `[Completed: Added X, Modified Y, Removed Z]`.
+- Pre-response self-audit: before completion, verify: [ ] LOC density tiers respected (≤150/≤300, 300–500 state machines only, hard ceiling 500)? [ ] `../` traversals eliminated? [ ] delta-merging used? [ ] local compiler/linter ran? [ ] `git submodule status` no `+`/`-`? [ ] `./scripts/check.sh` ran and exited 0 (open `check` skill for gate diagnostics)? Any fail → correct autonomously before reply. Then report `[Implementing]` → `[Paused/Blocked]` → `[Completed: Added X, Modified Y, Removed Z]`.
 
 ## 11. Observability, Evolution & Debug-by-Default
 

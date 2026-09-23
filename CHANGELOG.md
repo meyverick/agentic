@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [5.0.2] - 2026-09-23
+
+### Changed
+
+- **Refined LOC density tiers in `AGENTS.md`** (`refine-agents-loc-tiers`): replaced flat binary >500 LOC rule with an explicit 4-tier code density model across Must-follow rules (L19), Core Engineering Pillars §2 (L68), and Pre-response self-audit §10 (L202):
+  - Tier 1 (≤150 LOC): Atomic/leaf target for near-zero hallucination, minimal token burn, and flawless diff patches
+  - Tier 2 (≤300 LOC): Cohesive domain sweet spot balancing context, complete signatures, and reliable multi-turn edits
+  - Tier 3 (300–500 LOC): Upper boundary exception strictly confined to complex state machines, protocol parsers, and unified event reducers, with explicit acknowledgment of increased latency and token burn
+  - Tier 4 (>500 LOC): Hard ceiling failure-prone threshold; touched files require completing immediate objective, then flagging ADR-tracked decomposition
+
 ## [5.0.1] - 2026-09-22
 
 ### Changed
