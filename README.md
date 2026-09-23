@@ -5,8 +5,10 @@ Self-improving AI agent skills and prompts for [pi.dev](https://pi.dev). A close
 ## Install
 
 ```bash
-bunx github:meyverick/agentic
+bunx @meyverick/agentic
 ```
+
+*(or via GitHub direct: `bunx github:meyverick/agentic`)*
 
 Installs 9 skills into your project's `.agents/skills/`, distributes utility scripts into `./scripts/`, writes a provenance manifest, and creates `openspec/reports/`.
 

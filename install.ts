@@ -2,7 +2,8 @@
 /**
  * install.ts - Install agentic skills, scripts, and AGENTS.md
  * 
- * Usage: bunx github:meyverick/agentic
+ * Usage: bunx @meyverick/agentic
+ *   (or: bunx github:meyverick/agentic)
  * 
  * Installs to current directory:
  *   - project/skills/* → .agents/skills/ (atomic replacement)
@@ -27,6 +28,16 @@ function findSourceDir(): string {
   const parentDir = path.dirname(__dirname);
   if (fs.existsSync(path.join(parentDir, 'skills'))) {
     return parentDir;
+  }
+  
+  const scopedNodeModules = path.join(__dirname, 'node_modules', '@meyverick', 'agentic');
+  if (fs.existsSync(scopedNodeModules) && fs.existsSync(path.join(scopedNodeModules, 'skills'))) {
+    return scopedNodeModules;
+  }
+  
+  const parentScopedNodeModules = path.join(parentDir, 'node_modules', '@meyverick', 'agentic');
+  if (fs.existsSync(parentScopedNodeModules) && fs.existsSync(path.join(parentScopedNodeModules, 'skills'))) {
+    return parentScopedNodeModules;
   }
   
   const nodeModulesPath = path.join(__dirname, 'node_modules', 'agentic');

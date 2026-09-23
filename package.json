@@ -1,15 +1,30 @@
 {
-  "name": "agentic",
+  "name": "@meyverick/agentic",
   "version": "5.0.2",
   "description": "AI agent skills and prompts for pi.dev",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/meyverick/agentic.git"
+  },
+  "files": [
+    "install.ts",
+    "skills",
+    "scripts",
+    "AGENTS.md",
+    "README.md",
+    "CHANGELOG.md"
+  ],
   "scripts": {
     "check-deps": "./scripts/check-deps.mjs",
     "git-dl": "./scripts/git-dl.mjs"
   },
   "bin": {
-    "agentic": "./install.ts",
-    "check-deps": "./scripts/check-deps.mjs",
-    "git-dl": "./scripts/git-dl.mjs"
+    "agentic": "install.ts",
+    "check-deps": "scripts/check-deps.mjs",
+    "git-dl": "scripts/git-dl.mjs"
   },
   "keywords": [
     "ai",
