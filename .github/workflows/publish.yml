@@ -30,7 +30,7 @@ jobs:
         uses: oven-sh/setup-bun@v2
 
       - name: Verify dependencies
-        run: bun run scripts/check-deps.mjs
+        run: bun run scripts/check-deps.ts
 
       - name: Verify package tarball
         run: npm pack --dry-run
