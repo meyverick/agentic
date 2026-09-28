@@ -97,7 +97,7 @@ skill-name/
 │   ├── schema.csv
 │   └── examples.json
 ├── scripts/              # Executable logic
-│   └── process.mjs
+│   └── process.ts
 └── references/           # Detailed docs
     └── api-reference.md
 ```

@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [5.1.0] - 2026-09-28
+
+### Added
+
+- **openspec-pi-apply skill** (`add-openspec-pi-apply-skill`): 10th shipped skill — delegate OpenSpec change task implementation to a headless pi worker agent via JSON-RPC (`scripts/pi-rpc-apply.ts`), providing live streaming, automated event loop triage, and non-blocking background task orchestration
+
+### Changed
+
+- **Consumer scripts migrated to Bun TypeScript** (`migrate-consumer-scripts-to-bun-ts`): convert all 9 consumer scripts across `scripts/` and skill packages to self-contained, typed Bun `.ts` (`check-deps.ts`, `git-dl.ts`, `validate-frontmatter.ts`, `validate-structure.ts`, `validate-routing.ts`, `audit-antipatterns.ts`, `run-cold-eval.ts`, `compute-benchmark.ts`, `scaffold-skill.ts`) with `#!/usr/bin/env bun` shebangs, eliminating language fragmentation
+- **CI validator runners modernized**: update `project/.github/workflows/quality.yml` to execute validators natively with `bun run`
+- **Package scripts and binaries aligned**: update `project/package.json` `scripts` and `bin` to reference `.ts` entrypoints
+- **Agent directives standardized on Bun TypeScript**: update `AGENTS.md` (root and submodule) §8 to mandate self-contained Bun `.ts` (`bun <file>.ts`) for script bundling and ad-hoc spikes
+- **Skill creation and evals alignment**: update `create-skill` instructions, references, template assets, and eval suites (`evals.json`) to reference `.ts` validators and scripts
+- Total shipped skills increased from 9 to 10
+
 ## [5.0.2] - 2026-09-23
 
 ### Changed

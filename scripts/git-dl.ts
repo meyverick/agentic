@@ -3,18 +3,19 @@ import { execFileSync, spawn } from 'node:child_process';
 import { mkdir, rm } from 'node:fs/promises';
 import { basename, join } from 'node:path';
 import { Readable } from 'node:stream';
+import type { ReadableStream as WebReadableStream } from 'node:stream/web';
 
 const input = process.argv[2];
 
 if (input === '-h' || input === '--help') {
-  console.log('Usage: git-dl.mjs <owner/repo|url> [target-dir]');
+  console.log('Usage: git-dl.ts <owner/repo|url> [target-dir]');
   console.log('Default target-dir: references/<repo>');
   process.exit(0);
 }
 
 if (!input) {
   console.error('Error: Provide a GitHub URL or owner/repo');
-  console.error('Usage: git-dl.mjs <owner/repo|url> [target-dir]');
+  console.error('Usage: git-dl.ts <owner/repo|url> [target-dir]');
   console.error('Default target-dir: references/<repo>');
   process.exit(1);
 }
@@ -37,22 +38,23 @@ const defaultDir = join('references', basename(repo));
 const dir = process.argv[3] || defaultDir;
 
 // Resolve the latest tag via git ls-remote (version sorted, handles prefixes and monorepos)
-let lsOutput;
+let lsOutput: string;
 try {
   lsOutput = execFileSync(
     'git',
     ['ls-remote', '--tags', '--refs', '--sort=v:refname', `https://github.com/${repo}.git`],
     { encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'] }
   );
-} catch (err) {
-  const errMsg = err.stderr ? err.stderr.trim() : err.message;
+} catch (err: unknown) {
+  const execErr = err as { stderr?: Buffer | string; message: string };
+  const errMsg = execErr.stderr ? execErr.stderr.toString().trim() : execErr.message;
   console.error(`Error: Failed to query tags for '${repo}': ${errMsg}`);
   process.exit(1);
 }
 
 const lines = lsOutput.trim().split('\n').filter(Boolean);
 const lastLine = lines[lines.length - 1];
-let rawTag = null;
+let rawTag: string | null = null;
 if (lastLine) {
   const parts = lastLine.split(/\s+/);
   if (parts.length >= 2) {
@@ -77,12 +79,12 @@ const res = await fetch(tarballUrl, {
   }
 });
 
-if (!res.ok) {
+if (!res.ok || !res.body) {
   console.error(`Error: Failed to download tarball from ${tarballUrl} (${res.status} ${res.statusText})`);
   process.exit(1);
 }
 
-await new Promise((resolve, reject) => {
+await new Promise<void>((resolve, reject) => {
   const tar = spawn('tar', ['-xz', '-C', dir, '--strip-components=1'], {
     stdio: ['pipe', 'inherit', 'inherit']
   });
@@ -93,7 +95,7 @@ await new Promise((resolve, reject) => {
     else reject(new Error(`tar extraction exited with code ${code}`));
   });
 
-  Readable.fromWeb(res.body).pipe(tar.stdin);
+  Readable.fromWeb(res.body as unknown as WebReadableStream).pipe(tar.stdin);
 });
 
 const displayDir = dir.startsWith('/') || dir.startsWith('.') ? dir : `./${dir}`;

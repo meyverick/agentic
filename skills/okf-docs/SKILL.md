@@ -67,7 +67,7 @@ Set `status: draft` on creation. Flip to `stable` after human review (`verified:
 ### 5. Validate Before Delivery
 
 ```bash
-bun scripts/validate-frontmatter.mjs <document.md>
+bun scripts/validate-frontmatter.ts <document.md>
 ```
 
 Envelope must read `pass: true`. Fix named FAIL entries; re-run until clean.

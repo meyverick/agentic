@@ -10,7 +10,7 @@ bunx @meyverick/agentic
 
 *(or via GitHub direct: `bunx github:meyverick/agentic`)*
 
-Installs 9 skills into your project's `.agents/skills/`, distributes utility scripts into `./scripts/`, writes a provenance manifest, and creates `openspec/reports/`.
+Installs 10 skills into your project's `.agents/skills/`, distributes utility scripts into `./scripts/`, writes a provenance manifest, and creates `openspec/reports/`.
 
 ## Skills
 
@@ -23,6 +23,7 @@ Installs 9 skills into your project's `.agents/skills/`, distributes utility scr
 | okf-docs | Author OKF v0.2-compliant documents — ADRs, module docs, decision records — with mandatory provenance frontmatter and mechanical validation |
 | openspec-harden | Harden an existing OpenSpec change for cold application — enrich artifacts with concrete file paths, code blocks, and verify steps |
 | openspec-learn | Analyze reports in `./openspec/reports/` and generate OpenSpec proposals for skill/prompt improvements |
+| openspec-pi-apply | Delegate OpenSpec change task implementation to a headless pi worker agent via JSON-RPC |
 | openspec-report | Generate self-reflection (meditation) reports from archived OpenSpec changes |
 | qmd-research | Research project markdown and specifications using local QMD hybrid search, and maintain index collections |
 

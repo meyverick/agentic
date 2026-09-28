@@ -10,13 +10,13 @@ Before applying improvements:
 
 1. **Structural validation**:
    ```bash
-   project/skills/create-skill/scripts/validate-structure.mjs <skill-dir>
+   bun project/skills/create-skill/scripts/validate-structure.ts <skill-dir>
    ```
    Extract: pass/fail, errors, warnings
 
 2. **Antipattern audit**:
    ```bash
-   project/skills/create-skill/scripts/audit-antipatterns.mjs <skill-dir>
+   bun project/skills/create-skill/scripts/audit-antipatterns.ts <skill-dir>
    ```
    Extract: pass/fail, violation count, violations
 

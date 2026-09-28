@@ -16,7 +16,7 @@
       "evidence": "Deferred to deployment"
     },
     {
-      "text": "Scripts use .mjs extension and are self-contained",
+      "text": "Scripts use .ts extension and are self-contained",
       "passed": null,
       "evidence": "Deferred to deployment"
     },

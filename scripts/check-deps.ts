@@ -17,6 +17,7 @@ const colors = {
 };
 
 const USER_AGENT = 'agentic-dep-checker/1.0 (https://github.com/meyverick/agentic)';
+const isHelp = process.argv.includes('--help') || process.argv.includes('-h');
 const includeReferences = process.argv.includes('--all') || process.argv.includes('--references');
 const isJson = process.argv.includes('--json');
 
@@ -36,9 +37,72 @@ const IGNORED_DIRS = new Set([
   ...(includeReferences ? [] : ['references'])
 ]);
 
-async function asyncPool(limit, items, iteratorFn) {
-  const ret = [];
-  const executing = new Set();
+interface ScanResults {
+  cargo: string[];
+  npm: string[];
+  lockFiles: string[];
+  toolchains: string[];
+}
+
+interface ToolchainItem {
+  name: string;
+  version: string;
+}
+
+interface CargoDependency {
+  name: string;
+  version: string;
+  git: string | null;
+  section: string;
+}
+
+interface SemverDiff {
+  status: 'UP_TO_DATE' | 'MINOR_PATCH' | 'MAJOR_BREAKING' | 'UNKNOWN';
+  reason?: string;
+}
+
+interface JsonReport {
+  summary: {
+    totalChecked: number;
+    upToDate: number;
+    minorPatch: number;
+    majorBreaking: number;
+  };
+  toolchains: Array<{
+    name: string;
+    current: string;
+    latest: string | null;
+    status: string;
+    reason: string | null;
+  }>;
+  rustModules: Array<{
+    file: string;
+    dependencies: Array<{
+      name: string;
+      declaredVersion: string;
+      resolvedVersion: string;
+      latest: string | null;
+      status: string;
+      reason: string | null;
+      section: string;
+    }>;
+  }>;
+  npmModules: Array<{
+    file: string;
+    dependencies: Array<{
+      name: string;
+      declaredVersion: string;
+      latest: string | null;
+      status: string;
+      reason: string | null;
+      type: string;
+    }>;
+  }>;
+}
+
+async function asyncPool<T, R>(limit: number, items: T[], iteratorFn: (item: T) => Promise<R>): Promise<R[]> {
+  const ret: Promise<R>[] = [];
+  const executing = new Set<Promise<R>>();
   for (const item of items) {
     const p = Promise.resolve().then(() => iteratorFn(item));
     ret.push(p);
@@ -52,10 +116,10 @@ async function asyncPool(limit, items, iteratorFn) {
   return Promise.all(ret);
 }
 
-async function scanFiles(dir) {
-  const results = { cargo: [], npm: [], lockFiles: [], toolchains: [] };
+async function scanFiles(dir: string): Promise<ScanResults> {
+  const results: ScanResults = { cargo: [], npm: [], lockFiles: [], toolchains: [] };
 
-  async function walk(currentDir) {
+  async function walk(currentDir: string): Promise<void> {
     const entries = await readdir(currentDir, { withFileTypes: true }).catch(() => []);
     for (const entry of entries) {
       const fullPath = join(currentDir, entry.name);
@@ -84,8 +148,12 @@ async function scanFiles(dir) {
   return results;
 }
 
-async function detectToolchains(toolchainFiles, cargoFiles, npmFiles) {
-  let rustVersion = null;
+async function detectToolchains(
+  toolchainFiles: string[],
+  cargoFiles: string[],
+  npmFiles: string[]
+): Promise<ToolchainItem[]> {
+  let rustVersion: string | null = null;
 
   for (const tf of toolchainFiles) {
     try {
@@ -119,14 +187,14 @@ async function detectToolchains(toolchainFiles, cargoFiles, npmFiles) {
     } catch {}
   }
 
-  let cargoVersion = null;
+  let cargoVersion: string | null = null;
   try {
     const out = execSync('cargo --version', { encoding: 'utf8', stdio: ['pipe', 'pipe', 'ignore'] });
     const m = out.match(/cargo\s+([0-9]+\.[0-9]+\.[0-9]+)/);
     if (m) cargoVersion = m[1];
   } catch {}
 
-  let bunVersion = null;
+  let bunVersion: string | null = null;
   for (const nf of npmFiles) {
     try {
       const pkg = JSON.parse(await readFile(nf, 'utf8'));
@@ -150,7 +218,7 @@ async function detectToolchains(toolchainFiles, cargoFiles, npmFiles) {
     } catch {}
   }
 
-  const items = [];
+  const items: ToolchainItem[] = [];
   if (rustVersion) {
     items.push({ name: 'rust', version: rustVersion });
   }
@@ -164,7 +232,7 @@ async function detectToolchains(toolchainFiles, cargoFiles, npmFiles) {
   return items;
 }
 
-async function fetchLatestToolchain() {
+async function fetchLatestToolchain(): Promise<string | null> {
   try {
     const res = await fetch('https://static.rust-lang.org/dist/channel-rust-stable.toml', {
       headers: { 'User-Agent': USER_AGENT }
@@ -178,8 +246,8 @@ async function fetchLatestToolchain() {
   }
 }
 
-async function parseCargoLocks(lockFiles) {
-  const lockedVersions = new Map();
+async function parseCargoLocks(lockFiles: string[]): Promise<Map<string, string[]>> {
+  const lockedVersions = new Map<string, string[]>();
   for (const lockPath of lockFiles) {
     try {
       const content = await readFile(lockPath, 'utf8');
@@ -193,7 +261,7 @@ async function parseCargoLocks(lockFiles) {
           if (!lockedVersions.has(name)) {
             lockedVersions.set(name, []);
           }
-          lockedVersions.get(name).push(ver);
+          lockedVersions.get(name)!.push(ver);
         }
       }
     } catch {}
@@ -201,7 +269,7 @@ async function parseCargoLocks(lockFiles) {
   return lockedVersions;
 }
 
-function resolveLockedVersion(name, declaredVer, lockedMap) {
+function resolveLockedVersion(name: string, declaredVer: string, lockedMap: Map<string, string[]>): string {
   const versions = lockedMap.get(name);
   if (!versions || versions.length === 0) return declaredVer;
   if (versions.length === 1) return versions[0];
@@ -220,7 +288,7 @@ function resolveLockedVersion(name, declaredVer, lockedMap) {
   return matched || versions[0];
 }
 
-function getCrateIndexPath(crateName) {
+function getCrateIndexPath(crateName: string): string {
   const name = crateName.toLowerCase();
   if (name.length === 1) return `1/${name}`;
   if (name.length === 2) return `2/${name}`;
@@ -228,9 +296,7 @@ function getCrateIndexPath(crateName) {
   return `${name.slice(0, 2)}/${name.slice(2, 4)}/${name}`;
 }
 
-async function fetchLatestCrate(crateName) {
-  let version = null;
-
+async function fetchLatestCrate(crateName: string): Promise<{ version: string | null }> {
   try {
     const indexPath = getCrateIndexPath(crateName);
     const indexRes = await fetch(`https://index.crates.io/${indexPath}`, {
@@ -244,27 +310,26 @@ async function fetchLatestCrate(crateName) {
         try {
           const entry = JSON.parse(lines[i]);
           if (!entry.yanked) {
-            version = entry.vers;
-            break;
+            return { version: entry.vers };
           }
         } catch {}
       }
     }
 
-    return { version };
+    return { version: null };
   } catch {
     return { version: null };
   }
 }
 
-async function fetchLatestNpm(pkgName) {
+async function fetchLatestNpm(pkgName: string): Promise<{ version: string | null }> {
   try {
     const encoded = pkgName.startsWith('@')
       ? `@${encodeURIComponent(pkgName.slice(1))}`
       : encodeURIComponent(pkgName);
     const res = await fetch(`https://registry.npmjs.org/${encoded}`);
     if (!res.ok) return { version: null };
-    const data = await res.json();
+    const data = (await res.json()) as { 'dist-tags'?: { latest?: string }; versions?: Record<string, unknown> };
     const version = data['dist-tags']?.latest ?? Object.keys(data.versions || {}).pop() ?? null;
     return { version };
   } catch {
@@ -272,10 +337,10 @@ async function fetchLatestNpm(pkgName) {
   }
 }
 
-function parseCargoDependencies(content) {
-  const deps = [];
+function parseCargoDependencies(content: string): CargoDependency[] {
+  const deps: CargoDependency[] = [];
   const lines = content.split('\n');
-  let currentSection = null;
+  let currentSection: string | null = null;
 
   for (const line of lines) {
     const trimmed = line.trim();
@@ -298,8 +363,8 @@ function parseCargoDependencies(content) {
       if (depMatch) {
         const name = depMatch[1];
         const val = depMatch[2];
-        let version = null;
-        let git = null;
+        let version: string | null = null;
+        let git: string | null = null;
 
         if (val.startsWith('"')) {
           version = val.split('"')[1];
@@ -320,7 +385,7 @@ function parseCargoDependencies(content) {
   return deps;
 }
 
-function getSemverDiff(declared, latest) {
+function getSemverDiff(declared: string, latest: string | null): SemverDiff {
   if (!latest) return { status: 'UNKNOWN' };
 
   const cleanDeclared = declared.replace(/^[\^~>=<]+/, '').trim();
@@ -345,7 +410,22 @@ function getSemverDiff(declared, latest) {
   return { status: 'MINOR_PATCH', reason: `${cleanDeclared} -> ${latest}` };
 }
 
-async function main() {
+function printUsage(): void {
+  console.log(`Usage: bun check-deps.ts [options] [target-dir]
+
+Options:
+  --all, --references  Include scanning of references directories
+  --json               Output machine-readable JSON report
+  -h, --help           Show this help message
+`);
+}
+
+async function main(): Promise<void> {
+  if (isHelp) {
+    printUsage();
+    process.exit(0);
+  }
+
   if (!isJson) {
     console.log(`${colors.bold}${colors.cyan}================================================================${colors.reset}`);
     console.log(`${colors.bold}${colors.cyan}  Agentic - Dependency Freshness Verifier                       ${colors.reset}`);
@@ -362,13 +442,8 @@ async function main() {
   let totalMinorPatch = 0;
   let totalMajorBreaking = 0;
 
-  const jsonReport = {
-    summary: {
-      totalChecked: 0,
-      upToDate: 0,
-      minorPatch: 0,
-      majorBreaking: 0
-    },
+  const jsonReport: JsonReport = {
+    summary: { totalChecked: 0, upToDate: 0, minorPatch: 0, majorBreaking: 0 },
     toolchains: [],
     rustModules: [],
     npmModules: []
@@ -376,9 +451,7 @@ async function main() {
 
   // 1. Toolchains (Rust, Cargo, Bun)
   if (toolchainItems.length > 0) {
-    if (!isJson) {
-      console.log(`${colors.bold}${colors.blue}⚙ Toolchains: Rust, Cargo & Bun${colors.reset}`);
-    }
+    if (!isJson) console.log(`${colors.bold}${colors.blue}⚙ Toolchains: Rust, Cargo & Bun${colors.reset}`);
     const latestRust = await fetchLatestToolchain();
     const { version: latestBun } = await fetchLatestNpm('bun');
 
@@ -424,17 +497,12 @@ async function main() {
     const deps = parseCargoDependencies(content);
 
     if (deps.length === 0) continue;
+    if (!isJson) console.log(`${colors.bold}${colors.blue}📦 Rust Module: ${relPath}${colors.reset}`);
 
-    if (!isJson) {
-      console.log(`${colors.bold}${colors.blue}📦 Rust Module: ${relPath}${colors.reset}`);
-    }
-
-    const currentModule = { file: relPath, dependencies: [] };
+    const currentModule: JsonReport['rustModules'][number] = { file: relPath, dependencies: [] };
 
     const results = await asyncPool(10, deps, async (dep) => {
-      if (dep.git) {
-        return { ...dep, latest: 'git' };
-      }
+      if (dep.git) return { ...dep, latest: 'git' };
       const { version: latest } = await fetchLatestCrate(dep.name);
       return { ...dep, latest };
     });
@@ -482,14 +550,14 @@ async function main() {
   for (const npmPath of npm) {
     const relPath = relative(rootDir, npmPath);
     const raw = await readFile(npmPath, 'utf8');
-    let pkgJson = {};
+    let pkgJson: { dependencies?: Record<string, string>; devDependencies?: Record<string, string> } = {};
     try {
       pkgJson = JSON.parse(raw);
     } catch {
       continue;
     }
 
-    const allDeps = [];
+    const allDeps: Array<{ name: string; version: string; type: string }> = [];
     if (pkgJson.dependencies) {
       for (const [name, version] of Object.entries(pkgJson.dependencies)) {
         if (!version.startsWith('workspace:')) {
@@ -506,12 +574,9 @@ async function main() {
     }
 
     if (allDeps.length === 0) continue;
+    if (!isJson) console.log(`${colors.bold}${colors.magenta}🌐 NPM/Web Module: ${relPath}${colors.reset}`);
 
-    if (!isJson) {
-      console.log(`${colors.bold}${colors.magenta}🌐 NPM/Web Module: ${relPath}${colors.reset}`);
-    }
-
-    const currentModule = { file: relPath, dependencies: [] };
+    const currentModule: JsonReport['npmModules'][number] = { file: relPath, dependencies: [] };
 
     const results = await asyncPool(10, allDeps, async (dep) => {
       const { version: latest } = await fetchLatestNpm(dep.name);
@@ -577,7 +642,7 @@ async function main() {
   }
 }
 
-main().catch((err) => {
+main().catch((err: Error) => {
   if (isJson) {
     console.error(JSON.stringify({ error: err.message }));
   } else {

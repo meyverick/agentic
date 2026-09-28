@@ -4,7 +4,7 @@
     {
       "id": 1,
       "prompt": "Write an ADR documenting our decision to adopt PostgreSQL as the central datastore.",
-      "expected_output": "Skill activates; authored document carries OKF v0.2 frontmatter (type: Architecture Decision Record, generated actor-convention provenance, sources list) and passes scripts/validate-frontmatter.mjs before delivery.",
+      "expected_output": "Skill activates; authored document carries OKF v0.2 frontmatter (type: Architecture Decision Record, generated actor-convention provenance, sources list) and passes scripts/validate-frontmatter.ts before delivery.",
       "files": [],
       "assertions": [
         "Frontmatter contains type + generated.by/at in actor convention",
@@ -25,7 +25,7 @@
     {
       "id": 3,
       "prompt": "Add proper frontmatter to this legacy module doc so it passes validation.",
-      "expected_output": "Agent applies OKF v0.2 frontmatter (type per intent, generated provenance, status lifecycle), runs validate-frontmatter.mjs, iterates until pass:true, and leaves body content unaltered beyond attribution footnotes if claims need sourcing.",
+      "expected_output": "Agent applies OKF v0.2 frontmatter (type per intent, generated provenance, status lifecycle), runs validate-frontmatter.ts, iterates until pass:true, and leaves body content unaltered beyond attribution footnotes if claims need sourcing.",
       "files": [],
       "assertions": [
         "Validator run on the updated document",
