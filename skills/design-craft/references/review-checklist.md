@@ -51,14 +51,14 @@ Severity ladder: **blocker** (inaccessible, dishonest, or broken) · **major** (
 ### Motion
 
 - `prefers-reduced-motion` renders final states; decorative loops stop entirely.
-- Only compositor-friendly properties animate; properties are listed, never "all".
+- Motion runs on transform and opacity; blur, `backdrop-filter`, `clip-path`, and `mask` only as the single authored moment (scoped rule, `motion-craft.md` §8); properties are listed, never "all".
 - Transform origin is deliberate; animations are interruptible.
 - Motion longer than five seconds alongside other content offers pause, stop, or hide.
 - No gesture-only action without a click and keyboard equivalent.
 
 ### Typography and content
 
-- Body measure under ~80 characters; headings do not orphan a single word.
+- Body measure 65–75ch; headings do not orphan a single word.
 - Ellipsis character for truncation and loading labels; typographic quotes; non-breaking spaces in units and brand names.
 - Numeric columns use tabular figures.
 - Long, short, and very long content all render without breaking layout; empty states give direction.
@@ -118,4 +118,4 @@ Upstream: `https://raw.githubusercontent.com/vercel-labs/web-interface-guideline
 
 **Copy** — active voice; title case for headings and buttons; numerals for counts; specific button labels; errors with a fix; second person.
 
-**Flag on sight** — disabled zoom; blocked paste; animating all properties; removed outlines; click handlers on non-interactive containers; images without dimensions; unvirtualised large lists; inputs without labels; icon buttons without names; hardcoded date or number formats; unjustified autofocus; animated images where video fits; gesture-only actions.
+**Flag on sight** — disabled zoom; blocked paste; animating all properties; removed outlines; click handlers on non-interactive containers; images without dimensions; unvirtualised large lists; inputs without labels; icon buttons without names; hardcoded date or number formats; unjustified autofocus; animated images where video fits; gesture-only actions; gradient text as emphasis; the hero-metric template as a hero; glass as the default finish.

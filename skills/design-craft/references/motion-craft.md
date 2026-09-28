@@ -2,11 +2,12 @@
 type: Reference
 title: Motion Craft
 description: Deciding whether to animate, then choosing easing, duration, springs, technique, and cleanup.
-generated: { by: agentic/1.0, at: 2026-09-21T00:00:00Z }
+generated: { by: agentic/1.0, at: 2026-09-28T00:00:00Z }
 sources:
   - { id: emil-design-eng, resource: references/design-skills/emil-design-eng.md, license: absent-terms (ideas distilled and rewritten, attributed) }
   - { id: taste-skill, resource: references/design-skills/taste-skill.md, license: absent-terms }
   - { id: awwwards, resource: references/design-skills/build-awwwards-quality-sites.md, license: absent-terms }
+  - { id: impeccable-craft-floor, resource: references/design-skills/impeccable/skill/reference/craft-floor.md, license: Apache-2.0 }
   - { id: web-design-guidelines, resource: https://github.com/vercel-labs/web-interface-guidelines, license: MIT }
 status: stable
 ---
@@ -81,7 +82,7 @@ Use a spring when the motion is **interruptible** or follows a **gesture** — d
 - **Scale children too**: scaling a parent scales its contents; compensate or animate the inner element separately to avoid distorted text.
 - **Transform origin**: set it deliberately — popovers and menus originate from their trigger, not from their own centre.
 - **Depth**: a small 3D rotation or perspective can imply layering; keep it subtle and never for text.
-- **Clip-path reveals**: an inset clip animates cleanly for image and panel reveals, and pairs well with a slight translate.
+- **Clip-path reveals**: an inset clip animates cleanly for image and panel reveals, and pairs well with a slight translate — the single authored moment, per the palette rule in §8.
 - **Stagger**: offset siblings by small increments with a capped total; direction stays consistent. Do not stagger the primary action.
 - **Interruptibility**: a user who changes their mind mid-animation should be able to reverse it immediately.
 - Prefer the simplest mechanism that works — platform transitions for state, the platform animation API for sequenced or programmatic motion. One motion system per project.
@@ -95,6 +96,7 @@ Use a spring when the motion is **interruptible** or follows a **gesture** — d
 
 ## 8. Performance
 
+- **Palette (deciding line):** transform and opacity are the default; blur, `backdrop-filter`, `clip-path`, and `mask` are permitted only as the single authored moment when they stay smooth and respect reduced motion. Layout-affecting animation remains a defect in all cases, brief or no brief.
 - Animate **transform and opacity**; anything that triggers layout or paint on every frame is a defect.
 - Never animate every property — list the properties explicitly.
 - Pause or stop animation when the element is offscreen or the document is hidden.
@@ -119,6 +121,7 @@ Use a spring when the motion is **interruptible** or follows a **gesture** — d
 
 - Animation with no narrative or feedback role.
 - Infinite offscreen animation; continuously animated backgrounds.
-- Layout-affecting animation, per-frame allocation, or unbounded blur and glow.
+- Layout-affecting animation in all cases, per-frame allocation, or blur and glow outside the single authored moment (§8).
+- Animating an image on hover, directly or through its parent: an image is not an action target — give the container the feedback. (`rule:skill-interaction-gemini-no-image-hover`)
 - Entrances from zero scale, or from a different origin than the element's own.
 - Animating keyboard-driven actions, or making a person wait for an animation to act.

@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [5.2.0] - 2026-09-28
+
+### Added
+
+- **Impeccable parity ban rows** (`design-craft-harden`): append rows 25–38 to `design-craft` anti-slop patterns (gradient text, glass default, hero-metric template, identical/nested card grids, system display face, mono as costume, decorative chrome, side-stripe borders, modal by reflex, theme by habit, stripes/grid backgrounds, hard offset shadow, geometric occlusion mask, sketchy-SVG), each carrying its craft-floor rule id
+- **Impeccable coverage footer**: map all 23 canonical ban/reflex/interaction ids to a pattern, a named hold, or a stated skip, so parity is countable rather than asserted
+- **Browser-surfaces rule**: theme selection, caret, scrollbar, focus ring, underline offset, and tabular numerals from the palette; default chrome on a shipped surface is a minor finding
+- **Scope and non-goals block** in SKILL.md §1 (procedure not data; no live loop, no PRODUCT/DESIGN persistence, no hooks/doctor)
+- **Near-miss eval**: docs-only trigger case that must not activate; literal `severity · file:line · rule · fix` form pinned by assertion; refusal evidence recorded in `evals/transcripts/`
+- **impeccable-craft-floor source** attributed in anti-slop-patterns, design-engineering, and motion-craft
+
+### Changed
+
+- **Numeric engineering floors**: display max 6rem, body measure 65–75ch (replacing the under-80-characters clause), tracking floor -0.04em, card radii 12–16px, ghost-card ban, contrast floors ≥4.5:1 / ≥3:1 stated beneath AA/AAA targets
+- **Motion palette reconciled**: single deciding line scopes blur/backdrop-filter/clip-path/mask to one authored moment across motion-craft, SKILL.md, and review-checklist; image-hover rule added to forbidden list
+- **Brief-proof set named** in SKILL.md §3: non-negotiables, layout-affecting animation, and contrast minimums survive any brief; anti-slop preamble and brief-wins line qualified
+- **Eyebrow rule resolved** to the one-per-three ration in both files with the enforceability rationale (no edit-time hook)
+- **Tier 1 / Tier 2 ceilings re-derived** from recorded measurement, bounded by absolute caps (body ≤2000 tokens, frontmatter ≤400) with the routing floor outranking token numbers
+- **Behavioral evidence honesty**: cold-eval proxy documented as a deterministic harness whose `d`/`m` is a health check, not behavior evidence; eval set 7→8, benchmark structural and behavioral stages re-measured
+- **design-craft skill metadata version** 1.0.0 → 1.1.0 (content revision, no contract change)
+
 ## [5.1.0] - 2026-09-28
 
 ### Added

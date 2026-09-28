@@ -13,7 +13,7 @@ license: MIT
 compatibility: No runtime or network requirement; references ship with the skill.
 metadata:
   author: agentic
-  version: "1.0.0"
+  version: "1.1.0"
 positive_triggers:
   - "design or redesign a page, screen, or component"
   - "make this interface look less templated"
@@ -35,6 +35,8 @@ A syllabus for interface work on any stack. Read the outline, then open only the
 
 **Does not trigger on:** backend, API, database, or infrastructure work; pure documentation; choosing a renderer or framework (delegate to the project's own rules); non-visual performance work.
 
+**Scope:** procedure, not data — no shipped palettes, styles, or font tables. **Non-goals:** no live browser loop, no PRODUCT.md/DESIGN.md persistence, no hooks/doctor.
+
 ## 2. Design Read — the gate
 
 Before the first UI edit, emit one line:
@@ -46,7 +48,8 @@ Before the first UI edit, emit one line:
 
 ## 3. The Brief Wins
 
-- An explicit brief — aesthetic, era, material, palette, typeface, brand, or a supplied reference — outranks generic taste and every anti-slop rule below. Follow it exactly.
+- An explicit brief — aesthetic, era, material, palette, typeface, brand, or a supplied reference — outranks generic taste and every anti-slop rule below outside the brief-proof set. Follow it exactly.
+- **Brief-proof set:** a brief, pinned reference, or brand mandate cannot earn past the non-negotiables (§5), layout-affecting animation, or the contrast minimums (body/placeholder ≥4.5:1, large text ≥3:1). A brief does earn refusal-list defaults and other floor values; a departure under it names the brief clause that earns it.
 - **Refine preserves, redesign replaces.** Refinement keeps identity, behaviour, copy, and everything outside scope. Redesign keeps product truth and function, treats the old look as anti-reference, and replaces it wholesale — never polish a discarded direction.
 - When the brief is silent on an axis, decide and state why. Never spend that freedom on a default.
 - Ask exactly one question when product, audience, or job is unknown. Otherwise, decide.
@@ -69,7 +72,7 @@ Presets: operate/dashboard 2·1·8 · marketing/persuade 7·5·3 · read/docs 3�
 - Contrast: body text meets AA; hero and primary CTA target AAA.
 - Semantic structure first (landmarks, ordered headings, real labels); ARIA only to fill a real gap.
 - `prefers-reduced-motion` is honoured by rendering final states, not by merely shortening.
-- Motion stays on compositor-friendly properties; layout-affecting animation is a defect.
+- Motion stays on compositor-friendly properties (palette scoped in `references/motion-craft.md` §8); layout-affecting animation is a defect.
 - Theme parity: whatever modes the project ships, hierarchy and brand read the same in each.
 - Asset honesty: references give traits — never reuse, trace, or closely reproduce assets, identity, or copy. No invented proof, logos, or testimonials.
 - Honest claims: "premium", "cinematic", or "award-caliber" describe a bar, never a recognition.
@@ -84,6 +87,11 @@ Presets: operate/dashboard 2·1·8 · marketing/persuade 7·5·3 · read/docs 3�
 | one card shape repeated | composition varies with content weight |
 | animation everywhere | motion only where it explains a change |
 | accent colour on one headline word | one deliberate type treatment for the whole page |
+| gradient text on a headline or stat | weight or size carries the emphasis instead |
+| glass default — glass panels and outer glow as the finish | one deliberate use with a solid fallback |
+| hero-metric template (big number, small label, stats, accent) as the hero | composition grounded in the subject instead |
+
+Eyebrow rationale: the rule is a ration — at most one small label per three sections, including the hero, or none. Impeccable bans eyebrows outright; this skill ships no edit-time hook, so the ration is the checkable form.
 
 Anti-examples:
 

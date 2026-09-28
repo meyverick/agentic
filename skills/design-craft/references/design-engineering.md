@@ -2,10 +2,11 @@
 type: Reference
 title: Design Engineering
 description: Type, colour, layout, materiality, states, forms, density, theming, and locale-handling rules.
-generated: { by: agentic/1.0, at: 2026-09-21T00:00:00Z }
+generated: { by: agentic/1.0, at: 2026-09-28T00:00:00Z }
 sources:
   - { id: taste-skill, resource: references/design-skills/taste-skill.md, license: absent-terms (ideas distilled and rewritten, attributed) }
   - { id: impeccable, resource: references/design-skills/impeccable.md, license: Apache-2.0 }
+  - { id: impeccable-craft-floor, resource: references/design-skills/impeccable/skill/reference/craft-floor.md, license: Apache-2.0 }
   - { id: web-design-guidelines, resource: https://github.com/vercel-labs/web-interface-guidelines, license: MIT }
 status: stable
 ---
@@ -18,7 +19,9 @@ Concrete rules for the decisions that make an interface feel authored rather tha
 
 - One family, or two that are clearly distinct in role. Never a third.
 - Set a scale with intentional steps; a page needs four to six sizes, not ten.
-- Body measure stays under ~80 characters; serif body text may run slightly longer with correspondingly more leading.
+- Body measure 65–75ch; serif body text may run slightly longer with correspondingly more leading.
+- Display type max 6rem; display tracking floor -0.04em, and -0.02 to -0.03em usually reads better than the limit.
+- Numeric floors (display max, measure, tracking, radii, contrast) carry the same brief-mandate escape as the ban list — except the contrast minimums: body/placeholder ≥4.5:1 and large text ≥3:1 are brief-proof and no brief earns past them. A departure under a brief names the brief clause that earns it.
 - Numbers that are compared or stacked use tabular figures; numerals in prose stay proportional.
 - Loading, saving, and pending labels end with an ellipsis character, not three periods. Use typographic quotes and non-breaking spaces in units and brand names.
 - Balance headings so they do not orphan a single word.
@@ -29,6 +32,7 @@ Concrete rules for the decisions that make an interface feel authored rather tha
 
 - Name 4–6 base values and give each a role (surface, raised surface, text, muted text, accent, state). Everything else derives.
 - Contrast: body text meets AA; hero copy and the primary action target AAA.
+- Those targets rest on stated floors, not a second set of targets — floor, not target: body and placeholder text ≥4.5:1, large text ≥3:1, and the contrast minimums are brief-proof.
 - Hierarchy parity: if the primary action dominates in one theme, it dominates in every theme.
 - Brand fidelity: keep the brand colour recognisable rather than desaturating it into a theme.
 - Avoid pure black and pure white; near-values preserve depth.
@@ -47,8 +51,9 @@ Concrete rules for the decisions that make an interface feel authored rather tha
 ## 4. Materiality
 
 - Borders before shadows; one elevation recipe per level, applied consistently.
+- Declare elevation once — border or shadow, never both; a 1px border under a wide soft shadow is the ghost card.
 - Blur and glow are decisions with a reason, not a default finish on every surface.
-- Radius is hierarchical: one value applied to everything flattens hierarchy.
+- Radius is hierarchical: one value applied to everything flattens hierarchy. Card radii stay 12–16px; pills are for small controls.
 - Backgrounds vary where content varies; a grid of identical white cells reads as unfinished.
 
 ## 5. Interactive states
@@ -77,6 +82,7 @@ Every interactive element defines: **default, hover, active, focus, disabled, lo
 
 - Text containers survive long content: truncate, clamp, or break long tokens deliberately, and let children shrink where truncation is expected.
 - Test short, average, and very long inputs — including user-generated ones.
+- Run the real copy at every breakpoint and fix what overflows there; overflow hidden by a clipped container is not a fix.
 - Empty states are directional: say what belongs here and how to add it. A blank panel is a dead end.
 - Density follows the dial: dense surfaces group and compress, airy surfaces let sections breathe. Never a dense table on an airy page without a reason.
 - Copy is content, not decoration: active voice, specific labels ("Save API key", not "Continue"), sentence case, second person, errors that state the fix, and one job per written element.
@@ -86,6 +92,7 @@ Every interactive element defines: **default, hover, active, focus, disabled, lo
 - Support the themes the project ships; do not assume a single mode. Respect the system preference unless the brand insists otherwise.
 - Decide the mode earlier, not later: retrofitting a dark theme into hardcoded light values is a rewrite.
 - Set the document colour scheme so native controls, scrollbars, and form widgets match the active theme.
+- Theme the browser surfaces you did not draw from the palette — text selection, caret, scrollbar, focus ring, underline offset, and tabular numerals ship from no design system, so default browser chrome on a shipped surface is a minor finding.
 - Test every shipped theme before finishing: contrast, hierarchy, imagery, and brand expression all hold in each.
 
 ## 9. Media and imagery

@@ -20,7 +20,7 @@
       "files": [],
       "assertions": [
         "Skill activates on a review request",
-        "Each finding names severity, file:line, rule, and fix",
+        "Each finding uses the literal `severity · file:line · rule · fix` separator form, carrying severity, file:line, rule, and fix",
         "No target files modified during review"
       ]
     },
@@ -37,7 +37,7 @@
     {
       "id": 4,
       "prompt": "Polish the pricing page. Keep the brand.", 
-      "expected_output": "Agent activates design-craft in Polish mode and, when a named anti-slop pattern applies to the existing surface, refuses it explicitly (for example a viewport-height hero, an entrance from zero scale, or an eyebrow above every heading) and states the replacement.",
+      "expected_output": "Agent activates design-craft in Polish mode and, when a named anti-slop pattern applies to the existing surface, refuses it explicitly (for example a viewport-height hero, an entrance from zero scale, an eyebrow above every heading, gradient text used as emphasis, or the hero-metric template as the hero) and states the replacement.",
       "files": [],
       "assertions": [
         "Named anti-slop pattern identified and refused by name",
@@ -75,6 +75,16 @@
         "Body and guidance name no framework or library (agnosticism)",
         "Stack detected from the project rather than assumed",
         "Framework idiom deferred to project conventions or a documentation lookup"
+      ]
+    },
+    {
+      "id": 8,
+      "prompt": "Write the release notes and a README changelog section for our new invoice export endpoint.",
+      "expected_output": "Agent does NOT activate design-craft. This is a docs-only request: writing release notes and non-visual copy is an explicit anti-trigger.",
+      "files": [],
+      "assertions": [
+        "Anti-trigger fires: docs-only request does not activate the skill",
+        "No Design Read emitted for a non-visual docs task"
       ]
     }
   ]

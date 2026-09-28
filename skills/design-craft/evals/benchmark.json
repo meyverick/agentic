@@ -17,25 +17,25 @@
       "single_responsibility": true
     },
     "evals": {
-      "count": 7,
-      "assertions": 20,
+      "count": 8,
+      "assertions": 22,
       "anti_trigger_coverage": true,
       "agnosticism_coverage": true
     }
   },
-  "behavioral_dxm": "1×0.35",
+  "behavioral_dxm": "1×0.36",
   "ship_gate": {
     "criterion": "d = +1 and m >= 0.2",
     "applies_to": "behavioral stage"
   },
   "behavioral": {
-    "at": "2026-09-21T06:37:39.843Z",
-    "evals": 7,
-    "assertions": 20,
+    "at": "2026-09-28T12:40:10.217Z",
+    "evals": 8,
+    "assertions": 22,
     "baseline": 0.5,
-    "with_skill": 0.85,
+    "with_skill": 0.8636,
     "d": 1,
-    "m": 0.35,
+    "m": 0.3636,
     "ship": "pass"
   }
 }
