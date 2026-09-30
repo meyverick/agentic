@@ -28,15 +28,6 @@ describe('resolveSessionId', () => {
     expect(resolveSessionId('')).toBe('openspec-task');
     expect(resolveSessionId('---')).toBe('openspec-task');
   });
-
-  it('appends unique timestamp suffix when fresh is enabled', () => {
-    const id1 = resolveSessionId('my-change', true);
-    const id2 = resolveSessionId('my-change', false);
-
-    expect(id2).toBe('openspec-my-change');
-    expect(id1.startsWith('openspec-my-change-')).toBe(true);
-    expect(id1.length).toBeGreaterThan(id2.length);
-  });
 });
 
 describe('parseArgs', () => {
@@ -44,13 +35,11 @@ describe('parseArgs', () => {
     const opts = parseArgs([
       '--change',
       'test-change',
-      '--fresh',
       '--verbose',
       '--timeout',
       '60000',
     ]);
     expect(opts.changeName).toBe('test-change');
-    expect(opts.fresh).toBe(true);
     expect(opts.verbose).toBe(true);
     expect(opts.timeoutMs).toBe(60000);
   });

@@ -8,7 +8,6 @@
  * Responsibilities:
  * - Deterministically resolves workspace root (nearest Git / OpenSpec root ancestor)
  * - Reuses the change's active apply session (`openspec-${changeName}`) by default
- * - Supports `--fresh` to force a new session when needed
  * - Streams and strictly decodes JSONL on LF (\n) boundaries
  * - Suppresses high-frequency token deltas to prevent log flooding & pipe stalls
  * - Formats and displays clean tool calls and assistant progress
@@ -72,7 +71,6 @@ export interface CliOptions {
   changeName?: string;
   replyMessage?: string;
   continueSession: boolean;
-  fresh: boolean;
   timeoutMs: number;
   explicitRoot?: string;
   verbose: boolean;
@@ -86,7 +84,6 @@ Options:
   --change <name>        OpenSpec change name to archive
   --reply "<message>"    Send a reply/clarification to the active pi worker session
   --continue             Continue existing pi session without new prompt
-  --fresh                Start a fresh session (ignores existing apply session)
   --timeout <ms>         Turn timeout in milliseconds (default: 300000ms / 5 min)
   --root <path>          Explicit workspace root directory
   --verbose              Print detailed event diagnostics to stderr
@@ -97,7 +94,6 @@ Options:
 export function parseArgs(args: string[]): CliOptions {
   const options: CliOptions = {
     continueSession: false,
-    fresh: false,
     timeoutMs: 300_000,
     verbose: false,
   };
@@ -113,8 +109,6 @@ export function parseArgs(args: string[]): CliOptions {
       options.replyMessage = args[++i];
     } else if (arg === '--continue') {
       options.continueSession = true;
-    } else if (arg === '--fresh') {
-      options.fresh = true;
     } else if (arg === '--timeout') {
       options.timeoutMs = parseInt(args[++i], 10) || 300_000;
     } else if (arg === '--root') {
@@ -134,19 +128,15 @@ export function parseArgs(args: string[]): CliOptions {
  * Pi CLI constraints:
  * - Must start and end with an alphanumeric character ([a-zA-Z0-9])
  * - May contain letters, numbers, '.', '_', and '-'
- * Returns `openspec-${safeName}` (or `openspec-${safeName}-${Date.now().toString(36)}` if fresh).
+ * Returns `openspec-${safeName}`.
  */
-export function resolveSessionId(changeName: string, fresh = false): string {
+export function resolveSessionId(changeName: string): string {
   let safe = changeName.trim().replace(/[^a-zA-Z0-9._-]/g, '-');
   safe = safe.replace(/^[^a-zA-Z0-9]+/, '').replace(/[^a-zA-Z0-9]+$/, '');
   if (!safe) {
     safe = 'task';
   }
-  const base = `openspec-${safe}`;
-  if (fresh) {
-    return `${base}-${Date.now().toString(36)}`;
-  }
-  return base;
+  return `openspec-${safe}`;
 }
 
 /**
@@ -244,9 +234,9 @@ export async function main() {
 
   const spawnArgs = ['-a'];
   if (options.changeName) {
-    const sessionId = resolveSessionId(options.changeName, options.fresh);
+    const sessionId = resolveSessionId(options.changeName);
     spawnArgs.push('--session-id', sessionId);
-    console.log(`[pi-archive] Reusing session ID: ${sessionId} (fresh: ${options.fresh})`);
+    console.log(`[pi-archive] Reusing session ID: ${sessionId}`);
   } else {
     console.warn(`[pi-archive] Warning: No change name provided, falling back to continue (-c)`);
     spawnArgs.push('-c');

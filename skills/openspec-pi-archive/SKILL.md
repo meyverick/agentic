@@ -66,8 +66,6 @@ Run the archive bridge runner from the workspace root:
 bun run .agents/skills/openspec-pi-archive/scripts/pi-rpc-archive.ts --change "<name>"
 ```
 
-*(To bypass past apply session history and start fresh, add `--fresh`)*
-
 *(For low-level RPC framing specifications, see [references/rpc-protocol.md](references/rpc-protocol.md).)*
 
 The runner:

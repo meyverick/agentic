@@ -25,14 +25,4 @@ describe('resolveSessionId', () => {
     expect(resolveSessionId('   ')).toBe('openspec-task');
     expect(resolveSessionId('!@#$%^&*()')).toBe('openspec-task');
   });
-
-  it('appends unique timestamp suffix when fresh is enabled', () => {
-    const fresh1 = resolveSessionId('my-change', true);
-    const fresh2 = resolveSessionId('my-change', true);
-
-    expect(fresh1.startsWith('openspec-my-change-')).toBe(true);
-    expect(fresh2.startsWith('openspec-my-change-')).toBe(true);
-    // Verified valid alphanumeric start and end
-    expect(/^[a-zA-Z0-9].*[a-zA-Z0-9]$/.test(fresh1)).toBe(true);
-  });
 });

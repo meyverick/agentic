@@ -64,8 +64,6 @@ Run the bridge runner from the workspace root:
 bun run .agents/skills/openspec-pi-apply/scripts/pi-rpc-apply.ts --change "<name>"
 ```
 
-*(To discard previous attempt sessions and force a fresh session, add `--fresh`)*
-
 *(For low-level RPC framing specifications, see [references/rpc-protocol.md](references/rpc-protocol.md).)*
 
 The runner:

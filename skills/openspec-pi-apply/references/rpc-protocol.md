@@ -6,7 +6,6 @@ This reference outlines the JSON-RPC framing, lifecycle events, and process conf
 
 - `-a` (`--approve`): Auto-approves operations within project scope, preventing interactive confirmation prompts.
 - `--session-id "openspec-<change-name>"`: Enforces change-scoped session isolation. Reuses the exact session across worker turns, preventing contamination from unrelated workspace history while preserving implementation context.
-- `--fresh`: Appends a unique base36 timestamp (`openspec-<change-name>-<timestamp>`), bypassing existing session history when a clean session is required.
 - `-c` (`--continue`): Fallback flag maintaining the most recent workspace session only when no change name is provided.
 - `--mode rpc`: Activates bidirectional JSON-RPC 2.0 streaming over standard I/O.
 
