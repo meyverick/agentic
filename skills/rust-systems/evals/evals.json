@@ -1,0 +1,91 @@
+{
+  "skill_name": "rust-systems",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Scaffold a new Tokio TCP stream worker module in our Rust workspace with cancellation and lint governance.",
+      "expected_output": "Agent activates rust-systems in Build mode, emits a readiness statement naming the mode and the [workspace.lints] table (RFC 3389, Edition 2024) before the first file edit, and implements a dedicated writer task with graceful shutdown via CancellationToken.",
+      "files": [],
+      "assertions": [
+        "Skill activates on Rust build request",
+        "Readiness statement emitted before the first edit",
+        "Applies [workspace.lints] RFC 3389 table and Edition 2024 rules",
+        "Establishes dedicated writer task and CancellationToken shutdown"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Review this Rust network session handler for async hazards and memory soundness. Do not edit the files, just report issues.",
+      "expected_output": "Agent activates rust-systems in Review mode, emits findings in the pinned literal line format `severity · file:line · rule · fix`, and modifies zero target files.",
+      "files": [],
+      "assertions": [
+        "Skill activates in Review mode",
+        "Reports findings using pinned format: `severity · file:line · rule · fix`",
+        "No target files modified during review"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "We wrote inline assembly and AVX-512 SIMD intrinsics for a packet parser. Verify its memory safety using Miri.",
+      "expected_output": "Agent activates rust-systems in Verify mode, identifies that Miri cannot execute inline assembly or hardware SIMD intrinsics, refuses a Miri-only safety claim, and requires native compiler sanitizers (-Zsanitizer=address,thread) alongside nextest.",
+      "files": [],
+      "assertions": [
+        "Skill activates in Verify mode",
+        "Refuses Miri-only claim on assembly and hardware SIMD",
+        "Prescribes required lane with AddressSanitizer and ThreadSanitizer"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "Update the Tailwind CSS styles, color palette, and button hover states on our web dashboard.",
+      "expected_output": "Agent does NOT activate rust-systems. Frontend, CSS, and styling work is excluded by anti-triggers.",
+      "files": [],
+      "assertions": [
+        "Anti-trigger fires: no rust-systems activation for frontend or CSS work",
+        "No readiness statement or Rust systems review emitted"
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "Upgrade tokio, serde, and reqwest to their latest semver releases across all Cargo.toml manifests.",
+      "expected_output": "Agent does NOT activate rust-systems. Dependency upgrading is an explicit non-goal.",
+      "files": [],
+      "assertions": [
+        "Near-miss anti-trigger fires: no rust-systems activation for dependency upgrade request",
+        "Recognizes toolchain and dependency upgrade tasks as out of scope"
+      ]
+    },
+    {
+      "id": 6,
+      "prompt": "Audit the rust-systems skill body to confirm it remains portable and agnostic across projects.",
+      "expected_output": "Asserts that the Tier 2 body names no project-specific crate or hardcoded environment path.",
+      "files": [],
+      "assertions": [
+        "Skill body names no project-specific crate",
+        "Zero machine-specific or orchestrator paths in skill body"
+      ]
+    },
+    {
+      "id": 7,
+      "prompt": "Review this Rust cryptographic library for lifetime elision, nullability issues, and secret zeroization on drop.",
+      "expected_output": "Both guardrails and rust-systems activate. The guardrails skill loads first to handle secrets and lifetimes, while rust-systems enforces systems memory and lint soundness.",
+      "files": [],
+      "assertions": [
+        "Co-activation succeeds without conflict",
+        "guardrails loads first for cross-cutting hazards",
+        "rust-systems verifies memory provenance and lint invariants"
+      ]
+    },
+    {
+      "id": 8,
+      "prompt": "In our select! loop, await socket.read_exact(&mut buf) and cast the pointer through ptr as usize as *mut u8.",
+      "expected_output": "Agent refuses the cancel-unsafe read_exact inside tokio::select! by name, explains that partial buffers are lost on cancellation, and replaces raw integer casts with strict provenance APIs like addr() and with_addr().",
+      "files": [],
+      "assertions": [
+        "Refuses read_exact in select! by name",
+        "Rejects integer pointer casts in favor of addr() and with_addr() provenance APIs",
+        "Prescribes cancel-safe read or task spawn isolation"
+      ]
+    }
+  ]
+}

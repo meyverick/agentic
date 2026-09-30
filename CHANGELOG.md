@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [5.4.0] - 2026-09-30
+
+### Added
+
+- **rust-systems skill** (`rust-systems-skill`): 11th shipped consumer skill — 2026-SOTA Rust systems engineering providing checkable rules and bounded verification across lint governance (RFC 3389 `[workspace.lints]`, Edition 2024 defaults, profile hardening), async cancellation contracts (cancel-safety tables, single writer, `CancellationToken` cascades, lexical lock scopes), memory and FFI soundness (strict provenance `addr()`/`with_addr()`, Tree Borrows, `#[repr(C)]`, unwinding shims), verification lanes (`nextest`, Miri strict provenance, native compiler sanitizers), and data-parallel invariants (`core::simd`, false-sharing cacheline alignment, Criterion benchmarks).
+- **Six reference guides**: `workspace-lints.md`, `cancellation.md`, `verification.md`, `ffi-boundaries.md`, `data-parallel.md`, and `review-checklist.md`.
+- **Evaluation suite and proof**: 8 behavioral evals in `evals/evals.json` and cold-agent refusal transcript in `evals/transcripts/`.
+- **Corpus provenance**: OKF attribution frontmatter linking to research papers in `references/rust-researches/`.
+
 ## [5.3.0] - 2026-09-30
 
 ### Changed

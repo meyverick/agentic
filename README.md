@@ -10,7 +10,7 @@ bunx @meyverick/agentic
 
 *(or via GitHub direct: `bunx github:meyverick/agentic`)*
 
-Installs 10 skills into your project's `.agents/skills/`, distributes utility scripts into `./scripts/`, writes a provenance manifest, and creates `openspec/reports/`.
+Installs 11 skills into your project's `.agents/skills/`, distributes utility scripts into `./scripts/`, writes a provenance manifest, and creates `openspec/reports/`.
 
 ## Skills
 
@@ -26,6 +26,7 @@ Installs 10 skills into your project's `.agents/skills/`, distributes utility sc
 | openspec-pi-apply | Delegate OpenSpec change task implementation to a headless pi worker agent via JSON-RPC |
 | openspec-report | Generate self-reflection (meditation) reports from archived OpenSpec changes |
 | qmd-research | Research project markdown and specifications using local QMD hybrid search, and maintain index collections |
+| rust-systems | 2026-SOTA Rust systems engineering: lint governance, async cancellation contracts, memory and FFI soundness, verification lanes, and data-parallel invariants |
 
 ## The Loop
 
