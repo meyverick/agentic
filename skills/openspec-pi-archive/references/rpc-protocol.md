@@ -18,7 +18,7 @@ Transmits the workflow entry point to Pi:
 {
   "id": "prompt-1",
   "type": "prompt",
-  "message": "/skill:openspec-apply-change <change-name>"
+  "message": "/skill:openspec-archive-change <change-name>"
 }
 ```
 *Note*: `pi` natively expands `/skill:name` commands prior to session execution.

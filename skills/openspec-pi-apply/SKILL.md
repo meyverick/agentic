@@ -32,7 +32,7 @@ Delegate task execution for an active OpenSpec change to a headless `pi` worker 
 
 | Dimension | Direct Supervisor (`openspec-apply-change`) | Headless Pi Worker (`openspec-pi-apply`) | Why Different |
 | :--- | :--- | :--- | :--- |
-| **Execution** | Supervisor edits project files directly in turn context | Child process worker (`pi -a -c --mode rpc`) executes edits | Prevents supervisor context bloat & high turn latency |
+| **Execution** | Supervisor edits project files directly in turn context | Child process worker (`pi -a --session-id openspec-<name> --mode rpc`) executes edits | Prevents supervisor context bloat & high turn latency |
 | **Supervision** | Self-directed implementation | Supervisor monitors tool events & validates completion gates | Decouples code authoring from architectural oversight |
 | **Clarifications** | Halts and asks human immediately | Supervisor triages autonomously against change artifacts | Eliminates unnecessary user interruptions for specified details |
 
@@ -64,10 +64,13 @@ Run the bridge runner from the workspace root:
 bun run .agents/skills/openspec-pi-apply/scripts/pi-rpc-apply.ts --change "<name>"
 ```
 
+*(To discard previous attempt sessions and force a fresh session, add `--fresh`)*
+
 *(For low-level RPC framing specifications, see [references/rpc-protocol.md](references/rpc-protocol.md).)*
 
 The runner:
-- Resolves workspace root and spawns `pi -a -c --mode rpc`
+- Resolves workspace root and spawns `pi -a --session-id "openspec-<name>" --mode rpc`
+- Enforces change-scoped session isolation, preventing contamination from previous interactive chats or other changes
 - Transmits `/skill:openspec-apply-change <name>` over stdin
 - Filters raw token noise, emitting clean progress logs (`⚙ [pi:tool] Invoking: ...`)
 - Detects `agent_settled` upon turn completion

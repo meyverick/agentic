@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [5.5.0] - 2026-09-30
+
+### Added
+
+- **openspec-pi-archive skill** (`add-openspec-pi-archive-skill`): 12th shipped consumer skill — delegate OpenSpec change archiving and delta specification merging to a headless `pi` agent worker via JSON-RPC (`scripts/pi-rpc-archive.ts`), providing apply-session continuity (`openspec-${changeName}`), interactive delta spec sync triaging, token delta suppression, and physical archive invariant verification.
+- **Reference documentation**: added comprehensive `rpc-protocol.md` reference guide covering JSON-RPC process invocation flags, protocol record families, event stream filtering, and `extension_ui_request`/`extension_ui_response` dialog handling.
+
+### Changed
+
+- **Change-scoped session isolation for openspec-pi-apply** (`pi-apply-scoped-session`): replaced blind `-c` with change-scoped `--session-id "openspec-${changeName}"` and `--fresh` override to prevent cross-task conversational history pollution.
+
 ## [5.4.0] - 2026-09-30
 
 ### Added

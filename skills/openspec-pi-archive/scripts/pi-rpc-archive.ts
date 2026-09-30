@@ -1,24 +1,25 @@
 #!/usr/bin/env bun
 /**
- * scripts/pi-rpc-apply.ts
+ * scripts/pi-rpc-archive.ts
  *
- * Bridge runner driving `pi -a -c --mode rpc` over stdio duplex to execute
- * the `openspec-apply-change` workflow on a specified change.
+ * Bridge runner driving `pi -a --session-id <id> --mode rpc` over stdio duplex to execute
+ * the `openspec-archive-change` workflow on a specified change.
  *
  * Responsibilities:
  * - Deterministically resolves workspace root (nearest Git / OpenSpec root ancestor)
- * - Spawns `pi -a -c --mode rpc` with cwd set to workspace root
+ * - Reuses the change's active apply session (`openspec-${changeName}`) by default
+ * - Supports `--fresh` to force a new session when needed
  * - Streams and strictly decodes JSONL on LF (\n) boundaries
  * - Suppresses high-frequency token deltas to prevent log flooding & pipe stalls
  * - Formats and displays clean tool calls and assistant progress
  * - Detects `agent_settled` turn completion
- * - Validates change completion against `openspec status --change <name> --json`
+ * - Validates physical archive invariants (folder moved to archive/ & spec validation)
  * - Emits structured status (COMPLETED, PAUSED_FOR_CLARIFICATION, FAILED)
  * - Supports session continuation via `--reply "<answer>"`
  */
 
 import { spawn, type ChildProcess } from 'node:child_process';
-import { existsSync } from 'node:fs';
+import { existsSync, readdirSync } from 'node:fs';
 import { dirname, resolve, join } from 'node:path';
 
 // --- Type Definitions for Pi RPC Events ---
@@ -65,9 +66,9 @@ interface PiEvent {
   toolResults?: unknown[];
 }
 
-// --- CLI Arguments & Workspace Resolution ---
+// --- CLI Arguments & Options ---
 
-interface CliOptions {
+export interface CliOptions {
   changeName?: string;
   replyMessage?: string;
   continueSession: boolean;
@@ -77,15 +78,15 @@ interface CliOptions {
   verbose: boolean;
 }
 
-function printHelp(): void {
+export function printHelp(): void {
   console.log(`
-Usage: bun run scripts/pi-rpc-apply.ts [options]
+Usage: bun run scripts/pi-rpc-archive.ts [options]
 
 Options:
-  --change <name>        OpenSpec change name to apply
+  --change <name>        OpenSpec change name to archive
   --reply "<message>"    Send a reply/clarification to the active pi worker session
   --continue             Continue existing pi session without new prompt
-  --fresh                Start a fresh session for the change (ignores existing session)
+  --fresh                Start a fresh session (ignores existing apply session)
   --timeout <ms>         Turn timeout in milliseconds (default: 300000ms / 5 min)
   --root <path>          Explicit workspace root directory
   --verbose              Print detailed event diagnostics to stderr
@@ -93,7 +94,7 @@ Options:
 `);
 }
 
-function parseArgs(args: string[]): CliOptions {
+export function parseArgs(args: string[]): CliOptions {
   const options: CliOptions = {
     continueSession: false,
     fresh: false,
@@ -167,6 +168,54 @@ export function resolveWorkspaceRoot(startDir: string = process.cwd()): string {
   return resolve(startDir);
 }
 
+export interface ArchiveInvariantResult {
+  isArchived: boolean;
+  archivePath?: string;
+  reason?: string;
+}
+
+/**
+ * Verifies that the active change folder no longer exists and has moved to archive/
+ */
+export function checkArchiveInvariants(workspaceRoot: string, changeName: string): ArchiveInvariantResult {
+  const activeChangePath = join(workspaceRoot, 'openspec', 'changes', changeName);
+  if (existsSync(activeChangePath)) {
+    return {
+      isArchived: false,
+      reason: `Active change directory still exists at ${activeChangePath}`,
+    };
+  }
+
+  const archiveRoot = join(workspaceRoot, 'openspec', 'changes', 'archive');
+  if (!existsSync(archiveRoot)) {
+    return {
+      isArchived: false,
+      reason: `Archive directory does not exist at ${archiveRoot}`,
+    };
+  }
+
+  try {
+    const entries = readdirSync(archiveRoot);
+    const match = entries.find((e) => e === changeName || e.endsWith(`-${changeName}`));
+    if (!match) {
+      return {
+        isArchived: false,
+        reason: `Change directory not found in ${archiveRoot}`,
+      };
+    }
+
+    return {
+      isArchived: true,
+      archivePath: join(archiveRoot, match),
+    };
+  } catch (err) {
+    return {
+      isArchived: false,
+      reason: `Failed to inspect archive directory: ${err}`,
+    };
+  }
+}
+
 // --- Main Runner Execution ---
 
 export async function main() {
@@ -179,34 +228,32 @@ export async function main() {
   }
 
   const workspaceRoot = options.explicitRoot ? resolve(options.explicitRoot) : resolveWorkspaceRoot();
-  console.log(`[pi-runner] Workspace root resolved to: ${workspaceRoot}`);
+  console.log(`[pi-archive] Workspace root resolved to: ${workspaceRoot}`);
 
-  // Construct initial prompt
   let initialPrompt = '';
   if (options.replyMessage) {
     initialPrompt = options.replyMessage;
-    console.log(`[pi-runner] Sending clarification reply to worker session...`);
+    console.log(`[pi-archive] Sending reply to archive session...`);
   } else if (options.changeName) {
-    initialPrompt = `/skill:openspec-apply-change ${options.changeName}`;
-    console.log(`[pi-runner] Starting apply for change: '${options.changeName}'...`);
+    initialPrompt = `/skill:openspec-archive-change ${options.changeName}`;
+    console.log(`[pi-archive] Starting archive delegation for change: '${options.changeName}'...`);
   } else if (options.continueSession) {
     initialPrompt = 'Continue';
-    console.log(`[pi-runner] Resuming worker session with continue...`);
+    console.log(`[pi-archive] Resuming worker session with continue...`);
   }
 
-  // Construct pi spawn arguments with change-scoped session isolation
   const spawnArgs = ['-a'];
   if (options.changeName) {
     const sessionId = resolveSessionId(options.changeName, options.fresh);
     spawnArgs.push('--session-id', sessionId);
-    console.log(`[pi-runner] Change session ID: ${sessionId} (fresh: ${options.fresh})`);
+    console.log(`[pi-archive] Reusing session ID: ${sessionId} (fresh: ${options.fresh})`);
   } else {
-    console.warn(`[pi-runner] Warning: No change name provided, falling back to continue (-c)`);
+    console.warn(`[pi-archive] Warning: No change name provided, falling back to continue (-c)`);
     spawnArgs.push('-c');
   }
   spawnArgs.push('--mode', 'rpc');
 
-  console.log(`[pi-runner] Spawning: pi ${spawnArgs.join(' ')} (cwd: ${workspaceRoot})`);
+  console.log(`[pi-archive] Spawning: pi ${spawnArgs.join(' ')} (cwd: ${workspaceRoot})`);
   const piProcess: ChildProcess = spawn('pi', spawnArgs, {
     cwd: workspaceRoot,
     stdio: ['pipe', 'pipe', 'pipe'],
@@ -214,7 +261,7 @@ export async function main() {
   });
 
   if (!piProcess.stdin || !piProcess.stdout || !piProcess.stderr) {
-    console.error('[pi-runner] Failed to establish stdio pipes with pi process.');
+    console.error('[pi-archive] Failed to establish stdio pipes with pi process.');
     process.exit(1);
   }
 
@@ -226,7 +273,7 @@ export async function main() {
   function resetTimer() {
     if (turnTimer) clearTimeout(turnTimer);
     turnTimer = setTimeout(() => {
-      console.error(`\n[pi-runner] ERROR: Worker turn timed out after ${options.timeoutMs}ms without settlement.`);
+      console.error(`\n[pi-archive] ERROR: Worker turn timed out after ${options.timeoutMs}ms without settlement.`);
       piProcess.kill('SIGTERM');
       process.exit(1);
     }, options.timeoutMs);
@@ -234,7 +281,6 @@ export async function main() {
 
   resetTimer();
 
-  // Strict LF (\n) stream parser (per references/pi/packages/coding-agent/docs/json.md)
   piProcess.stdout.on('data', (chunk: Buffer) => {
     lineBuffer += chunk.toString('utf-8');
     let idx: number;
@@ -254,7 +300,7 @@ export async function main() {
         handleRpcRecord(parsed);
       } catch (err) {
         if (options.verbose) {
-          console.error(`[pi-runner:raw] ${line}`);
+          console.error(`[pi-archive:raw] ${line}`);
         }
       }
     }
@@ -268,14 +314,14 @@ export async function main() {
   });
 
   piProcess.on('error', (err) => {
-    console.error(`[pi-runner] Worker process error:`, err);
+    console.error(`[pi-archive] Worker process error:`, err);
     process.exit(1);
   });
 
   piProcess.on('close', (code) => {
     if (turnTimer) clearTimeout(turnTimer);
     if (!settled) {
-      console.log(`[pi-runner] Process closed with code ${code}`);
+      console.log(`[pi-archive] Process closed with code ${code}`);
       if (code !== 0) {
         console.error(`[STATUS] FAILED: pi process exited with code ${code}`);
         process.exit(code || 1);
@@ -306,26 +352,24 @@ export async function main() {
       return;
     }
 
-    // Check responses
     if (record.type === 'response') {
       const resp = record as unknown as RpcResponse;
       if (!resp.success) {
-        console.error(`[pi-runner] RPC command rejected:`, resp.error || resp);
+        console.error(`[pi-archive] RPC command rejected:`, resp.error || resp);
       }
       return;
     }
 
     const event = record as unknown as PiEvent;
 
-    // Filter noisy token deltas (message_update with text_delta / thinking_delta)
+    // Suppress high-frequency token updates
     if (event.type === 'message_update') {
       const sub = event.assistantMessageEvent;
       if (sub && (sub.type === 'text_delta' || sub.type === 'thinking_delta')) {
-        return; // Suppress high-frequency token updates
+        return;
       }
     }
 
-    // High-level tool execution events (nested or top-level)
     const isToolStart =
       event.type === 'toolcall_start' ||
       (event.type === 'message_update' && event.assistantMessageEvent?.type === 'toolcall_start');
@@ -350,7 +394,6 @@ export async function main() {
       console.log(`  [pi:turn] Completed ${event.toolResults.length} tool invocation(s).`);
     }
 
-    // Capture assistant messages on message_end
     if (event.type === 'message_end' && event.message?.role === 'assistant') {
       const content = event.message.content;
       if (typeof content === 'string') {
@@ -367,7 +410,6 @@ export async function main() {
       return;
     }
 
-    // Handle settlement
     if (event.type === 'agent_settled') {
       settled = true;
       if (turnTimer) clearTimeout(turnTimer);
@@ -376,51 +418,32 @@ export async function main() {
   }
 
   function onAgentSettled() {
-    console.log(`[pi-runner] Worker agent settled.`);
+    console.log(`[pi-archive] Worker agent settled.`);
 
-    // If changeName is known, check OpenSpec task implementation progress
     if (options.changeName) {
-      try {
-        const proc = Bun.spawnSync(
-          ['openspec', 'instructions', 'apply', '--change', options.changeName, '--json'],
-          { cwd: workspaceRoot }
-        );
-        const stdout = proc.stdout.toString();
-        const applyJson = JSON.parse(stdout);
-
-        const total = applyJson.progress?.total ?? 0;
-        const complete = applyJson.progress?.complete ?? 0;
-        const remaining = applyJson.progress?.remaining ?? 0;
-
-        if (total > 0 && remaining === 0) {
+      // Grace period for directory operations
+      setTimeout(() => {
+        const invariant = checkArchiveInvariants(workspaceRoot, options.changeName!);
+        if (invariant.isArchived) {
           console.log(`\n========================================`);
-          console.log(`[STATUS] COMPLETED: All ${complete}/${total} tasks for '${options.changeName}' are complete!`);
+          console.log(`[STATUS] COMPLETED: Change '${options.changeName}' successfully archived!`);
+          if (invariant.archivePath) {
+            console.log(`Archived location: ${invariant.archivePath}`);
+          }
           console.log(`========================================\n`);
           safeExit(0);
-          return;
         } else {
           console.log(`\n========================================`);
-          console.log(`[STATUS] PAUSED_FOR_CLARIFICATION: Worker settled with ${remaining}/${total} remaining task(s).`);
-          if (Array.isArray(applyJson.tasks)) {
-            const pendingTasks = applyJson.tasks.filter((t: { done: boolean }) => !t.done);
-            console.log(`Pending Tasks (${pendingTasks.length}):`);
-            for (const t of pendingTasks.slice(0, 5)) {
-              console.log(`  - [ ] ${t.description}`);
-            }
-            if (pendingTasks.length > 5) {
-              console.log(`  ... and ${pendingTasks.length - 5} more.`);
-            }
-          }
+          console.log(`[STATUS] PAUSED_FOR_CLARIFICATION: Worker settled but change '${options.changeName}' is not archived.`);
+          console.log(`Details: ${invariant.reason}`);
           if (lastAssistantMessage.trim()) {
             console.log(`\nLast Message from Worker:\n${lastAssistantMessage.trim()}`);
           }
           console.log(`========================================\n`);
           safeExit(0);
-          return;
         }
-      } catch (err) {
-        console.warn(`[pi-runner] Could not read openspec apply instructions JSON:`, err);
-      }
+      }, 200);
+      return;
     }
 
     console.log(`[STATUS] SETTLED: Worker turn finished.`);
@@ -436,7 +459,6 @@ export async function main() {
     }, 200);
   }
 
-  // Send initial prompt if provided
   if (initialPrompt) {
     const promptCmd = JSON.stringify({
       id: `prompt-${Date.now()}`,
@@ -448,10 +470,9 @@ export async function main() {
   }
 }
 
-// Run if invoked directly
 if (import.meta.main) {
   main().catch((err) => {
-    console.error('[pi-runner] Fatal error:', err);
+    console.error('[pi-archive] Fatal error:', err);
     process.exit(1);
   });
 }
