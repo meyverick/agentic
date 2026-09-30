@@ -93,13 +93,3 @@ An explicit user brief outranks default preferences and lint levels, but SHALL N
 - **Verification:**
   `Do NOT:` claim Miri verification proves safety when code invokes `asm!`, hardware SIMD, or FFI.
   `Do:` mandate native compiler sanitizers (`-Zsanitizer=address,thread`) for those surfaces.
-
-## 6. Validator Self-Check
-
-Verify skill structure, routing, and hygiene before commit:
-
-```bash
-bun run skills/create-skill/scripts/validate-structure.ts skills/rust-systems/
-bun run skills/create-skill/scripts/validate-routing.ts skills/rust-systems/
-bun run skills/create-skill/scripts/audit-antipatterns.ts skills/rust-systems/
-```
