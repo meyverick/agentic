@@ -14,6 +14,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - **Evaluation suite and proof**: 8 behavioral evals in `evals/evals.json` and cold-agent refusal transcript in `evals/transcripts/`.
 - **Corpus provenance**: OKF attribution frontmatter linking to research papers in `references/rust-researches/`.
 
+### Changed
+
+- **Modernized agent directives with 2026 SOTA engineering practices** (`modernize-agents-sota-2026`): updated `AGENTS.md` across LOC tiers (≤150 / ≤300 / 300–500 / >500), canonical wide-event logging, temporal isolation, and multi-arch runner hygiene.
+
 ## [5.3.0] - 2026-09-30
 
 ### Changed
