@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
-- **Change-scoped session isolation for openspec-pi-apply** (`pi-apply-scoped-session`): replaced blind `-c` with change-scoped `--session-id "openspec-${changeName}"` and `--fresh` override to prevent cross-task conversational history pollution.
+- **Change-scoped session isolation for openspec-pi-apply** (`pi-apply-scoped-session`): replaced blind `-c` with change-scoped `--session-id "openspec-${changeName}"` to enforce strict session isolation and prevent cross-task conversational history pollution.
 
 ## [5.4.0] - 2026-09-30
 
