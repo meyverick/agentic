@@ -19,7 +19,7 @@ Universal operational core for this workspace. Full read required before any cod
 - File size tiers: target ≤150 LOC (atomic/leaf), standard ≤300 LOC (cohesive domain), 300–500 LOC upper boundary (complex state machines only; raises latency/tokens); hard ceiling 500 LOC (failure-prone). Files >500 LOC: finish objective → flag ADR-tracked decomposition. Never refactor mid-task. New work stays within target.
 - Log redaction NEVER gated by verbosity — token/vid/otp/jwt/key/secret stripped at emission, every mode.
 - Task complete ONLY when touched module's native lane — `bun run check && bun test && bun run build` · Rust `cargo clippy -- -D warnings && cargo test` — exits 0.
-- Commands execute from owning module's directory (`./<project>-<module>/`); never pollute siblings/root.
+- Commands execute from owning module's directory (`./<project>/` or `./<project>-<module>/`); never pollute siblings/root.
 - Modules isolated deployables: zero `../` traversal; inter-module via API/network only.
 - Schema/migrations owned by exactly one tier (Axum/Rust tier via SQLx); never modify existing migration — append new.
 - Heavy/async work never blocks request path — queue + worker + streaming.
@@ -34,11 +34,11 @@ Universal operational core for this workspace. Full read required before any cod
 - Multi-arch builds MUST use parallel native matrix (`ubuntu-26.04` + `ubuntu-26.04-arm`) via `docker buildx imagetools create` — NEVER QEMU emulation.
 - Docker CI MUST use `type=gha` layer cache + dependency pre-cook (`cargo-chef` / lockfile `COPY`); host CI MUST use `swatinem/rust-cache`, `setup-bun` caches.
 - After tasks with difficulty ≥3/5, surprise, or time cost >30m → suggest to user: `Want /openspec-report?` (never auto-run; manual only).
-- Learned negatives live in skills as `Contrast`/`Anti-examples`; never autonomously edit `project/AGENTS.md` — human-owned only.
+- Learned negatives live in skills as `Contrast`/`Anti-examples`; never autonomously edit `<project>/AGENTS.md` — human-owned only.
 - Must-read: `.agents/skills/guardrails/SKILL.md` before any code touching `deps/Docker/HTML/auth` — cross-cutting hardening lives there, not in `AGENTS.md` body.
 - Submodule CI/CD Contract [CRITICAL]: Each submodule MUST own `.github/workflows/quality.yml` (native lane: `bun check && bun test && bun build` or `cargo fmt --check && cargo clippy -- -D warnings && cargo test && cargo build --release`); orchestrator MUST own `.github/workflows/deploy.yml` (unified multi-stage `Dockerfile → Rust musl → distroless` + `git:from-image` Dokku); never build/push submodules from orchestrator quality lane.
 - Deploy Path Allowlist [CRITICAL]: Orchestrator `deploy.yml` MUST use explicit `paths:` allowlist watching deployable submodule dirs + `Dockerfile` + `deploy.yml` (not `paths-ignore`); `workflow_dispatch` always allowed.
-- Private Submodule & GHCR CI Access [CRITICAL]: Orchestrator `deploy.yml` `actions/checkout@v4` MUST use `token: ${{ secrets.SUBMODULE_TOKEN }}` (`repo` read) + `submodules: recursive` + `fetch-depth: 0`; `docker/login-action` for `ghcr.io` MUST use `password: ${{ secrets.SUBMODULE_TOKEN }}` (`write:packages` scope) because container image namespace (`<project>`) differs from orchestrator repo (`<project>-project`); `GITHUB_TOKEN` alone insufficient.
+- Private Submodule & GHCR CI Access [CRITICAL]: Orchestrator `deploy.yml` `actions/checkout@v4` MUST use `token: ${{ secrets.SUBMODULE_TOKEN }}` (`repo` read) + `submodules: recursive` + `fetch-depth: 0`; `docker/login-action` for `ghcr.io` MUST use `password: ${{ secrets.SUBMODULE_TOKEN }}` (`write:packages` scope) because container image namespace (`<project>`) differs from orchestrator repo (`<project>-workspace`); `GITHUB_TOKEN` alone insufficient.
 - Submodule Git Allowlist: Submodule default-deny `/*` `.gitignore` MUST explicitly allow `!/.github/` and `!/wiki/` (plus `!/.gitignore` + source dirs) so `quality.yml`/`wiki/index.md` are not silently ignored.
 - Dokku Proxy Tuning: All Dokku apps MUST `proxy-read-timeout 3600s` + `proxy-buffering off` + `client-max-body-size 50m` via `proxy:build-config <app>` (modern, not `nginx.conf`).
 - Dokku Deploy Action SSH Port: Orchestrator `deploy.yml` `appleboy/ssh-action` MUST explicitly specify `port: ${{ secrets.DOKKU_SSH_PORT }}` (or target host daemon port); omitting defaults to port 22 which is blocked on firewalled VPS hosts, causing silent connection timeouts.
@@ -69,13 +69,13 @@ Identity → Systems Architect, Security-focused. Goal → maximize throughput, 
 
 ## 3. Workspace Topology
 
-- Naming [CRITICAL]: orchestrator folder `<name>` (e.g., `myapp`) → GitHub private `<name>-project` (e.g., `myapp-project`); subproject folder `<subproject>` (or `project` for mono, e.g., `web`, `bot`, `api`) → GitHub `<project>-<subproject>` (e.g., `myapp-web`, `myapp-bot`) → Dokku app `<project>-<subproject>` (e.g., `myapp-web`) → Dokku URL `https://<project>-<subproject>.example.com` (also `https://<project>.<subproject>.example.com`, e.g., `myapp.web.example.com`). Never invent names — derive from folder + project prefix.
+- Naming [CRITICAL]: orchestrator folder & GitHub repo `<project>-workspace` (e.g., `myapp-workspace`); submodule folders strictly mirror remote repo names 1:1 (`basename(submodule_dir) == repo_name`): single-deliverable core submodule `<project>` (e.g., `agentic`) → GitHub `<project>`; multi-deliverable submodules `<project>-<module>` (e.g., `myapp-web`, `myapp-bot`) → GitHub `<project>-<module>`. Dokku apps: `<project>` for unified distroless container, `<project>-<module>` for auxiliary services (never use dots in app names); public dotted domains (e.g., `https://<project>.<module>.example.com`) configured via `dokku domains:set <app> <domain>`. Never invent names — derive from folder + project prefix.
 - Monorepo: root `./` holds orchestrator metadata, `AGENTS.md`, global `docker-compose.yml`. All paths relative to `./`.
 - App modules = Git Submodules [CRITICAL]: each top-level folder strictly isolated, independently deployable, dedicated submodule with independent history and its own `.github/workflows/quality.yml` (web: `bun check && bun test && bun build`; api: `cargo fmt --check && cargo clippy -- -D warnings && cargo test && cargo build --release`); orchestrator owns `deploy.yml` (unified `Dockerfile → distroless` + `SUBMODULE_TOKEN`, `paths:` allowlist, `proxy:build-config`).
 - Centralized DB [CRITICAL]: PostgreSQL is THE datastore → Docker network or managed service. Axum backend (`crates/api`) owns schema & migrations via SQLx (`crates/api/migrations/`). Compute workers → pooled connections or queue/API/RPC.
 - Deployment asymmetry: Collapsed to single static distroless binary (`gcr.io/distroless/static-debian13:nonroot`) serving SvelteKit static build + Axum API/WSS/gRPC; Native Shell → Tauri v2 (Desktop/Mobile); Native Sims → Desktop/WASM.
 - Context boundaries [CRITICAL]: modules fully self-contained. Zero horizontal coupling. Block `../sibling/` → HTTP/gRPC/WebSocket only.
-- Execution context [CRITICAL]: `bun`/`cargo`/`git`/`sem` MUST target specific module path. Set CWD to `./<project>-<module>/` before execution.
+- Execution context [CRITICAL]: `bun`/`cargo`/`git`/`sem` MUST target specific module path. Set CWD to `./<project>/` or `./<project>-<module>/` before execution.
 
 ## 4. Tech Stack Preferences
 
@@ -155,7 +155,7 @@ Identity → Systems Architect, Security-focused. Goal → maximize throughput, 
 ## 7. Documentation & OKF (v0.2)
 
 - README: promotional showcase for everyday users. [CRITICAL] Purge ALL technical details/terminal blocks → strict SoC.
-- Wiki (`./<project>-<module>/wiki/`): technical docs per module, tracked natively, synced remotely ONLY IF public+enabled.
+- Wiki (`./<project>/wiki/` or `./<project>-<module>/wiki/`): technical docs per module, tracked natively, synced remotely ONLY IF public+enabled.
 - OKF v0.2: enforce for all docs, ADRs, memory bundles.
 - Frontmatter & Provenance [CRITICAL]: YAML frontmatter (`type` REQUIRED). `generated: {by: <actor>, at: <ISO 8601>}` replaces `timestamp`. Record `sources` list → attribute claims via `[^source-id]` footnotes → replaces `# Citations`.
 
@@ -218,11 +218,11 @@ stale_after: 2027-08-15
 
 ## 12. Version Control, Releases & Scaffolding
 
-- Module scaffolding [CRITICAL]: new app module → `git init` inside `./<project>-<module>/` → remote → `git submodule add` to parent orchestrator + `mkdir -p .github/workflows` with per-module `quality.yml` (native lint/test/build lane; standalone microservices add `deploy.yml`); orchestrator owns unified `deploy.yml` (multi-stage `Dockerfile → musl → distroless` + `SUBMODULE_TOKEN` + `paths:` allowlist).
+- Module scaffolding [CRITICAL]: new app module → `git init` inside `./<project>/` or `./<project>-<module>/` → remote → `git submodule add` to parent orchestrator + `mkdir -p .github/workflows` with per-module `quality.yml` (native lint/test/build lane; standalone microservices add `deploy.yml`); orchestrator owns unified `deploy.yml` (multi-stage `Dockerfile → musl → distroless` + `SUBMODULE_TOKEN` + `paths:` allowlist).
 - Orchestrator deploy pipeline [CRITICAL]: `deploy.yml` watches deployable submodule dirs + `Dockerfile` + `deploy.yml` via `paths:`. Uses `secrets.SUBMODULE_TOKEN` for both checkout and GHCR login (`write:packages`). Dokku deployment step uses `appleboy/ssh-action` with explicit `port: ${{ secrets.DOKKU_SSH_PORT }}` and triggers `dokku git:from-image <project> ghcr.io/<owner>/<project>:<version>`.
 - `.gitignore`: secure default-deny (block `*`, allowlist source) in root AND EACH submodule. Update actively → prevent credential leaks.
 - SemVer: strict `MAJOR.MINOR.PATCH` per module.
-- Changelog: `./<project>-<module>/CHANGELOG.md` (`## VERSION - YYYY-MM-DD`). Categories `Added`/`Changed`/`Removed`/`Fixed`. Imperative mood.
+- Changelog: `./<project>/CHANGELOG.md` or `./<project>-<module>/CHANGELOG.md` (`## VERSION - YYYY-MM-DD`). Categories `Added`/`Changed`/`Removed`/`Fixed`. Imperative mood.
 - Push gate [CRITICAL] — two lanes, per touched submodule (generic; host caches `swatinem/rust-cache` / `oven-sh/setup-bun` + multi-arch `ubuntu-26.04` + `ubuntu-26.04-arm` matrix `cache-from/to: type=gha` NEVER QEMU; stack mappings: Bun `bun run check && bun test && bun run build`, Rust `cargo fmt --check && cargo clippy -- -D warnings && cargo test && cargo build --release`):
   - **Blocking (exit 1):** per touched submodule run native codegen (if exists) → lint → tests → hermetic/static build in builder image → secret-leak scan (new dirs/`*.env` patterns, `git submodule status | grep "^-"`) → submodule-pointer freshness (`git submodule status | grep "^\+"`). Any failure → `exit 1` with failing command. No project names in rule body. Fails pre-push ~15s, not remote. **Advisory (exit 0):** `sem diff --format json` + manifest version + `CHANGELOG.md` presence. Inform, never block.
 - Check script maintenance [CRITICAL]: Workspace orchestrator root and each submodule MUST maintain an executable `./scripts/check.sh` implementing the canonical 6-slot contract (Pointers, Secrets, Native Lanes, Tracked Assets, Clean-Clone Sandbox, Smoke) and supporting `--quick` (sub-10s iteration exiting before sandbox). Root orchestrator checks submodule freshness/credentials and delegates to submodule check scripts; submodules verify native format/lint/test lanes, assert compile-time asset tracking (`git ls-files --error-unmatch`), honor `--quick`, and verify committed buildability via hermetic clean clone (`mktemp -d` + `git clone .`). Agents MUST update check scripts whenever manifests, dependencies, or compile-time assets change. Consult `check` skill for anatomy and diagnostic procedures.
