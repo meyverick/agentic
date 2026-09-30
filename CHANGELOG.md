@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [5.3.0] - 2026-09-30
+
+### Changed
+
+- **Standardized workspace topology and 1:1 submodule naming** (`refactor-workspace-topology-and-natural-submodules`):
+  - Standardized orchestrator naming to `<project>-workspace` and formalized the 1:1 Submodule Law (`basename(submodule_dir) == repo_name`).
+  - Relocated core submodule from generic `project/` to natural name `./agentic/` matching the repository and npm package name 1:1.
+  - Aligned `.gitmodules`, `install.ts` asset discovery comments, and canonical OpenSpec specifications (`submodule-cicd-contract`, `npm-package-distribution`, `skill-distribution`).
+  - Clarified Dokku internal application naming (`<project>` or `<project>-<module>`) and mapped dotted public routes via `dokku domains:set`.
+
 ## [5.2.0] - 2026-09-28
 
 ### Added
