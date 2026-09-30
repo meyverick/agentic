@@ -21,7 +21,7 @@ Universal operational core for this workspace. Full read required before any cod
 - Task complete ONLY when touched module's native lane — `bun run check && bun test && bun run build` · Rust `cargo clippy -- -D warnings && cargo test` — exits 0.
 - Commands execute from owning module's directory (`./<repo_name>/` or `./<project>/`); never pollute siblings/root.
 - Modules isolated deployables: zero `../` traversal; inter-module via API/network only.
-- Schema/migrations owned by exactly one tier (Axum/Rust tier via SQLx); never modify existing migration — append new.
+- Schema/migrations owned by exactly one tier (Axum/Rust tier via SQLx); never modify existing migration — append new; non-trivial schema modifications follow 3-phase Expand-Contract (Phase 1: Expand nullable/dual-write → Phase 2: Backfill async → Phase 3: Contract drop legacy) across releases.
 - Heavy/async work never blocks request path — queue + worker + streaming.
 - Real-time via WebSocket/SSE push; client polling is anti-pattern.
 - Backpressure explicit: bounded concurrency, caps, rate limits — reject unbounded growth.
@@ -29,7 +29,7 @@ Universal operational core for this workspace. Full read required before any cod
 - NEVER commit credentials/`.env` · force-push shared branches · edit `vendor/`/`node_modules/`/generated · inline-disable lint/compiler rules.
 - ASK FIRST: shared-env schema migrations · new external dependencies · deletions outside task scope.
 - Exploration mode: strictly zero code-writing.
-- Produced code verbose-by-default: `VERBOSE` unset/true → all levels; `VERBOSE=false` → WARN+ only; `LOGS` unset/true → mirror `<module>.log`. Console always mirrors. Never commit `VERBOSE=false`/`LOGS=false` into configs/envs/container defs.
+- Produced code verbose-by-default: `VERBOSE` unset/true → emit wide-events + operational logs; `VERBOSE=false` → WARN+ only; `LOGS` unset/true → mirror `<module>.log`. Console always mirrors. Never commit `VERBOSE=false`/`LOGS=false` into configs/envs/container defs.
 - Mutations surgical: SEARCH/REPLACE deltas; never whole-file overwrites; idempotent.
 - Multi-arch builds MUST use parallel native matrix (`ubuntu-26.04` + `ubuntu-26.04-arm`) via `docker buildx imagetools create` — NEVER QEMU emulation.
 - Docker CI MUST use `type=gha` layer cache + dependency pre-cook (`cargo-chef` / lockfile `COPY`); host CI MUST use `swatinem/rust-cache`, `setup-bun` caches.
@@ -72,7 +72,7 @@ Identity → Systems Architect, Security-focused. Goal → maximize throughput, 
 - Naming [CRITICAL]: orchestrator folder & GitHub repo `<project>-workspace` (e.g., `myapp-workspace`); submodule folders strictly mirror remote repo names 1:1 (`basename(submodule_dir) == repo_name`): whether independent standalone projects/libraries (`<repo_name>`, e.g., `saturn`, `agentic`) or project-scoped deliverables (`<project>-<module>`, e.g., `myapp-web`). Dokku apps: alphanumeric with hyphens matching submodule repo name `<repo_name>` (never use dots in app names); public dotted domains (e.g., `https://<project>.<module>.example.com` or `https://<module>.<project>.example.com`) configured via `dokku domains:set <app> <domain>`. Never alias or invent paths.
 - Monorepo: root `./` holds orchestrator metadata, `AGENTS.md`, global `docker-compose.yml`. All paths relative to `./`.
 - App modules = Git Submodules [CRITICAL]: each top-level folder strictly isolated, independently deployable, dedicated submodule with independent history and its own `.github/workflows/quality.yml` (web: `bun check && bun test && bun build`; api: `cargo fmt --check && cargo clippy -- -D warnings && cargo test && cargo build --release`); orchestrator owns `deploy.yml` (unified `Dockerfile → distroless` + `SUBMODULE_TOKEN`, `paths:` allowlist, `proxy:build-config`).
-- Centralized DB [CRITICAL]: PostgreSQL is THE datastore → Docker network or managed service. Axum backend (`crates/api`) owns schema & migrations via SQLx (`crates/api/migrations/`). Compute workers → pooled connections or queue/API/RPC.
+- Centralized DB [CRITICAL]: PostgreSQL is THE datastore → Docker network or managed service. Axum backend (`crates/api`) owns schema & migrations via SQLx (`crates/api/migrations/`). Non-trivial migrations MUST follow 3-phase Expand-Contract lifecycle (Phase 1: Expand nullable/dual-write → Phase 2: Backfill async → Phase 3: Contract drop legacy) across releases; zero downtime during rolling deploys. Compute workers → pooled connections or queue/API/RPC.
 - Deployment asymmetry: Collapsed to single static distroless binary (`gcr.io/distroless/static-debian13:nonroot`) serving SvelteKit static build + Axum API/WSS/gRPC; Native Shell → Tauri v2 (Desktop/Mobile); Native Sims → Desktop/WASM.
 - Context boundaries [CRITICAL]: modules fully self-contained. Zero horizontal coupling. Block `../sibling/` → HTTP/gRPC/WebSocket only.
 - Execution context [CRITICAL]: `bun`/`cargo`/`git`/`sem` MUST target specific module path. Set CWD to `./<repo_name>/` or `./<project>/` before execution.
@@ -141,6 +141,7 @@ Identity → Systems Architect, Security-focused. Goal → maximize throughput, 
 - Backpressure explicit: bounded concurrency, queue caps, rate limits — reject unbounded growth.
 - Defaults: PostgreSQL queue table (SQLx), WebSocket/SSE streaming, lightweight Rust workers — platform primitives over new brokers. Default for heavy/async/batch/rate-limited; trivial sync stays in request path (KISS/YAGNI).
 - Anti-patterns: stateful workers · multiple state owners · cron-as-scheduler · unbounded queues · blocking request path · peer-to-peer meshes.
+- Temporal isolation & deterministic state: domain state transitions MUST be pure functions over events (`delta: (State, Event) -> State`) with zero side effects; reading hardware clocks (`Instant::now()`, `clock_gettime`) inside transition logic is forbidden — logical timestamps are assigned at the ingress gateway boundary and passed in event payloads.
 - WebSocket/SSE: default real-time sync for live Svelte stores.
 
 ## 6a. Realtime & Event-Driven
@@ -194,7 +195,7 @@ stale_after: 2027-08-15
 
 - Pre-computation: feature request || exploration crystallized → strategy (Why, How, Steps) as dense bullets/JSON BEFORE mutation. Output to user chat → shared understanding.
 - Momentum threshold: reasonable decisions autonomously; HALT+prompt ONLY on critical domain ambiguity.
-- Mutation topological sort [CRITICAL]: cross-module scaffolding in strict order: 1) DB Schema → PostgreSQL+SQLx (`crates/api/migrations/*.sql`, `sqlx migrate`) 2) Compute & Backend Coordinator → Rust/Axum/Rayon/Candle/Tokio 3) Full-Stack State & Route Handlers → Axum WSS/SSE/gRPC + `ts-rs` bindings (`#[ts(export)]`) 4) UI & Graphics → Svelte/Miniplex/Threlte/Babylon.js/PixiJS/Phaser static views. Never build UI before data contracts.
+- Mutation topological sort [CRITICAL]: cross-module scaffolding in strict order: 1) DB Schema → PostgreSQL+SQLx (`crates/api/migrations/*.sql`, `sqlx migrate`; expand-contract phased) 2) Compute & Backend Coordinator → Rust/Axum/Rayon/Candle/Tokio 3) Full-Stack State & Route Handlers → Axum WSS/SSE/gRPC + `ts-rs` bindings (`#[ts(export)]`) 4) UI & Graphics → Svelte/Miniplex/Threlte/Babylon.js/PixiJS/Phaser static views. Never build UI before data contracts.
 - Contextual baseline: ingest QMD/ADRs/`sem impact`/context files/upstream event sources (webhook/SSE availability) → explicit baseline.
 - Vibe coding loop: focused mutation → validate locally (`bun run check`, `cargo clippy`, `bun test`, `cargo test`) immediately → verify step → proceed. No YOLO.
 - Surgical mutations [CRITICAL]: SEARCH/REPLACE blocks. Preserve untargeted content. Zero whole-file overwrites. Idempotent.
@@ -204,14 +205,15 @@ stale_after: 2027-08-15
 ## 11. Observability, Evolution & Debug-by-Default
 
 - Telemetry: flat OTLP JSONL log-record (NOT resourceLogs wrapper): `timeUnixNano`, `severityNumber` (TRACE=1 DEBUG=5 INFO=9 WARN=13 ERROR=17 FATAL=21), `severityText`, `body`, `attributes` (incl. `service.name`), `traceId`/`spanId`. Propagate `request_id`. Mask PII/PHI (GDPR strict).
+- Canonical Wide-Event Logging [2026 SOTA]: request-handling and worker-job boundaries emit exactly ONE comprehensive, high-cardinality JSON document upon execution completion (bundling route/task, status, duration, tenant, query counts, operational context); deprecate scattered intermediate function-level TRACE/DEBUG log spam. Unhandled errors emit immediately with stack context.
 
 ```json
 {"timeUnixNano":"1723723200000000000","severityNumber":5,"severityText":"DEBUG","body":"market catalog fetched","attributes":{"service.name":"market-scan","offers":2346},"traceId":"4bf92f3577b34da6a3ce929d0e0e4736"}
 ```
 
-- Produced code verbose-by-default: `VERBOSE=0|false` → WARN/13 only; `VERBOSE=1|true` or MISSING → everything (TRACE/1). `LOGS=0|false` → no file sink; `LOGS=1|true` or MISSING → mirror to per-module `<module>.log`. Console always mirrors (gated by VERBOSE). REDACTION NOT GATED BY VERBOSE: token/vid/otp/jwt/key/secret redacted at emission, every setting. Existing modules keep `LOG_LEVEL`; new uses `VERBOSE`/`LOGS`.
+- Produced code verbose-by-default: `VERBOSE=0|false` → WARN/13 only; `VERBOSE=1|true` or MISSING → emit wide-events + operational logs (TRACE/1). `LOGS=0|false` → no file sink; `LOGS=1|true` or MISSING → mirror to per-module `<module>.log`. Console always mirrors (gated by VERBOSE). REDACTION NOT GATED BY VERBOSE: token/vid/otp/jwt/key/secret redacted at emission, every setting. Existing modules keep `LOG_LEVEL`; new uses `VERBOSE`/`LOGS`.
 - Testing & docs: DI → deterministic QA. Comment *why*. ADRs as OKF concepts.
-- Test design matrix (two-layer, proactive): Layer 1 systematic coverage — cover every exclusion/branch, empty/null, bounds/cap, permission gate in spec scenarios (spec IS checklist). Layer 2 autonomous adversarial — invent one fixture breaking happy-path (real-world order not sorted, type-coerced inputs, stale ids, empty vs populated). Fixture rule: never only sorted/happy-path for ordering-sensitive code.
+- Test design matrix (two-layer, proactive): Layer 1 systematic coverage — cover every exclusion/branch, empty/null, bounds/cap, permission gate in spec scenarios (spec IS checklist). Layer 2 autonomous adversarial & property invariants — invent fixtures asserting algebraic invariants for domain logic (round-trip serialization `deserialize(serialize(x)) == x`, idempotency `f(f(x)) == f(x)`, balance conservation); test non-sorted orderings, type-coerced inputs, and stale IDs. Fixture rule: never only sorted/happy-path for ordering-sensitive code.
 - API/Evolution: strict schemas (OpenAPI/gRPC), SemVer, graceful deprecation.
 - Refactoring: Boy Scout Rule → incremental debt resolution.
 - Green Ops/2026 SOTA: minimize carbon. Cross-reference 2026 SOTA → prevent hallucination.
