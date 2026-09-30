@@ -6,9 +6,9 @@
  *   (or: bunx github:meyverick/agentic)
  * 
  * Installs to current directory:
- *   - project/skills/* → .agents/skills/ (atomic replacement)
- *   - project/scripts/* → scripts/ (diff-based)
- *   - project/AGENTS.md → AGENTS.md
+ *   - agentic/skills/* → .agents/skills/ (atomic replacement)
+ *   - agentic/scripts/* → scripts/ (diff-based)
+ *   - agentic/AGENTS.md → AGENTS.md
  */
 
 import fs from 'fs';
