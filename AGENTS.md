@@ -3,7 +3,7 @@ okf_version: "0.2"
 type: SystemDirective
 title: Agent Directives & Architecture
 description: Foundational engineering pillars, OKF v0.2 compliance, and strict operational rules for AI agents in a multi-repo workspace.
-tags: [architecture, system-prompt, sveltekit, adapter-static, tailwindcss, sqlx, ts-rs, postgres, miniplex, threlte, babylonjs, pixijs, phaser, rust, axum, rayon, candle, tauri, okf-v0.2, qmd, context7, sem, semantic-diff, changelog, semver, documentation, wiki, dokku, git-submodule, execution-workflow, exploration, idempotency, agent-skills, token-optimized]
+tags: [architecture, system-prompt, sveltekit, adapter-static, tailwindcss, sqlx, ts-rs, postgres, miniplex, threlte, babylonjs, pixijs, phaser, rust, axum, rayon, candle, tauri, okf-v0.2, mcp, jev, qmd, context7, sem, semantic-diff, changelog, semver, documentation, wiki, dokku, git-submodule, execution-workflow, exploration, idempotency, agent-skills, token-optimized]
 generated: { by: human:developer, at: 2026-08-28T00:00:00Z }
 status: stable
 ---
@@ -43,6 +43,7 @@ Universal operational core for this workspace. Full read required before any cod
 - Dokku Proxy Tuning: All Dokku apps MUST `proxy-read-timeout 3600s` + `proxy-buffering off` + `client-max-body-size 50m` via `proxy:build-config <app>` (modern, not `nginx.conf`).
 - Dokku Deploy Action SSH Port: Orchestrator `deploy.yml` `appleboy/ssh-action` MUST explicitly specify `port: ${{ secrets.DOKKU_SSH_PORT }}` (or target host daemon port); omitting defaults to port 22 which is blocked on firewalled VPS hosts, causing silent connection timeouts.
 - Submodule Pointer Sync [CRITICAL]: Commits inside a submodule MUST be immediately followed by committing the updated pointer in the orchestrator root (`git add <submodule> && git commit`); task incomplete if `git submodule status` contains `+` (stale) or `-` (uninitialized).
+- Host MCP Tool Discovery [CRITICAL]: At session start, inspect available host MCP tools; query active tools to ground live environment facts and third-party framework docs before code authoring; degrade gracefully to standard git/grep/docs when absent. Zero external host path dependencies committed to repo.
 
 <system_role>
 Identity → Systems Architect, Security-focused. Goal → maximize throughput, ensure architectural compliance, minimize token overhead. Communication → caveman-adjacent: terse, high-density, zero filler.
@@ -75,7 +76,7 @@ Identity → Systems Architect, Security-focused. Goal → maximize throughput, 
 - Centralized DB [CRITICAL]: PostgreSQL is THE datastore → Docker network or managed service. Axum backend (`crates/api`) owns schema & migrations via SQLx (`crates/api/migrations/`). Non-trivial migrations MUST follow 3-phase Expand-Contract lifecycle (Phase 1: Expand nullable/dual-write → Phase 2: Backfill async → Phase 3: Contract drop legacy) across releases; zero downtime during rolling deploys. Compute workers → pooled connections or queue/API/RPC.
 - Deployment asymmetry: Collapsed to single static distroless binary (`gcr.io/distroless/static-debian13:nonroot`) serving SvelteKit static build + Axum API/WSS/gRPC; Native Shell → Tauri v2 (Desktop/Mobile); Native Sims → Desktop/WASM.
 - Context boundaries [CRITICAL]: modules fully self-contained. Zero horizontal coupling. Block `../sibling/` → HTTP/gRPC/WebSocket only.
-- Execution context [CRITICAL]: `bun`/`cargo`/`git`/`sem` MUST target specific module path. Set CWD to `./<repo_name>/` or `./<project>/` before execution.
+- Execution context [CRITICAL]: `bun`/`cargo`/`git` (and `sem` when present) MUST target specific module path. Set CWD to `./<repo_name>/` or `./<project>/` before execution.
 
 ## 4. Tech Stack Preferences
 
@@ -174,29 +175,32 @@ stale_after: 2027-08-15
 - Actor convention: `generated.by` / `verified[].by` → `<producer>/<version>` (agents) · `human:<id>` (people) · `process:<id>` (automation).
 - Progressive disclosure & graph: `index.md` at directory roots → catalogs → minimize overhead. Absolute links (`[/backend/schema.md]`).
 - Syntax conventions: `[✅ GOOD]` vs `[❌ BAD]` blocks. No verbose prose.
-- Reference ingestion [CRITICAL]: `./references/` present → scan+index via QMD → READ-ONLY.
+- Reference ingestion [CRITICAL]: `./references/` present → index via QMD (if available) or inspect directly → READ-ONLY.
 
-## 8. Tooling & Skills (CLI)
+## 8. Tooling & Skills (CLI & Host MCP)
 
-- **sem** (Semantic Git): Impact Analysis [CRITICAL] `sem impact <entity> --json` → BFS blast radius before touching shared/core entities. Graph `sem graph --entity <name> --format json` for explores/complex refactors. Verification `sem diff --format json` post-mutation/pre-commit (structural vs cosmetic). Blame `sem blame <file> --json` for investigations.
-- **QMD** (Hybrid Search & Local Memory): Project-local index only — `qmd init` at repo root → `<repo>/.qmd/` (gitignored); NEVER create or populate a global/shared index, never fall back to one. Mode select: exact terms/titles/headings/symbols → `qmd search '"<phrase>"' --json -n 10 -c <collection>` (BM25, no LLM); concept/paraphrase → `qmd query $'intent: <goal + what to avoid>\nlex: <anchors>\nvec: <paraphrase>' --json -n 10` (author the fields yourself — never paste raw request text). Retrieve before claiming: `qmd get "#id:from:count"` / `qmd multi-get "<ids>" --json` (never pipe `sed`/`head`/`tail`). Maintenance [CRITICAL] mutations → `qmd update && qmd embed --chunk-strategy auto`; health `qmd status`; depth `.agents/skills/qmd-research/` (query grammar · filters · index upkeep).
-- **Context7** (External Framework Intelligence): Trigger [CRITICAL] generating third-party setup/config or touching frameworks/packages (SvelteKit, Tailwind, SQLx, ts-rs, miniplex, Threlte, babylonjs, PixiJS, Phaser, Axum, Rayon, candle, tauri, grammY, `@telegram-apps/sdk`) → autonomous Context7 → prevent hallucinated outdated training data. Flow: `resolve-library-id(name, query)` → `/org/project` ID → `query-docs(id, full_query)` → SOTA patterns. Append explicit versions to queries. Priority Context7 > web search. Bypass for internal business logic.
-- **check** (Workspace Gate Verification): Textbook and diagnostic manual for `./scripts/check.sh` gates. Consult `.agents/skills/check/SKILL.md` when executing check-gates, configuring the 6-slot harness (pointers, secrets, native lanes, tracked compile-time assets, clean-clone sandbox, smoke), or diagnosing and self-healing gate failures.
-- **Skill Engineering** (`./.agents/skills/`): Utilization [CRITICAL] task initiation → scan `./.agents/skills/` → evaluate `description` frontmatters → load `SKILL.md` if relevant. Creation: extract recurring gotchas/workflows into `skills/<name>/SKILL.md` (action gerund, Validation Loops, Plan-Validate-Execute, `references/` offload for progressive disclosure). Anatomy [CRITICAL] frontmatter per the Agent Skills spec (`name` + `description` required; `license` · `compatibility` · `metadata` · `allowed-tools` optional — OKF provenance `type`/`generated` is for documents, §7), `description` <1024 chars imperative "Use this skill when...". Script bundling: self-contained (Bun `.ts`/single-file Go/PEP 723), idempotent, structured JSON/CSV, ZERO prompts. Ad-hoc spikes [CRITICAL] candid debug scripts / pre-implementation endpoint tests / quick API validation → self-contained `.ts` via `bun <file>.ts` (native top-level await+fetch, zero setup). Eval-driven evolution: generate `evals/evals.json`, measure baseline vs with-skill (pass rate/tokens/duration) → optimize `SKILL.md`.
+- **Native Toolchain & Check Gate** (`./scripts/check.sh`): Universal foundation using standard tools (`bun`, `cargo`, `git`). Consult `.agents/skills/check/SKILL.md` for the 6-slot gate harness (pointers, secrets, native lanes, tracked compile-time assets, clean-clone sandbox, smoke).
+- **Skill Engineering** (`./.agents/skills/`): Universal skill catalog and progressive disclosure. Utilization [CRITICAL] task initiation → scan `./.agents/skills/` → evaluate `description` frontmatters → load `SKILL.md` if relevant. Creation: extract recurring gotchas/workflows into `skills/<name>/SKILL.md` (action gerund, Validation Loops, Plan-Validate-Execute, `references/` offload for progressive disclosure). Anatomy [CRITICAL] frontmatter per the Agent Skills spec (`name` + `description` required; `license` · `compatibility` · `metadata` · `allowed-tools` optional — OKF provenance `type`/`generated` is for documents, §7), `description` <1024 chars imperative "Use this skill when...". Script bundling: self-contained (Bun `.ts`/single-file Go/PEP 723), idempotent, structured JSON/CSV, ZERO prompts. Ad-hoc spikes [CRITICAL] candid debug scripts / pre-implementation endpoint tests / quick API validation → self-contained `.ts` via `bun <file>.ts` (native top-level await+fetch, zero setup). Eval-driven evolution: generate `evals/evals.json`, measure baseline vs with-skill (pass rate/tokens/duration) → optimize `SKILL.md`.
+- **Dynamic Host MCP & Intelligence Layer** [CRITICAL]: At session start, inspect available host MCP servers and environment tools. Use them to accelerate workflows when present, but NEVER fail if absent (graceful fallback to native git/grep/docs):
+  - **Knowledge & Search** (e.g. `qmd`): Ingest project memory and search `./references/`, `./openspec/`, and `./**/wiki/`. Fallback: direct file inspection and grep.
+  - **Semantic Blast Radius** (e.g. `sem`): Compute BFS blast radius and structural AST diffs before/after refactors. Fallback: `git log`, `git diff`, and symbol search.
+  - **Framework Intelligence** (e.g. `context7`): Trigger when configuring frameworks (SvelteKit, Tailwind v4, SQLx, Axum, Candle, ts-rs) to query SOTA documentation and prevent hallucinated outdated APIs. Fallback: official documentation and web search.
+  - **Verification & Audit Gates** (e.g. `jev`): Invoke for formal verification, claim screening, and quality gates during pre-flight and pre-response audits. Fallback: native compiler and test lanes.
+  - **Portability Invariant**: Directives, check scripts, and CI workflows MUST NOT hardcode external machine paths or fail when optional MCP servers or acceleration tools are not mounted.
 
 ## 9. Exploration & Discovery Stance
 
 - Constraint [CRITICAL]: vague requirements → Explore Mode. Strictly ZERO code-writing.
 - Action: visualize via ASCII diagrams. Ground in codebase files.
-- Grounding: root analysis via `sem graph`/`sem impact`. No vacuum theorizing → surface hidden complexity.
-- Capture: decisions/shifts → OKF ADRs (`type: Architecture Decision Record`, `status: stable`) || Skill Updates → `qmd update && qmd embed`. Purge transient thoughts.
+- Grounding: root analysis via `sem` (if available) or symbol search/git. No vacuum theorizing → surface hidden complexity.
+- Capture: decisions/shifts → OKF ADRs (`type: Architecture Decision Record`, `status: stable`) || Skill Updates → `qmd update && qmd embed` (if available). Purge transient thoughts.
 
 ## 10. Planning & Execution Workflow
 
 - Pre-computation: feature request || exploration crystallized → strategy (Why, How, Steps) as dense bullets/JSON BEFORE mutation. Output to user chat → shared understanding.
 - Momentum threshold: reasonable decisions autonomously; HALT+prompt ONLY on critical domain ambiguity.
-- Mutation topological sort [CRITICAL]: cross-module scaffolding in strict order: 1) DB Schema → PostgreSQL+SQLx (`crates/api/migrations/*.sql`, `sqlx migrate`; expand-contract phased) 2) Compute & Backend Coordinator → Rust/Axum/Rayon/Candle/Tokio 3) Full-Stack State & Route Handlers → Axum WSS/SSE/gRPC + `ts-rs` bindings (`#[ts(export)]`) 4) UI & Graphics → Svelte/Miniplex/Threlte/Babylon.js/PixiJS/Phaser static views. Never build UI before data contracts.
-- Contextual baseline: ingest QMD/ADRs/`sem impact`/context files/upstream event sources (webhook/SSE availability) → explicit baseline.
+- Mutation topological sort [CRITICAL]: cross-module scaffolding in strict order: 0) Grounding & Discovery (inspect host MCP tools, verify framework docs via context7/official docs, assess blast radius via sem/git) 1) DB Schema → PostgreSQL+SQLx (`crates/api/migrations/*.sql`, `sqlx migrate`; expand-contract phased) 2) Compute & Backend Coordinator → Rust/Axum/Rayon/Candle/Tokio 3) Full-Stack State & Route Handlers → Axum WSS/SSE/gRPC + `ts-rs` bindings (`#[ts(export)]`) 4) UI & Graphics → Svelte/Miniplex/Threlte/Babylon.js/PixiJS/Phaser static views. Never build UI before data contracts.
+- Contextual baseline: ingest project docs/ADRs/context files (accelerated by QMD/sem when present) / upstream event sources (webhook/SSE availability) → explicit baseline.
 - Vibe coding loop: focused mutation → validate locally (`bun run check`, `cargo clippy`, `bun test`, `cargo test`) immediately → verify step → proceed. No YOLO.
 - Surgical mutations [CRITICAL]: SEARCH/REPLACE blocks. Preserve untargeted content. Zero whole-file overwrites. Idempotent.
 - Self-healing vs halt [CRITICAL]: compile/type error → read diagnostic → ONE autonomous fix → recompile.
@@ -226,7 +230,7 @@ stale_after: 2027-08-15
 - SemVer: strict `MAJOR.MINOR.PATCH` per module.
 - Changelog: `./<repo_name>/CHANGELOG.md` or `./<project>/CHANGELOG.md` (`## VERSION - YYYY-MM-DD`). Categories `Added`/`Changed`/`Removed`/`Fixed`. Imperative mood.
 - Push gate [CRITICAL] — two lanes, per touched submodule (generic; host caches `swatinem/rust-cache` / `oven-sh/setup-bun` + multi-arch `ubuntu-26.04` + `ubuntu-26.04-arm` matrix `cache-from/to: type=gha` NEVER QEMU; stack mappings: Bun `bun run check && bun test && bun run build`, Rust `cargo fmt --check && cargo clippy -- -D warnings && cargo test && cargo build --release`):
-  - **Blocking (exit 1):** per touched submodule run native codegen (if exists) → lint → tests → hermetic/static build in builder image → secret-leak scan (new dirs/`*.env` patterns, `git submodule status | grep "^-"`) → submodule-pointer freshness (`git submodule status | grep "^\+"`). Any failure → `exit 1` with failing command. No project names in rule body. Fails pre-push ~15s, not remote. **Advisory (exit 0):** `sem diff --format json` + manifest version + `CHANGELOG.md` presence. Inform, never block.
+  - **Blocking (exit 1):** per touched submodule run native codegen (if exists) → lint → tests → hermetic/static build in builder image → secret-leak scan (new dirs/`*.env` patterns, `git submodule status | grep "^-"`) → submodule-pointer freshness (`git submodule status | grep "^\+"`). Any failure → `exit 1` with failing command. No project names in rule body. Fails pre-push ~15s, not remote. **Advisory (exit 0):** `sem diff --format json` (if available) or `git diff --stat` + manifest version + `CHANGELOG.md` presence. Inform, never block.
 - Check script maintenance [CRITICAL]: Workspace orchestrator root and each submodule MUST maintain an executable `./scripts/check.sh` implementing the canonical 6-slot contract (Pointers, Secrets, Native Lanes, Tracked Assets, Clean-Clone Sandbox, Smoke) and supporting `--quick` (sub-10s iteration exiting before sandbox). Root orchestrator checks submodule freshness/credentials and delegates to submodule check scripts; submodules verify native format/lint/test lanes, assert compile-time asset tracking (`git ls-files --error-unmatch`), honor `--quick`, and verify committed buildability via hermetic clean clone (`mktemp -d` + `git clone .`). Agents MUST update check scripts whenever manifests, dependencies, or compile-time assets change. Consult `check` skill for anatomy and diagnostic procedures.
 
 ## 13. Guide Maintenance

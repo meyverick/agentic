@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [5.6.0] - 2026-10-02
+
+### Changed
+
+- **Dynamic Host MCP Tool Governance & Portability Decoupling** (`integrate-mcp-tool-governance`):
+  - Refactored `AGENTS.md` §8 to unify external runtime intelligence and acceleration tools under a portable `Dynamic Host MCP & Intelligence Layer`, categorizing tools into Knowledge & Search (`qmd`), Semantic Blast Radius (`sem`), Framework Intelligence (`context7`), and Verification & Audit Gates (`jev`).
+  - Subsumed `context7` into the unified MCP governance block alongside `jev`, preserving the critical anti-hallucination mandate for third-party framework configuration.
+  - Enforced a strict host portability invariant: directives, check scripts, and CI workflows must never fail when optional host MCP servers or custom acceleration tools are not installed in the environment.
+  - Decoupled scattered non-portable CLI dependencies across §3 (execution context), §7 (references ingestion), §9 (exploration grounding), §10 (contextual baseline and Step 0 topological sort), and §12 (advisory push gate), providing guaranteed fallbacks to native standard tools (`git`, `bun`, `cargo`, `grep`).
+
 ## [5.5.0] - 2026-09-30
 
 ### Added
