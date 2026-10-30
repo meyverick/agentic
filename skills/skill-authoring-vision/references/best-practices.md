@@ -114,7 +114,7 @@ Not every part of a skill needs the same level of prescriptiveness. Match the sp
 Run exactly this sequence:
 
 ```bash
-python scripts/migrate.py --verify --backup
+bun scripts/migrate.ts --verify --backup
 ```
 
 Do not modify the command or add additional flags.

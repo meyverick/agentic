@@ -46,7 +46,7 @@ if (foreignScripts.length > 0) {
 // Gate 5: skill documentation must not name a removed script or a non-bun interpreter command.
 // Quoted upstream material may mention foreign files; only this repository's legacy scripts and
 // interpreter-prefixed invocations are treated as offenders.
-const LEGACY_SCRIPT = /(funding-gate\.py|test_funding_gate\.py|sync-wiki\.sh|perf_harness\.py|audit_learning_catalog\.py|\bcheck\.sh\b|\bpython3?\s+[^`\n]*\.(py|sh)\b|\bbash\s+[^`\n]*\.sh\b)/;
+const LEGACY_SCRIPT = /(funding-gate\.py|test_funding_gate\.py|sync-wiki\.sh|perf_harness\.py|audit_learning_catalog\.py|\bcheck\.sh\b|\bpython3?\s+[^`\n]*(\.(py|sh)\b|scripts\/)|\bbash\s+[^`\n]*\.sh\b)/;
 const skillDocs = tracked.filter((path) => path.startsWith("skills/") && path.endsWith(".md"));
 for (const path of skillDocs) {
   const text = await readFile(join(root, path), "utf8");

@@ -41,7 +41,7 @@ Every staged learning entry (`Situation & Blocker`, `Applied Solution`, `Prevent
 
 1. Run the bundled deterministic audit script to inventory `./learnings/*.md`, `~/.agents/skills/`, and `./AGENTS.md`:
    ```bash
-   python3 scripts/audit-catalog.ts \
+   bun scripts/audit-catalog.ts \
      --learnings-dir ./learnings \
      --skills-dir ~/.agents/skills \
      --agents-md ./AGENTS.md \
@@ -87,7 +87,7 @@ Execute the approved routing actions strictly according to target tier rules:
 
 1. Execute the audit script in verification mode to confirm all global skills in `~/.agents/skills/` have valid frontmatter and remain strictly under `500` physical lines:
    ```bash
-   python3 scripts/audit-catalog.ts \
+   bun scripts/audit-catalog.ts \
      --learnings-dir ./learnings \
      --skills-dir ~/.agents/skills \
      --agents-md ./AGENTS.md \

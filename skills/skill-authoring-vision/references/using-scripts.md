@@ -206,13 +206,13 @@ Accept all input via command-line flags, environment variables, or stdin:
 
 ```
 # Bad: hangs waiting for input
-$ python scripts/deploy.py
+$ bun scripts/deploy.ts
 Target environment: _
 
 # Good: clear error with guidance
-$ python scripts/deploy.py
+$ bun scripts/deploy.ts
 Error: --env is required. Options: development, staging, production.
-Usage: python scripts/deploy.py --env staging --tag v1.2.3
+Usage: bun scripts/deploy.ts --env staging --tag v1.2.3
 ```
 
 ### Document usage with `--help`

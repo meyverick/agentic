@@ -27,7 +27,7 @@ Perform an unattended, Principal-level performance engineering, resource efficie
    - Shared mutable state, lock primitives, worker pools, channels, and background schedulers.
 3. **Automated Hotspot Scan**: If Python 3 is available in the environment, execute:
    ```bash
-   python3 scripts/perf-harness.ts scan <target_path>
+   bun scripts/perf-harness.ts scan <target_path>
    ```
    Use the emitted JSON candidate list as an initial leads map, then manually verify each candidate in source context to eliminate false positives and trace cross-function call graphs.
 
@@ -37,7 +37,7 @@ Perform an unattended, Principal-level performance engineering, resource efficie
    - Execute existing microbenchmarks or test suites with memory and timing instrumentation enabled.
    - For CLI binaries, scripts, or reproducible workloads, run statistical benchmarking via:
      ```bash
-     python3 scripts/perf-harness.ts bench --cmd "<workload_command>" --warmup 3 --runs 15 --output /tmp/baseline_perf.json
+     bun scripts/perf-harness.ts bench --cmd "<workload_command>" --warmup 3 --runs 15 --output /tmp/baseline_perf.json
      ```
    - Inspect compiler escape analysis, inlining decisions, race detector output, or database `EXPLAIN` plans where applicable.
 3. **Boundary & Stress Probing**: Evaluate how the system behaves under adverse runtime conditions:
