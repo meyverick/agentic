@@ -14,7 +14,7 @@ const TWO_SKILLS = {
   beta: { "SKILL.md": "beta v1" },
 };
 
-const NOOP = { force: false, dryRun: false };
+const NOOP = { force: false, dryRun: false, openspec: false };
 
 async function installed(prefix: string) {
   const root = await scratch(prefix);

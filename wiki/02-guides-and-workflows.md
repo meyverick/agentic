@@ -20,8 +20,23 @@ stale_after: 2027-10-30
 | `agentic status` | Report installed version, marked skills that are no longer shipped, shipped skills that are missing or differ, and diverging host rulebooks. Exits non-zero on drift. |
 | `agentic --version` | Print the package version, which is also the version stamped into every marker. |
 | `agentic --help` | Print the command surface. |
+| `agentic --no-openspec` | Skip the OpenSpec lane: no CLI update, no OpenSpec skill purge, no placement. |
+| `agentic --force --no-openspec` | Both: take ownership of colliding directories and stay offline. |
 
 Every command is safe to run repeatedly. `install` converges; `status` and `--dry-run` never write.
+
+## The Two Skill Sets
+
+An install sets up two independent sets of skills in `~/.agents/skills/`, each with its own ownership marker:
+
+| Set | Marker | Source | Updated by |
+| --- | --- | --- | --- |
+| This package's skills | `.agentic` | the installed package | every run |
+| OpenSpec workflow skills | `.openspec` | `github.com/Fission-AI/OpenSpec` | every run, after updating the OpenSpec CLI |
+
+The OpenSpec lane first updates the CLI with `bun add -g @fission-ai/openspec@latest`, then verifies that the executable which resolves on your path is the one it just wrote — a package-manager copy earlier on the path can shadow it, and the installer says so rather than pretending the update took effect.
+
+Both sets are acquired before anything is deleted, so a failed download costs nothing. Use `--no-openspec` to skip the whole lane and keep the run offline and home-only.
 
 ## Reading the Output
 

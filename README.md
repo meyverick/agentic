@@ -16,7 +16,8 @@ agentic turns that quiet mess into one deliberate act. Run it and every machine 
 - **It only touches what it owns.** Skills installed by anything else are left exactly where they are, because ownership is proven by a small marker file rather than assumed from a name.
 - **It tells you when you have drifted.** A status check reports rulebooks that no longer match, skills that were edited locally, and skills that are no longer part of the library.
 - **Undoing an update is dull on purpose.** Install a previous version and that version's rulebook and skill set come back exactly, including the removal of anything newer.
-- **Nothing is hidden.** No background service, no outside dependency, no network access, no scripts running behind your back.
+- **Two skill sets, one command.** It installs its own skills and, alongside them, the OpenSpec workflow skills — keeping each set separate so neither can overwrite the other.
+- **Nothing is hidden.** No background service, no hidden dependency, no scripts running behind your back; the one step that reaches the network is announced, and can be switched off.
 
 ## Who This Is For
 

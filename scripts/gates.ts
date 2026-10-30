@@ -12,7 +12,7 @@ const git = (...args: string[]): string =>
 
 // Gate 1: ownership markers are install-only, never tracked.
 const tracked = git("ls-files").split("\n").filter(Boolean);
-const markers = tracked.filter((path) => path.split("/").pop() === ".agentic");
+const markers = tracked.filter((path) => [".agentic", ".openspec"].includes(path.split("/").pop() ?? ""));
 if (markers.length > 0) {
   failures.push(`tracked ownership markers (install-only): ${markers.join(", ")}`);
 }

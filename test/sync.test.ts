@@ -13,7 +13,7 @@ const TWO_SKILLS = {
   beta: { "SKILL.md": "beta v1" },
 };
 
-const NOOP = { force: false, dryRun: false };
+const NOOP = { force: false, dryRun: false, openspec: false };
 
 describe("purge", () => {
   test("removes marked orphans and preserves unmarked directories", async () => {
@@ -65,7 +65,7 @@ describe("collisions", () => {
     expect(refused.lines.join("\n")).toContain("--force");
     expect(await snapshot(join(root, "home"))).toEqual(before);
 
-    expect(await install(pkg, t, { force: true, dryRun: false }, emitter().emit)).toBe(0);
+    expect(await install(pkg, t, { force: true, dryRun: false, openspec: false }, emitter().emit)).toBe(0);
     expect((await readMarker(join(t.skills, "alpha")))?.version).toBe("9.9.9");
     expect(await Bun.file(join(t.skills, "alpha", "SKILL.md")).text()).toBe("alpha v1");
   });
@@ -99,7 +99,7 @@ describe("dry run", () => {
     const t = targets(join(root, "home"));
 
     const out = emitter();
-    expect(await install(pkg, t, { force: false, dryRun: true }, out.emit)).toBe(0);
+    expect(await install(pkg, t, { force: false, dryRun: true, openspec: false }, out.emit)).toBe(0);
 
     expect(await snapshot(join(root, "home"))).toEqual([]);
     expect(out.lines.join("\n")).toContain("add      alpha");

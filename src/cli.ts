@@ -3,7 +3,7 @@ import { install } from "./install.ts";
 import { homeDir, loadPackage, targets } from "./pkg.ts";
 import { collect, drift, render } from "./status.ts";
 
-const FLAGS = new Set(["--force", "--dry-run", "-h", "--help", "-v", "--version"]);
+const FLAGS = new Set(["--force", "--dry-run", "--no-openspec", "-h", "--help", "-v", "--version"]);
 const COMMANDS = new Set(["install", "status"]);
 
 export interface Env {
@@ -20,8 +20,9 @@ export function usage(version: string): string[] {
     "  agentic status                            report drift against shipped content",
     "  agentic --version                         print the package version",
     "",
-    "  --force     replace unmarked directories that occupy a shipped skill name",
-    "  --dry-run   report the plan without touching the filesystem",
+    "  --force       replace unmarked directories that occupy a shipped skill name",
+    "  --dry-run     report the plan without touching the filesystem",
+    "  --no-openspec skip the OpenSpec CLI update and its skills",
   ];
 }
 
@@ -65,7 +66,12 @@ export async function run(argv: string[], env: Env): Promise<number> {
     return drift(report) ? 1 : 0;
   }
 
-  return install(pkg, t, { force: argv.includes("--force"), dryRun: argv.includes("--dry-run") }, env.out);
+  return install(
+    pkg,
+    t,
+    { force: argv.includes("--force"), dryRun: argv.includes("--dry-run"), openspec: !argv.includes("--no-openspec") },
+    env.out,
+  );
 }
 
 if (import.meta.main) {

@@ -3,11 +3,14 @@ import { readdir, readFile, mkdir, rm, stat, writeFile } from "node:fs/promises"
 import { dirname, join } from "node:path";
 
 import type { Pkg, Skill, Targets } from "./pkg.ts";
+import type { Bundle } from "./openspec.ts";
+import { placeBundles, prepare, purgeMarked as purgeOpenSpec } from "./openspec.ts";
 import { copyTree, MARKER, treeHash } from "./tree.ts";
 
 export interface Options {
   force: boolean;
   dryRun: boolean;
+  openspec: boolean;
 }
 
 export interface Marker {
@@ -94,6 +97,19 @@ export async function install(pkg: Pkg, t: Targets, opts: Options, emit: Emit): 
     return 0;
   }
 
+  // Acquisition happens before the first write: a failed download or CLI update must cost nothing.
+  let bundles: Bundle[] = [];
+  if (opts.openspec) {
+    try {
+      bundles = await prepare(t, opts.force, emit);
+    } catch (error) {
+      emit(`openspec   ${(error as Error).message}`);
+      return 1;
+    }
+  } else {
+    emit("openspec   skipped (--no-openspec)");
+  }
+
   const rulebook = await readFile(pkg.rulebook);
   for (const path of plan.rulebooks) {
     await rm(path, { force: true });
@@ -112,6 +128,12 @@ export async function install(pkg: Pkg, t: Targets, opts: Options, emit: Emit): 
     const marker: Marker = { version: pkg.version, treeHash: await treeHash(skill.dir) };
     await writeFile(markerPath(target), `${JSON.stringify(marker, null, 2)}\n`);
     emit(`installed  ${skill.name}`);
+  }
+
+  if (bundles.length > 0) {
+    const removed = await purgeOpenSpec(t.skills);
+    if (removed.length > 0) emit(`openspec   removed ${removed.length} stale skills`);
+    await placeBundles(bundles, t.skills, emit);
   }
 
   emit(`done: ${plan.place.length} skills, ${plan.rulebooks.length} rulebooks`);

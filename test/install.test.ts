@@ -20,7 +20,7 @@ describe("pre-flight", () => {
     const home = join(root, "home");
     const before = await snapshot(home);
 
-    await expect(install(pkg, targets(home), { force: false, dryRun: false }, emitter().emit)).rejects.toThrow(
+    await expect(install(pkg, targets(home), { force: false, dryRun: false, openspec: false }, emitter().emit)).rejects.toThrow(
       /no shipped skills/,
     );
     expect(await snapshot(home)).toEqual(before);
@@ -34,7 +34,7 @@ describe("rulebook replacement", () => {
     const t = targets(join(root, "home"));
     await put(t.rulebooks[0], "STALE RULEBOOK\n");
 
-    expect(await install(pkg, t, { force: false, dryRun: false }, emitter().emit)).toBe(0);
+    expect(await install(pkg, t, { force: false, dryRun: false, openspec: false }, emitter().emit)).toBe(0);
     for (const path of t.rulebooks) {
       expect(await Bun.file(path).text()).toBe("RULEBOOK v1\n");
     }
@@ -47,7 +47,7 @@ describe("marker and hashing", () => {
     const pkg = await fixturePackage(root, TWO_SKILLS);
     const t = targets(join(root, "home"));
 
-    await install(pkg, t, { force: false, dryRun: false }, emitter().emit);
+    await install(pkg, t, { force: false, dryRun: false, openspec: false }, emitter().emit);
 
     for (const skill of pkg.skills) {
       const marker = await readMarker(join(t.skills, skill.name));
