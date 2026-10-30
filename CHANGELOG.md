@@ -17,6 +17,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `README.md` is now a non-technical spotlight; the command surface, ownership marker rules, and rollback semantics moved into the wiki.
 - The check gate now validates the funding ledger in the quick lane and resolves funding links in the full lane.
 
+### Fixed
+- The wiki sync script no longer requires `rsync`, which is absent on Windows and aborted the sync after the wiki had already been enabled and cloned; it mirrors with coreutils instead.
+- The wiki sync script refreshes its derived home page and sidebar on every run, so a host-generated placeholder page can no longer survive a sync.
+
 ### Removed
 - `FUNDING.yml` from the repository root, where GitHub does not read it.
 

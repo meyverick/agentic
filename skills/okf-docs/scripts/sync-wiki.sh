@@ -66,12 +66,17 @@ else
 fi
 
 # 3. Synchronize ./wiki/ content into flat/navigable GitHub Wiki structure
-rsync -a --delete --exclude='.git' wiki/ "$TMP_WIKI/wiki/"
+# ponytail: mirror with coreutils instead of rsync, which is absent on Windows and would
+# abort here after the wiki was already enabled and cloned.
+mkdir -p "$TMP_WIKI/wiki"
+find "$TMP_WIKI/wiki" -mindepth 1 -maxdepth 1 ! -name .git -exec rm -rf {} +
+cp -R wiki/. "$TMP_WIKI/wiki/"
 
-# Ensure Home.md and _Sidebar.md exist for GitHub Wiki landing page and navigation (mirroring index.md if absent)
+# Derived pages: the tracked index is the source of truth, so refresh them every run.
+# Leaving a host-generated placeholder in place is what makes a wiki land on "Welcome to the ...".
 if [ -f "$TMP_WIKI/wiki/index.md" ]; then
-    [ -f "$TMP_WIKI/wiki/Home.md" ] || cp "$TMP_WIKI/wiki/index.md" "$TMP_WIKI/wiki/Home.md"
-    [ -f "$TMP_WIKI/wiki/_Sidebar.md" ] || cp "$TMP_WIKI/wiki/index.md" "$TMP_WIKI/wiki/_Sidebar.md"
+    cp "$TMP_WIKI/wiki/index.md" "$TMP_WIKI/wiki/Home.md"
+    cp "$TMP_WIKI/wiki/index.md" "$TMP_WIKI/wiki/_Sidebar.md"
 fi
 
 # Flatten nested subdirectories (e.g., adr/0001-init.md -> adr-0001-init.md) so GitHub Wiki routing resolves every link
