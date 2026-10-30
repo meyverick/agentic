@@ -8,7 +8,7 @@ description: Execute an exhaustive, deep-dive performance, efficiency, robustnes
 Perform an unattended, Principal-level performance engineering, resource efficiency, and runtime stability audit across any programming language or systems stack. Unlike broad readiness reviews, this skill focuses exclusively on mechanical sympathy, algorithmic efficiency, memory lifecycle determinism, concurrency contention elimination, crash immunity, and tail-latency ($p_{99}/p_{99.9}$) resilience. It pairs deterministic static hotspot inspection with opportunistic empirical benchmarking and compiler/profiler verification to deliver quantified, proof-backed optimization reports.
 
 ## Core Mental Model
-1. **Measure First, Model Second, Never Guess**: Whenever a local toolchain is available, execute existing benchmarks, compiler escape/assembly diagnostics, and `scripts/perf_harness.py` to establish an empirical baseline. When running in a static-only environment, formulate explicit asymptotic complexity and memory-allocation cost models. Tag every finding with its verification basis: `[EMPIRICAL]` or `[STATIC-MODEL]`.
+1. **Measure First, Model Second, Never Guess**: Whenever a local toolchain is available, execute existing benchmarks, compiler escape/assembly diagnostics, and `scripts/perf-harness.ts` to establish an empirical baseline. When running in a static-only environment, formulate explicit asymptotic complexity and memory-allocation cost models. Tag every finding with its verification basis: `[EMPIRICAL]` or `[STATIC-MODEL]`.
 2. **Mechanical Sympathy Over Micro-Hacks**: Prioritize high-leverage physical and runtime mechanics—CPU cache locality, zero-copy memory lifecycles, lock-free or fine-grained concurrency, batched/pipelined I/O, and predictable tail latency—over cosmetic syntax micro-tweaks that degrade readability for negligible gain.
 3. **Stability is Non-Negotiable Performance**: Throughput without fault tolerance is a production hazard. Audit panic/crash vectors, resource leaks on early-return error paths, unbounded queues/allocations, race conditions, and missing timeouts/backpressure with the same rigor as CPU and memory bottlenecks.
 4. **Evidence, Quantified Deltas, and Verifiable Diffs**: Every finding must cite an exact file path and line range (`path/to/file.ext:L10-L42`), state a measured or mathematically modeled impact delta (e.g., latency reduction, allocations/op saved, throughput multiplier, or blast-radius elimination), and supply both a drop-in production `diff` and a reproducible verification command.
@@ -27,7 +27,7 @@ Perform an unattended, Principal-level performance engineering, resource efficie
    - Shared mutable state, lock primitives, worker pools, channels, and background schedulers.
 3. **Automated Hotspot Scan**: If Python 3 is available in the environment, execute:
    ```bash
-   python3 scripts/perf_harness.py scan <target_path>
+   python3 scripts/perf-harness.ts scan <target_path>
    ```
    Use the emitted JSON candidate list as an initial leads map, then manually verify each candidate in source context to eliminate false positives and trace cross-function call graphs.
 
@@ -37,7 +37,7 @@ Perform an unattended, Principal-level performance engineering, resource efficie
    - Execute existing microbenchmarks or test suites with memory and timing instrumentation enabled.
    - For CLI binaries, scripts, or reproducible workloads, run statistical benchmarking via:
      ```bash
-     python3 scripts/perf_harness.py bench --cmd "<workload_command>" --warmup 3 --runs 15 --output /tmp/baseline_perf.json
+     python3 scripts/perf-harness.ts bench --cmd "<workload_command>" --warmup 3 --runs 15 --output /tmp/baseline_perf.json
      ```
    - Inspect compiler escape analysis, inlining decisions, race detector output, or database `EXPLAIN` plans where applicable.
 3. **Boundary & Stress Probing**: Evaluate how the system behaves under adverse runtime conditions:
@@ -57,7 +57,7 @@ Load `references/optimization-rubrics.md` and systematically evaluate the codeba
 ### Phase 4: Quantitative Triage, Diff Synthesis & Verification
 1. **Classify & Quantify**: Assign every verified issue a unique ID (`COMP-01`, `MEM-01`, `CONC-01`, `IO-01`, `STAB-01`, `RESIL-01`), a **Priority** (`Critical`, `High`, `Medium`, `Low`), an **Effort** (`Low`, `Medium`, `High`), a **Verification Basis** (`[EMPIRICAL]` or `[STATIC-MODEL]`), and a concrete **Estimated / Measured Impact** (e.g., `$\mathcal{O}(n^2) \rightarrow \mathcal{O}(n)$, -85% p99 latency` or `-4 allocs/op, -12 KB/req`).
 2. **Synthesize Production Diffs**: Write clean, idiomatic, drop-in `diff` blocks for all `Critical`, `High`, and `Medium` findings. Preserve existing public API contracts unless breaking a contract is required to fix a `Critical` stability or performance flaw (which must be explicitly noted).
-3. **Post-Patch Empirical Check (When Runtime Available)**: If applying or testing patches in a sandbox or benchmark harness is feasible, re-run `scripts/perf_harness.py bench --cmd "<workload_command>" --baseline-json /tmp/baseline_perf.json` to record exact before/after percentage deltas ($\Delta\%$).
+3. **Post-Patch Empirical Check (When Runtime Available)**: If applying or testing patches in a sandbox or benchmark harness is feasible, re-run `scripts/perf-harness.ts bench --cmd "<workload_command>" --baseline-json /tmp/baseline_perf.json` to record exact before/after percentage deltas ($\Delta\%$).
 
 ---
 
@@ -83,7 +83,7 @@ Group findings by remediation tier:
 - **Low Priority Findings**: Compact bulleted list citing `ID`, `Location`, mechanical issue, and a 1–2 sentence optimization directive.
 
 ### 4. Empirical Verification & Stress-Test Protocol
-Provide copy-pasteable benchmark commands, profiler invocations, stress-test harnesses, and `scripts/perf_harness.py` recipes tailored to the repository so engineers and CI pipelines can validate the gains and guard against future performance regressions.
+Provide copy-pasteable benchmark commands, profiler invocations, stress-test harnesses, and `scripts/perf-harness.ts` recipes tailored to the repository so engineers and CI pipelines can validate the gains and guard against future performance regressions.
 
 ### 5. Sequenced Execution Roadmap
 Organize all findings into three pragmatic implementation horizons:

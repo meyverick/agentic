@@ -37,6 +37,30 @@ for (const name of skills) {
   }
 }
 
+// Gate 4: the repository has exactly one script runtime.
+const foreignScripts = tracked.filter((path) => /\.(py|sh)$/i.test(path));
+if (foreignScripts.length > 0) {
+  failures.push(`tracked non-TypeScript scripts: ${foreignScripts.join(", ")}`);
+}
+
+// Gate 5: skill documentation must not name a removed script or a non-bun interpreter command.
+// Quoted upstream material may mention foreign files; only this repository's legacy scripts and
+// interpreter-prefixed invocations are treated as offenders.
+const LEGACY_SCRIPT = /(funding-gate\.py|test_funding_gate\.py|sync-wiki\.sh|perf_harness\.py|audit_learning_catalog\.py|\bcheck\.sh\b|\bpython3?\s+[^`\n]*\.(py|sh)\b|\bbash\s+[^`\n]*\.sh\b)/;
+const skillDocs = tracked.filter((path) => path.startsWith("skills/") && path.endsWith(".md"));
+for (const path of skillDocs) {
+  const text = await readFile(join(root, path), "utf8");
+  text.split(/\r?\n/).forEach((text_line, index) => {
+    if (!text_line.includes("`")) return;
+    const where = `${path}:${index + 1}`;
+    if (LEGACY_SCRIPT.test(text_line)) failures.push(`${where}: names a removed script or a non-bun interpreter`);
+    // A bare `./scripts/` mention is prose about the rule; only a concrete script path is an offender.
+    if (/`[^`]*(\.[/\\]|skills\/[a-z0-9-]+\/)scripts\/[^`\s]*\.(ts|py|sh)\b/.test(text_line)) {
+      failures.push(`${where}: uses a repository-relative script path`);
+    }
+  });
+}
+
 // Gate 3: the packed artifact carries the executable, every skill, and the rulebook.
 let packOutput: string;
 try {

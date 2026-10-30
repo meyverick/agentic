@@ -2,7 +2,7 @@
 name: check
 description: >
   Execute and interpret local workspace and submodule check-gates to verify project integrity before push.
-  Use when verifying code changes, running pre-flight gates, diagnosing check.sh failures or submodule pointer desync, or confirming clean-clone buildability.
+  Use when verifying code changes, running pre-flight gates, diagnosing gate failures or submodule pointer desync, or confirming clean-clone buildability.
   Do NOT use when only reading or exploring code without modifications, or when planning changes before implementation.
 allowed-tools: Bash(*)
 license: MIT
@@ -19,7 +19,7 @@ A specialized reference manual and textbook instructing AI agents on how to exec
 ## Activation Boundary
 
 **Consult this textbook when:**
-- Executing `./scripts/check.sh` during the Pre-response self-audit (`./AGENTS.md` Chapters 7 & 1).
+- Executing `bun scripts/check.ts` during the Pre-response self-audit (`./AGENTS.md` Chapters 7 & 1).
 - Diagnosing why a local check gate, clean-clone build, or submodule pointer verification failed.
 - Confirming that all subprojects and orchestrators pass before reporting task completion.
 
@@ -48,16 +48,16 @@ Runs:                                   Runs:
 ### 1. The Fast Loop (`--quick`)
 Pass `--quick` as the first argument when validating intermediate code edits:
 ```bash
-./scripts/check.sh --quick
+bun scripts/check.ts --quick
 # Or for a specific submodule:
-./<submodule-path>/scripts/check.sh --quick
+bun <submodule-path>/scripts/check.ts --quick
 ```
 This executes all native linters, compilers, and static asset checks, but skips the clean-clone build and browser smoke tests, returning actionable feedback in seconds.
 
 ### 2. The Full Pre-Flight Gate
 Always execute the unflagged gate before marking any code-modifying task `[Completed]`:
 ```bash
-./scripts/check.sh
+bun scripts/check.ts
 ```
 This runs the full 6-slot pipeline, including cloning the committed tree into an isolated temporary directory to prove that uncommitted local files are not masking build breakages.
 
@@ -65,16 +65,16 @@ This runs the full 6-slot pipeline, including cloning the committed tree into an
 
 A check-gated repository organizes gates in a 2-tier hierarchy:
 
-1. **Workspace Root (`./scripts/check.sh`)**:
+1. **Workspace Root (`bun scripts/check.ts`)**:
    - Checks orchestrator invariants: submodule pointer freshness (`git submodule status`) and tracked credential leaks (`git ls-files`).
-   - Delegates to each registered submodule's gate: `<module>/scripts/check.sh $QUICK`.
-2. **Codebase Submodule (`./<module>/scripts/check.sh`)**:
+   - Delegates to each registered submodule's gate: `<module>/scripts/check.ts --quick`.
+2. **Codebase Submodule (`bun <module>/scripts/check.ts`)**:
    - Executes the component's native toolchain matrix (deduced autonomously via package manifests).
-   - Validates compile-time asset tracking, the public funding ledger (`.github/FUNDING.yml` + `DEPENDENCIES.md` parity, offline), and performs the clean-clone test. The full (non-`--quick`) lane adds `funding-gate.py --check --verify-links` so every funding entry resolves (404/5xx fail, 403/429 warn as anti-bot walls). Skip the gate when `gh repo view --json isPrivate -q .isPrivate` prints `true`. Offline contract tests: `python3 scripts/test_funding_gate.py`.
+   - Validates compile-time asset tracking, the public funding ledger (`.github/FUNDING.yml` + `DEPENDENCIES.md` parity, offline), and performs the clean-clone test. The full (non-`--quick`) lane adds `funding-gate.ts --check --verify-links` so every funding entry resolves (404/5xx fail, 403/429 warn as anti-bot walls). Skip the gate when `gh repo view --json isPrivate -q .isPrivate` prints `true`. Offline contract tests: `python3 scripts/funding-gate.test.ts`.
 
 ## Diagnostic Matrix: The 9 Failure Classes
 
-When `./scripts/check.sh` exits non-zero, identify the failure class and apply its self-healing recipe:
+When `bun scripts/check.ts` exits non-zero, identify the failure class and apply its self-healing recipe:
 
 | Class | Observed Diagnostic | Root Cause | Autonomous Healing Action |
 | :--- | :--- | :--- | :--- |
@@ -86,7 +86,7 @@ When `./scripts/check.sh` exits non-zero, identify the failure class and apply i
 | **6. Cross-Boundary Breach** | Syntax error in embedded JS/DOM contract | Static frontend asset contains undeclared variable or broken handler | Fix the client-side JavaScript/HTML contract in the source file |
 | **7. Native Regression** | Compiler, clippy, eslint, or test failed | Code broke typecheck, linter rules, or unit test assertions | Read compiler diagnostic, fix code or formatting, and re-run |
 | **8. Docs Contract Breach** | `FAIL: missing Spotlight README.md` / `README.md contains technical code/terminal blocks` / `missing or untracked ./wiki/*.md` | Missing `README.md`, fenced code block inside `README.md`, or missing/untracked `wiki/*.md` files | Load `.agents/skills/okf-docs/SKILL.md`, move technical blocks from `README.md` into `./wiki/`, stage `git add README.md wiki/`, and re-run check |
-| **9. Funding Ledger Stale** | `funding-gate: FAIL .github/FUNDING.yml: stale, manifests changed` | A dependency was added, removed, or bumped in a package manifest and the generated ledger was not regenerated | Run `python3 scripts/funding-gate.py --write <repo-dir>`, stage `.github/FUNDING.yml DEPENDENCIES.md`, and re-run check. Never hand-edit either file |
+| **9. Funding Ledger Stale** | `funding-gate: FAIL .github/FUNDING.yml: stale, manifests changed` | A dependency was added, removed, or bumped in a package manifest and the generated ledger was not regenerated | Run `python3 scripts/funding-gate.ts --write <repo-dir>`, stage `.github/FUNDING.yml DEPENDENCIES.md`, and re-run check. Never hand-edit either file |
 
 ## Autonomous Self-Healing Playbook
 
@@ -94,7 +94,7 @@ Do not halt or prompt the user for routine gate failures:
 1. **Never bypass failures with `--no-verify`**: If the gate fails, the change is incomplete.
 2. **Untracked build inputs**: Compare the error output with `git status`. If a newly created asset was forgotten, stage it immediately.
 3. **Submodule pointer bumps**: Always check `git submodule status` after committing inside a submodule. If a `+` appears, commit the gitlink in the parent orchestrator before finishing.
-4. **Re-verify after healing**: Always re-execute `./scripts/check.sh` after applying a fix to guarantee exit code 0.
+4. **Re-verify after healing**: Always re-execute `bun scripts/check.ts` after applying a fix to guarantee exit code 0.
 
 ## Reference Depth
 

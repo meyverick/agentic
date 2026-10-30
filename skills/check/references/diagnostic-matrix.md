@@ -191,5 +191,5 @@ Either `README.md` is missing, `README.md` contains fenced code/terminal blocks 
 4. Stage the documentation artifacts and re-verify:
    ```bash
    git add README.md wiki/
-   ./scripts/check.sh --quick
+   bun scripts/check.ts --quick
    ```

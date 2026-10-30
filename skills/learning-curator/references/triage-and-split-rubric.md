@@ -11,7 +11,7 @@ When evaluating a learning entry against an existing global skill in `~/.agents/
 | Dimension | Weight | Scoring Criteria |
 | :--- | :--- | :--- |
 | **1. Trigger & Failure Context Overlap** | `40%` | Does the learning occur during the exact activity described in the skill's YAML `description`? (`40%` = identical task trigger; `20%` = adjacent workflow; `0%` = unrelated trigger). |
-| **2. Toolchain & Entity Affinity** | `35%` | Do the entities in `Situation & Blocker` and `Prevention Rule` (e.g., `git`, `check.sh`, `MCP`, `worker queue`, `npm`, `CI runner`) match the tools governed by the skill? (`35%` = core tool match; `15%` = shared runtime only; `0%` = disjoint stack). |
+| **2. Toolchain & Entity Affinity** | `35%` | Do the entities in `Situation & Blocker` and `Prevention Rule` (e.g., `git`, `check.ts`, `MCP`, `worker queue`, `npm`, `CI runner`) match the tools governed by the skill? (`35%` = core tool match; `15%` = shared runtime only; `0%` = disjoint stack). |
 | **3. Lifecycle Phase Alignment** | `25%` | Does the `Applied Solution` execute in the same engineering phase (e.g., architecture design, inner-loop implementation, test verification, release/publish)? (`25%` = same phase; `10%` = adjacent phase; `0%` = different lifecycle phase). |
 
 ### Affinity Decision Thresholds
@@ -101,7 +101,7 @@ Use when `~/.agents/skills/<skill>/SKILL.md` mixes two separate engineering life
 3. Update both YAML frontmatter `description` fields with **mutually exclusive negative boundaries**:
    * In `<skill-a>/SKILL.md`: *"Trigger when running local verification gates or multi-OS CI test harnesses. Never trigger for package registry publishing or version release workflows (use `<skill-b>`)."*
    * In `<skill-b>/SKILL.md`: *"Trigger when publishing packages to registries, verifying artifact propagation, or managing release tags. Never trigger for local test harness execution (use `<skill-a>`)."*
-4. Re-run `scripts/audit_learning_catalog.py --verify-skills` to confirm both sibling skills are `< 500` physical lines and have valid frontmatter.
+4. Re-run `scripts/audit-catalog.ts --verify-skills` to confirm both sibling skills are `< 500` physical lines and have valid frontmatter.
 
 ---
 
@@ -109,7 +109,7 @@ Use when `~/.agents/skills/<skill>/SKILL.md` mixes two separate engineering life
 
 Because `./learnings/*.md` is strictly read-only and never purged after curation:
 
-1. Check the SHA-256 `Rule Fingerprint` and token overlap score emitted by `scripts/audit_learning_catalog.py`.
+1. Check the SHA-256 `Rule Fingerprint` and token overlap score emitted by `scripts/audit-catalog.ts`.
 2. Any learning with `>= 75%` normalized token overlap against `AGENTS.md` or an existing `~/.agents/skills/*/SKILL.md` (or `references/*.md`) is flagged by the script as `CANDIDATE_NO_OP`.
 3. Visually confirm that both the **invariant constraint** (`Prevention Rule`) and the **actionable remedy** (`Applied Solution`) are present in the matched target file.
 4. If confirmed, classify as `NO-OP (Already Integrated)` in the Curation Triage Matrix and skip all file mutations for that entry.

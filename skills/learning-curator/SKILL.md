@@ -41,7 +41,7 @@ Every staged learning entry (`Situation & Blocker`, `Applied Solution`, `Prevent
 
 1. Run the bundled deterministic audit script to inventory `./learnings/*.md`, `~/.agents/skills/`, and `./AGENTS.md`:
    ```bash
-   python3 scripts/audit_learning_catalog.py \
+   python3 scripts/audit-catalog.ts \
      --learnings-dir ./learnings \
      --skills-dir ~/.agents/skills \
      --agents-md ./AGENTS.md \
@@ -87,7 +87,7 @@ Execute the approved routing actions strictly according to target tier rules:
 
 1. Execute the audit script in verification mode to confirm all global skills in `~/.agents/skills/` have valid frontmatter and remain strictly under `500` physical lines:
    ```bash
-   python3 scripts/audit_learning_catalog.py \
+   python3 scripts/audit-catalog.ts \
      --learnings-dir ./learnings \
      --skills-dir ~/.agents/skills \
      --agents-md ./AGENTS.md \
@@ -122,7 +122,7 @@ Always emit the following structured Markdown summary when reporting curation an
   * *Remedy*: `learning-curator` operates exclusively on the host global catalog at `~/.agents/skills/`. Never create or modify skills inside workspace-local `.agents/skills/` or `.opencode/skills/`. When proposing Chapter 4 table updates to `AGENTS.md`, preserve the repository's established path convention in `AGENTS.md` while storing the curated skill implementation in `~/.agents/skills/`.
 * **Idempotent Re-Runs on Unmodified `./learnings/`**:
   * *Symptom*: Running `learning-curator` a second time appends duplicate bullets or duplicate gotcha sections to `~/.agents/skills/<skill>/SKILL.md` because `./learnings/*.md` files are never deleted or marked inline.
-  * *Remedy*: Always check both the `audit_learning_catalog.py` overlap flags and the target file's existing rules before mutating. If the `Prevention Rule` semantics are already present, classify the entry as `NO-OP (Already Integrated)`.
+  * *Remedy*: Always check both the `audit-catalog.ts` overlap flags and the target file's existing rules before mutating. If the `Prevention Rule` semantics are already present, classify the entry as `NO-OP (Already Integrated)`.
 * **Over-Elevating Situational Rules to `AGENTS.md`**:
   * *Symptom*: Platform-specific or tool-specific workarounds (e.g., Windows `npm.cmd` requiring `shell: true` with `execFile`, or `npm publish` `0.0.0-stage` registry polling) get elevated into `AGENTS.md`, bloating the universal rulebook.
   * *Remedy*: Apply the 4-Gate Elevation Filter in `references/triage-and-split-rubric.md`. If a rule names a specific OS, package manager, framework, or runtime API (`npm`, `Windows`, `execFile`, `opencode`), route it to `~/.agents/skills/` (`UPGRADE`, `SPLIT`, or `CREATE`), never `AGENTS.md`.

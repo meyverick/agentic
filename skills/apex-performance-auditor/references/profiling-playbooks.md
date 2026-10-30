@@ -4,22 +4,22 @@ Use these stack-specific recipes during **Phase 2 (Baseline Empirical Profiling)
 
 ---
 
-## 1. Universal Statistical Benchmarking (`perf_harness.py`)
+## 1. Universal Statistical Benchmarking (`perf-harness.ts`)
 When evaluating any CLI command, test runner, or standalone workload script, capture statistically rigorous latency distributions ($p_{50}, p_{95}, p_{99}$, CV%) and peak RSS memory using the bundled harness:
 
 ```bash
 # 1. Static Hotspot Reconnaissance
-python3 scripts/perf_harness.py scan /path/to/repo
+python3 scripts/perf-harness.ts scan /path/to/repo
 
 # 2. Capture Baseline Metrics (3 warmup runs, 15 measured runs)
-python3 scripts/perf_harness.py bench \
+python3 scripts/perf-harness.ts bench \
   --cmd "<target_command>" \
   --warmup 3 \
   --runs 15 \
   --output /tmp/perf_baseline.json
 
 # 3. Verify Post-Optimization Delta Against Baseline
-python3 scripts/perf_harness.py bench \
+python3 scripts/perf-harness.ts bench \
   --cmd "<target_command>" \
   --warmup 3 \
   --runs 15 \

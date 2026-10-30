@@ -217,11 +217,11 @@ An explicit checklist helps the agent track progress and avoid skipping steps, e
 ## Form processing workflow
 
 Progress:
-- [ ] Step 1: Analyze the form (run `scripts/analyze_form.py`)
+- [ ] Step 1: Analyze the form (run `scripts/analyze-form.ts`)
 - [ ] Step 2: Create field mapping (edit `fields.json`)
-- [ ] Step 3: Validate mapping (run `scripts/validate_fields.py`)
-- [ ] Step 4: Fill the form (run `scripts/fill_form.py`)
-- [ ] Step 5: Verify output (run `scripts/verify_output.py`)
+- [ ] Step 3: Validate mapping (run `scripts/validate-fields.ts`)
+- [ ] Step 4: Fill the form (run `scripts/fill-form.ts`)
+- [ ] Step 5: Verify output (run `scripts/verify-output.ts`)
 ```
 
 ### Validation loops
@@ -232,7 +232,7 @@ Instruct the agent to validate its own work before moving on. The pattern is: do
 ## Editing workflow
 
 1. Make your edits
-2. Run validation: `python scripts/validate.py output/`
+2. Run validation: `bun scripts/validate.ts output/`
 3. If validation fails:
    - Review the error message
    - Fix the issues
@@ -249,14 +249,14 @@ For batch or destructive operations, have the agent create an intermediate plan 
 ```markdown
 ## PDF form filling
 
-1. Extract form fields: `python scripts/analyze_form.py input.pdf` → `form_fields.json`
+1. Extract form fields: `bun scripts/analyze-form.ts input.pdf` → `form_fields.json`
    (lists every field name, type, and whether it's required)
 2. Create `field_values.json` mapping each field name to its intended value
-3. Validate: `python scripts/validate_fields.py form_fields.json field_values.json`
+3. Validate: `bun scripts/validate-fields.ts form_fields.json field_values.json`
    (checks that every field name exists in the form, types are compatible, and
    required fields aren't missing)
 4. If validation fails, revise `field_values.json` and re-validate
-5. Fill the form: `python scripts/fill_form.py input.pdf field_values.json output.pdf`
+5. Fill the form: `bun scripts/fill-form.ts input.pdf field_values.json output.pdf`
 ```
 
 The key ingredient is step 3: a validation script that checks the plan (`field_values.json`) against the source of truth (`form_fields.json`). Errors like "Field 'signature_date' not found — available fields: customer_name, order_total, signature_date_signed" give the agent enough information to self-correct.

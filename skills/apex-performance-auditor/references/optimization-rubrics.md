@@ -15,7 +15,7 @@ This reference defines the priority classification standards, quantitative impac
 | **Low** | • Cold-path allocations, minor branch inefficiencies, struct padding waste on low-count objects, or missing performance telemetry counters. | Concise 1–2 sentence optimization directive |
 
 ### Verification Basis Tags
-- **`[EMPIRICAL]`**: Validated by running benchmarks, `scripts/perf_harness.py bench`, compiler escape/assembly analysis, race detector, or query `EXPLAIN ANALYZE`. Must cite baseline vs. target metrics (e.g., `$p_{50}: 14.2\text{ ms} \rightarrow 3.1\text{ ms} (-78\%)$`).
+- **`[EMPIRICAL]`**: Validated by running benchmarks, `bun scripts/perf-harness.ts bench`, compiler escape/assembly analysis, race detector, or query `EXPLAIN ANALYZE`. Must cite baseline vs. target metrics (e.g., `$p_{50}: 14.2\text{ ms} \rightarrow 3.1\text{ ms} (-78\%)$`).
 - **`[STATIC-MODEL]`**: Derived from deterministic static analysis of source code when runtime execution is unavailable or requires external infrastructure. Must state explicit complexity or resource deltas (e.g., `$\mathcal{O}(N \cdot M) \rightarrow \mathcal{O}(N + M)$`, `Eliminates $2N$ heap allocations per batch`).
 
 ### Implementation Effort Classification

@@ -4,11 +4,11 @@
     {
       "id": 1,
       "prompt": "I've just finished implementing the new Axum route and migration. Verify the workspace integrity and run the check gate to ensure nothing is broken.",
-      "expected_output": "Agent activates the check skill, executes `./scripts/check.sh`, evaluates the 6-slot gate results, and reports whether the workspace passed.",
+      "expected_output": "Agent activates the check skill, executes `bun scripts/check.ts`, evaluates the 6-slot gate results, and reports whether the workspace passed.",
       "files": [],
       "assertions": [
         "Skill activates on workspace verification and check gate request",
-        "Agent executes `./scripts/check.sh`",
+        "Agent executes `bun scripts/check.ts`",
         "All 6 slots or module lanes are verified"
       ]
     },

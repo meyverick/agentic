@@ -47,7 +47,7 @@ Every production-grade skill is organized into a modular trinity:
    * Consulted by the executing agent only when specific sub-topics are activated (progressive disclosure).
 
 3. **`scripts/` (The Temple Tooling)**
-   * Houses deterministic, executable scripts (Python, Bash, Node.js) for repetitive, calculation-heavy, or fragile multi-step tasks.
+   * Houses deterministic, executable scripts (TypeScript executed by bun) for repetitive, calculation-heavy, or fragile multi-step tasks.
    * Eliminates LLM arithmetic errors, hallucination, and unnecessary token consumption.
 
 ---
@@ -143,7 +143,7 @@ When directing the Senior Knight, enforce these concrete authoring blueprints:
   * Pointers to `references/` and executable tools in `scripts/`.
 
 ### Blueprint C: Auxiliary Files (`scripts/` and `references/`)
-* **`scripts/`**: Production-grade scripts with clear CLI flags, error handling, clean exit codes, and verifiable outputs. Reference every bundled file from `SKILL.md` with bare skill-relative paths (`scripts/foo.py`, `references/foo.md`); `./scripts/`, `~/...`, and repository-relative paths are forbidden because they break portability — reserve the `./scripts/` spelling for commands belonging to the target project's own harness.
+* **`scripts/`**: Production-grade scripts with clear CLI flags, error handling, clean exit codes, and verifiable outputs. Reference every bundled file from `SKILL.md` with bare skill-relative paths (`scripts/foo.ts`, `references/foo.md`); `./scripts/`, `~/...`, and repository-relative paths are forbidden because they break portability — reserve the `./scripts/` spelling for commands belonging to the target project's own harness.
 * **`references/`**: Standalone Markdown or structured files focused on a single reference sub-topic, referenced explicitly inside `SKILL.md`.
 
 ---

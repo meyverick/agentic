@@ -27,13 +27,13 @@ Clone the repository, then run the gate. The quick lane is the inner loop and fi
 ```bash
 git clone https://github.com/meyverick/agentic.git
 cd agentic
-./scripts/check.sh --quick
+bun scripts/check.ts --quick
 ```
 
 The full lane adds the funding-link check and the clean-clone sandbox:
 
 ```bash
-./scripts/check.sh
+bun scripts/check.ts
 ```
 
 Both lanes must pass before a pull request is ready. The gate is the contract, not a formality — if it fails, the change is not done.
@@ -69,7 +69,7 @@ This repository is published deliberately, and the process is short but ordered:
 3. Synchronize the wiki from the repository root. The script enables the GitHub Wiki, derives the home page and sidebar from the local index, and pushes every tracked page:
 
    ```bash
-   bash skills/okf-docs/scripts/sync-wiki.sh .
+   bun skills/okf-docs/scripts/sync-wiki.ts .
    ```
 
    It refuses to act while the repository is private, so running it early is harmless — it exits successfully with a `SKIP` line.

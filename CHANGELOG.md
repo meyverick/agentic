@@ -14,6 +14,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Progressive `wiki/` for the package and the orchestrator, each with an index, four mastery tiers, and Architecture Decision Records.
 
 ### Changed
+- **BREAKING**: the gate entry points are `scripts/check.ts` and `modules/scripts/check.ts`, invoked as `bun <path>`. `./scripts/check.sh` no longer exists, and no invocation depends on a file mode or a shebang.
+- **BREAKING**: every script is TypeScript run by bun. Skill scripts are invoked as `bun scripts/<name>.ts`, and the funding ledger, wiki sync, performance harness, and catalog auditor are all rewritten.
 - `README.md` is now a non-technical spotlight; the command surface, ownership marker rules, and rollback semantics moved into the wiki.
 - The check gate now validates the funding ledger in the quick lane and resolves funding links in the full lane.
 
@@ -23,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 - `FUNDING.yml` from the repository root, where GitHub does not read it.
+- The shell gates (`scripts/check.sh`), the wiki sync script, and the four Python scripts, replaced by TypeScript equivalents.
 
 ## 0.1.0 - 2026-10-30
 

@@ -95,8 +95,8 @@ List available scripts in your `SKILL.md` so the agent knows they exist:
 ```markdown SKILL.md
 ## Available scripts
 
-- **`scripts/validate.sh`** — Validates configuration files
-- **`scripts/process.py`** — Processes input data
+- **`scripts/validate.ts`** — Validates configuration files
+- **`scripts/process.ts`** — Processes input data
 ```
 
 Then instruct the agent to run them:
@@ -106,12 +106,12 @@ Then instruct the agent to run them:
 
 1. Run the validation script:
    ```bash
-   bash scripts/validate.sh "$INPUT_FILE"
+   bun scripts/validate.ts "$INPUT_FILE"
    ```
 
 2. Process the results:
    ```bash
-   python3 scripts/process.py --input results.json
+   bun scripts/process.ts --input results.json
    ```
 ````
 
@@ -123,38 +123,10 @@ The same relative-path convention works in support files like `references/*.md` 
 
 When you need reusable logic, bundle a script in `scripts/` that declares its own dependencies inline. The agent can run the script with a single command — no separate manifest file or install step required.
 
-Several languages support inline dependency declarations:
+Bun makes a script self-contained without a manifest; the other runtimes below show the same idea for comparison:
 
 <Tabs sync={false}>
-  <Tab title="Python">
-    [PEP 723](https://peps.python.org/pep-0723/) defines a standard format for inline script metadata. Declare dependencies in a TOML block inside `# ///` markers:
 
-    ```python scripts/extract.py
-    # /// script
-    # dependencies = [
-    #   "beautifulsoup4",
-    # ]
-    # ///
-
-    from bs4 import BeautifulSoup
-
-    html = '<html><body><h1>Welcome</h1><p class="info">This is a test.</p></body></html>'
-    print(BeautifulSoup(html, "html.parser").select_one("p.info").get_text())
-    ```
-
-    Run with [uv](https://docs.astral.sh/uv/) (recommended):
-
-    ```bash
-    uv run scripts/extract.py
-    ```
-
-    `uv run` creates an isolated environment, installs the declared dependencies, and runs the script. [pipx](https://pipx.pypa.io/) (`pipx run scripts/extract.py`) also supports PEP 723.
-
-    - Pin versions with [PEP 508](https://peps.python.org/pep-0508/) specifiers: `"beautifulsoup4>=4.12,<5"`.
-    - Use `requires-python` to constrain the Python version.
-    - Use `uv lock --script` to create a lockfile for full reproducibility.
-  </Tab>
-  <Tab title="Deno">
     Deno's `npm:` and `jsr:` import specifiers make every script self-contained by default:
 
     ```typescript scripts/extract.ts
