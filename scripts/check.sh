@@ -39,8 +39,9 @@ fi
 
 # Slot 5: Hermetic clean-clone sandbox
 echo "== 5/6 clean-clone sandbox =="
-top="$(git rev-parse --show-toplevel 2>/dev/null || true)"
-if [ "$top" != "$(pwd)" ]; then
+top="$(cd "$(git rev-parse --show-toplevel 2>/dev/null || echo .)" 2>/dev/null && pwd -P)"
+here="$(pwd -P)"
+if [ "$top" != "$here" ]; then
     echo "  this module is not a standalone repository (owner: ${top:-none}); clean-clone lane deferred to the owning repository gate"
 else
     tmp="$(mktemp -d)"
