@@ -9,7 +9,8 @@
   "files": [
     "src",
     "skills",
-    "AGENTS.md"
+    "AGENTS.md",
+    "workspace"
   ],
   "license": "ISC",
   "repository": {

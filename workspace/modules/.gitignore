@@ -1,0 +1,28 @@
+# Dependencies and build output
+node_modules/
+target/
+build/
+dist/
+out/
+.next/
+.venv/
+__pycache__/
+*.pyc
+
+# Local environment
+.env
+.env.*
+!.env.example
+
+# Editor and OS noise
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Tooling caches
+.codegraph/
+
+# Install-time ownership markers never belong in a repository
+.agentic
+.openspec

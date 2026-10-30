@@ -20,10 +20,33 @@ stale_after: 2027-10-30
 | `agentic status` | Report installed version, marked skills that are no longer shipped, shipped skills that are missing or differ, and diverging host rulebooks. Exits non-zero on drift. |
 | `agentic --version` | Print the package version, which is also the version stamped into every marker. |
 | `agentic --help` | Print the command surface. |
+| `agentic --init` | Scaffold the two-tier workspace into the current directory: both tiers, both gates, the documentation skeleton, two local repositories wired as a submodule, and OpenSpec initialised. |
+| `agentic --init --no-openspec` | The same scaffold without the OpenSpec CLI update or its initialisation. |
+| `agentic --init --dry-run` | List the files the scaffold would create; writes nothing. |
 | `agentic --no-openspec` | Skip the OpenSpec lane: no CLI update, no OpenSpec skill purge, no placement. |
 | `agentic --force --no-openspec` | Both: take ownership of colliding directories and stay offline. |
 
 Every command is safe to run repeatedly. `install` converges; `status` and `--dry-run` never write.
+
+## Starting a New Project
+
+`agentic --init` scaffolds what `AGENTS.md` describes, into an empty directory:
+
+```
+<project>/
+  README.md · wiki/ · references/ · learnings/
+  scripts/check.ts          orchestrator gate: pointers and secrets, delegates to the module
+  modules/                  its own repository, registered as a submodule through ./modules
+    README.md · wiki/ · CHANGELOG.md
+    scripts/check.ts        six slots; the native lane and the smoke check fail until filled
+```
+
+Two things worth knowing before the first run:
+
+- **Both gates start red.** The module gate fails naming the native lane it does not have, and the orchestrator gate fails because it delegates to it. Fill in the project's format, lint, test, build and smoke commands to turn both green.
+- **The scaffold needs no network and no stack.** It writes no manifests and assumes no language; only the gates require bun.
+
+The `.gitmodules` URL is relative (`./modules`), so it resolves to a sibling repository of the same name once a remote exists. `--no-openspec` skips the CLI update and the `openspec init` step.
 
 ## The Two Skill Sets
 
