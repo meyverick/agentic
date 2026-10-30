@@ -31,7 +31,8 @@ async function repo(options: { readme?: string | null; contributing?: string | n
   await writeFile(
     join(root, ".github", "FUNDING.yml"),
     `# deps-sha256: ${marker}\ngithub: [owner]\nthanks_dev: u/gh/owner\ncustom:\n` +
-      `  - "https://thanks.dev/u/gh/owner"\n  - "https://github.com/sponsors/x"\n`,
+      `  - "https://github.com/sponsors/owner"\n  - "https://thanks.dev/u/gh/owner"\n` +
+      `  - "https://github.com/sponsors/x"\n`,
   );
   await writeFile(
     join(root, "DEPENDENCIES.md"),
@@ -100,7 +101,14 @@ describe("funding ledger validation", () => {
     );
     await writeFile(
       join(wellFormed, ".github", "FUNDING.yml"),
-      `# deps-sha256: ${empty}\ngithub: [owner]\nthanks_dev: u/gh/owner\ncustom:\n  - "https://thanks.dev/u/gh/owner"\n`,
+      `# deps-sha256: ${empty}
+github: [owner]
+thanks_dev: u/gh/owner
+custom:
+` +
+        `  - "https://github.com/sponsors/owner"
+  - "https://thanks.dev/u/gh/owner"
+`,
     );
     expect(await failures(wellFormed, [])).toEqual([]);
   });

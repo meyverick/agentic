@@ -11,6 +11,13 @@ export const ALLOWED_KEYS = ["github", "thanks_dev", "custom"];
 const GENERATOR = "skills/check/scripts/funding-gate.ts";
 const USAGE = `usage: funding-gate.ts --write|--check [--verify-links] <repo-dir>`;
 
+/** Links that always appear in `custom:`, independent of the dependency set. */
+export function baselineLinks(owner: string): string[] {
+  return owner
+    ? [`https://github.com/sponsors/${owner}`, `https://thanks.dev/u/gh/${owner}`]
+    : ["https://thanks.dev"];
+}
+
 export async function render(repoDir: string, deps: Dep[]): Promise<[string, string]> {
   const owner = repoOwner(repoDir);
   const marker = digest(deps);
@@ -23,7 +30,7 @@ export async function render(repoDir: string, deps: Dep[]): Promise<[string, str
     owner ? `github: [${owner}]` : "github: []",
     owner ? `thanks_dev: u/gh/${owner}` : "# thanks_dev: u/gh/<owner>",
     "custom:",
-    owner ? `  - "https://thanks.dev/u/gh/${owner}"` : '  - "https://thanks.dev"',
+    ...baselineLinks(owner).map((url) => `  - "${url}"`),
   ];
   const credits = [
     "# Dependencies",
@@ -111,7 +118,10 @@ export async function validate(repoDir: string, deps: Dep[], warn: (line: string
     problems.push("github must be empty when the repository owner cannot be resolved");
   }
 
-  if (parsed.urls.length === 0) problems.push("custom must list at least the thanks.dev support link");
+  const missingBaseline = baselineLinks(owner).filter((url) => !parsed.urls.includes(url));
+  if (missingBaseline.length > 0) {
+    problems.push(`custom must list the baseline support links, missing ${JSON.stringify(missingBaseline)}`);
+  }
   const badScheme = parsed.urls.filter((url) => !url.startsWith("https:") || !URL.canParse(url));
   if (badScheme.length > 0) problems.push(`custom URLs must be https: ${JSON.stringify(badScheme.slice(0, 3))}`);
   const duplicates = [...new Set(parsed.urls.filter((url) => parsed.urls.filter((other) => other === url).length > 1))].sort();
@@ -126,7 +136,7 @@ export async function validate(repoDir: string, deps: Dep[], warn: (line: string
     problems.push(`DEPENDENCIES.md rows do not match manifests (missing=${JSON.stringify(missing)}, extra=${JSON.stringify(extra)})`);
   }
 
-  const linked = rows.filter(([, , link]) => link.startsWith("http")).length + 1;
+  const linked = rows.filter(([, , link]) => link.startsWith("http")).length + baselineLinks(owner).length;
   if (owner && parsed.urls.length !== linked) {
     problems.push(`custom has ${parsed.urls.length} URLs but DEPENDENCIES.md implies ${linked}`);
   }

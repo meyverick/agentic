@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **BREAKING**: every script is TypeScript run by bun. Skill scripts are invoked as `bun scripts/<name>.ts`, and the funding ledger, wiki sync, performance harness, and catalog auditor are all rewritten.
 - `README.md` is now a non-technical spotlight; the command surface, ownership marker rules, and rollback semantics moved into the wiki.
 - The check gate now validates the funding ledger in the quick lane and resolves funding links in the full lane.
+- The generated funding ledger lists the GitHub Sponsors page alongside thanks.dev in `custom:`, so the sponsor button does not depend on a Sponsors profile existing at generation time.
 
 ### Fixed
 - The wiki sync script no longer requires `rsync`, which is absent on Windows and aborted the sync after the wiki had already been enabled and cloned; it mirrors with coreutils instead.
