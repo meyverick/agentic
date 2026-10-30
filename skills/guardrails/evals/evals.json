@@ -3,24 +3,24 @@
   "evals": [
     {
       "id": 1,
-      "prompt": "I'm about to commit code that handles user auth. Check for security pitfalls.",
-      "expected_output": "Guardrails triggers, lists Anti-example 2 (secret leak) and 1 (on* stripping), shows Do: envx + .gitignore, not commit .env.",
+      "prompt": "I'm about to commit code that handles user auth and HTML templates. Check for security pitfalls.",
+      "expected_output": "Guardrails triggers, lists Anti-example 2 (secret & credential hygiene) and Anti-example 1 (HTML/DOM sink escaping, canvas morph protection, and explicit event bindings), showing .gitignore deny-list and runtime secret injection rather than committing .env.",
       "files": [],
       "assertions": [
         "Guardrails skill triggered",
         "Anti-example for secret commit shown",
-        "Correct pattern envx + .gitignore shown"
+        "Correct .gitignore deny-list and HTML sink escaping pattern shown"
       ]
     },
     {
       "id": 2,
-      "prompt": "I need to update SvelteKit adapter for deployment to distroless.",
-      "expected_output": "Guardrails triggers, shows Anti-example 3: before svelte-adapter-bun vs after @sveltejs/adapter-static + tower-http, with fallback index.html.",
+      "prompt": "I need to harden our Dockerfile and dependency manifest for a production release.",
+      "expected_output": "Guardrails triggers, shows Anti-example 3: single-stage root container with build toolchains vs multi-stage build with locked manifest targeting a minimal non-root distroless runtime image.",
       "files": [],
       "assertions": [
-        "Guardrails triggered on deprecated adapter query",
-        "Contrast table includes Before adapter-bun vs After adapter-static",
-        "Why explains Axum serves static, single distroless binary"
+        "Guardrails triggered on container and dependency hardening query",
+        "Contrast table includes multi-stage locked build and non-root distroless runtime",
+        "Why explains least-privilege execution and removing build toolchains from production images"
       ]
     },
     {

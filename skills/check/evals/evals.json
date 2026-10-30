@@ -3,7 +3,7 @@
   "evals": [
     {
       "id": 1,
-      "prompt": "I've just finished implementing the new Axum route and migration. Verify the workspace integrity and run the check gate to ensure nothing is broken.",
+      "prompt": "I've just finished implementing the new HTTP route and database migration. Verify the workspace integrity and run the check gate to ensure nothing is broken.",
       "expected_output": "Agent activates the check skill, executes `bun scripts/check.ts`, evaluates the 6-slot gate results, and reports whether the workspace passed.",
       "files": [],
       "assertions": [

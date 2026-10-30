@@ -1,25 +1,25 @@
 ---
 name: guardrails
 description: >
-  Cross-cutting hardening for security, deprecated APIs, and system gotchas. Use when writing or modifying code that touches dependencies, Docker, HTML/auth, or secrets. Use when reviewing code for security pitfalls. Do NOT use when only reading or exploring without code changes.
+  Cross-cutting hardening for security, container/dependency hygiene, HTML/DOM sinks, and language soundness gotchas across any project or language. Use when writing or modifying code that touches dependencies, Docker/containers, HTML/templates/DOM, auth, secrets, nullability, or lifetimes/resources. Use when reviewing code for security pitfalls. Do NOT use when only reading or exploring without code changes.
 allowed-tools: Bash(*)
 license: MIT
-compatibility: Requires bun >= 1.0.
+compatibility: No runtime or network requirement; references ship with the skill.
 metadata:
   author: agentic
-  version: "1.0"
+  version: "2.0.0"
 ---
 
 # Guardrails
 
-Cross-cutting hardening that loads first — before domain skills — to prevent the 5 mistakes that recur across reports: `on*` stripping, secret leaks, deprecated adapter, `null` vs `Option`, lifetime elision. Tiny Level 1 inline; Level 2 behind `references/guardrails-patterns.md`.
+Cross-cutting hardening that loads first — before domain skills — to prevent the 5 universal failure classes across any stack: HTML/DOM sink hazards & canvas morph collisions, secret leaks, container/dependency bloat, unchecked `null` vs. explicit absence (`Option`), and lifetime/resource leaks. Tiny Level 1 inline; Level 2 behind `references/guardrails-patterns.md`.
 
 ## Activation Boundary
 
 **Triggers on:**
-- Writing/modifying code that touches `deps` (package.json, Cargo.toml), `Docker` (Dockerfile, compose), `HTML` (Svelte, templ), `auth` (tokens, cookies, sessions), or secrets
-- Reviewing a change for security or deprecated usage
-- Handling `on*` event handlers, `innerHTML`, or secret-like strings
+- Writing/modifying code that touches `deps` (`Cargo.toml`, `package.json`, `go.mod`, `pyproject.toml`), `Docker` (`Dockerfile`, `compose`), `HTML/DOM` (hypermedia templates, Maud/Datastar, JSX/Svelte), `auth` (tokens, cookies, sessions), or `secrets`
+- Reviewing a change for security, nullability, lifetime/resource safety, or container hardening
+- Handling untrusted HTML sinks (`innerHTML`, unescaped templates), `<canvas>` morph protection, or secret-like strings
 
 **Does NOT trigger on:**
 - Only reading or exploring without mutations (use explore mode)
@@ -28,84 +28,102 @@ Cross-cutting hardening that loads first — before domain skills — to prevent
 
 ## When to Use
 
-Load this skill **first** before any domain skill when the task touches the 4 high-risk surfaces above. Check the 5 anti-examples below, then proceed to domain logic. If no high-risk surface, skip guardrails — save tokens.
+Load this skill **first** before any domain skill when the task touches the high-risk surfaces above. Check the 5 universal guardrails below, then proceed to domain logic. If no high-risk surface is touched, skip guardrails to save tokens.
 
 ## Contrast
 
-| Before (old) | After (new) | Why different |
-|--------------|-------------|---------------|
-| `on*` handlers stripped silently | Preserve `on:click` explicitly or sanitize intentionally | Svelte 5 strips unknown `on*` — must be explicit, not accidental |
-| `if (user != null)` | `if let Some(user) = user` | Rust absence is type-level `Option`, not runtime `null` |
-| `svelte-adapter-bun` | `@sveltejs/adapter-static` + `tower-http` | 3.0.0 canonical: Axum serves static, not Bun adapter |
-| `Embedded SQLite per container` | `Central PostgreSQL via SQLx` | Single owner `crates/api/migrations/` — no `../` traversal |
-| `cargo build` in handler | `queue + worker + WSS` | Heavy CPU never blocks request path — coordinator delegates |
+| Surface | Before (Anti-Pattern) | After (Universal Guardrail) | Why & Ecosystem Specificities |
+| :--- | :--- | :--- | :--- |
+| **1. HTML, DOM & Canvas Sinks** | Unescaped HTML injection, unguarded `<canvas>` morphs, or implicit `on*` string handlers | Auto-escaped templates, `data-ignore` on stateful canvases, and explicit event bindings | Prevents XSS, preserves WebGL/WASM contexts during Datastar/HTMX DOM morphs, and avoids silent `on*` stripping in Svelte/JSX |
+| **2. Secrets & Credentials** | Committing `.env` / keys or echoing tokens in CI/deploy logs | `.gitignore` deny-lists, runtime secret injection, and unconditional log redaction | `AGENTS.md` invariant: never commit credentials or `.env` files across any environment |
+| **3. Containers & Dependencies** | Shipping build toolchains, root users, or unpinned dev adapters in production | Multi-stage builds, locked manifests, and minimal non-root runtime images (`distroless`) | Eliminates attack surface and runtime drift (`Rust/Go -> distroless:nonroot`, `TS/Python -> locked slim non-root`) |
+| **4. Explicit Absence & Parsing** | Unchecked `if (x != null)` or raw `any` payload access | Parse at I/O boundaries and encode absence in types (`Option<T>`, strict null checks) | Prevents runtime null-dereference panics (`Rust: if let Some(v) = x`, `TS: strictNullChecks`, `Go/Py: explicit nil/None guard`) |
+| **5. Lifetimes & Resources** | Eliding borrowed output lifetimes, holding locks across `.await`, or leaking handles | Explicit `'a` lifetime ties, lexical lock scopes, and deterministic `Drop`/`defer`/`using` | Guarantees memory soundness, prevents async deadlocks, and ensures deterministic descriptor cleanup |
 
 ## Anti-examples
 
-**1. Do NOT: Strip `on*` silently**
-```svelte
-<!-- before (wrong) — Svelte strips on* without warning -->
-<div oncustom={handler}>click</div>
+**1. Do NOT: Leave HTML sinks unescaped, `<canvas>` unprotected from DOM morphs, or event handlers implicit**
+```html
+<!-- before (wrong) — raw HTML sink + unprotected canvas destroyed on morph + fragile inline handler -->
+<div innerHTML={untrustedBio} oncustom={handler}>
+  <canvas id="sim-canvas"></canvas>
+</div>
 ```
-```svelte
-<!-- after (right) — explicit Svelte 5 handling -->
-<div on:click={handler}>click</div>
+```rust
+// after (right, Rust Maud + Datastar) — auto-escaped text, explicit data-on-click, and data-ignore on canvas container
+html! {
+    div data-on-click="$open = !$open" {
+        p { (untrusted_bio) }
+        div id="canvas-stage" data-ignore {
+            canvas id="sim-canvas" {}
+        }
+    }
+}
 ```
-Why: Svelte 5 sanitizes `on*` — undetected loss of interactivity.
+Why: Auto-escaping blocks XSS; `data-ignore` (or framework key preservation) stops DOM morphing from dropping active WebGL/WebGPU contexts; explicit event syntax (`data-on-click`, `on:click`, `onClick`) prevents silent handler stripping.
 
-**2. Do NOT: Commit secrets**
+**2. Do NOT: Commit secrets or echo credentials in logs**
 ```bash
 # before (wrong)
-git commit -m "add .env with WARERA_KEY=abc"
+git add .env && git commit -m "configure api keys"
 ```
 ```bash
-# after (right) — deny-list secret & artifact paths, secrets via envx
-printf '\n.env\n.env.*\n*.pem\n*.key\ncredentials\nnode_modules/\n\ntarget/\ndist/\nbuild/\n' >> .gitignore
-envx set WARERA_KEY
+# after (right) — deny-list secret & artifact paths in .gitignore, inject at runtime
+printf '\n.env\n.env.*\n*.pem\n*.key\ncredentials\nnode_modules/\ntarget/\ndist/\nbuild/\n' >> .gitignore
 ```
-Why: `NEVER commit credentials/.env` — `AGENTS.md` Must-follow, deny-list covers `.env`, `.env.*`, `*.pem`, `*.key`, credentials; leaked secrets rotate.
+Why: `AGENTS.md` Inviolable Prohibition — never commit `.env` or private keys, and mask tokens unconditionally in telemetry.
 
-**3. Do NOT: Use deprecated adapter**
-```js
-// before (wrong)
-import adapter from 'svelte-adapter-bun';
+**3. Do NOT: Ship build toolchains or root containers to production**
+```dockerfile
+# before (wrong) — single-stage build running as root with full compiler/dev toolchain
+FROM rust:latest
+COPY . .
+RUN cargo build --release
+CMD ["./target/release/app"]
 ```
-```js
-// after (right)
-import adapter from '@sveltejs/adapter-static';
-export default { kit: { adapter: adapter({ fallback: 'index.html' }) } };
-```
-Why: 3.0.0 stack inversion — Axum `tower-http` serves static, single distroless binary.
+```dockerfile
+# after (right) — multi-stage build into minimal non-root distroless runtime
+FROM rust:1-bookworm AS build
+WORKDIR /src
+COPY . .
+RUN cargo build --release --locked
 
-**4. Do NOT: Check null in Rust**
+FROM gcr.io/distroless/cc-debian13:nonroot
+COPY --from=build /src/target/release/app /app
+USER nonroot:nonroot
+ENTRYPOINT ["/app"]
+```
+Why: Least-privilege execution — production images carry only the locked artifact and run as `nonroot`.
+
+**4. Do NOT: Assume nullable references or unvalidated payloads**
 ```rust
-// before (wrong)
+// before (wrong) — C/JS mental model in Rust or unchecked nullable access
 if user != null { /* ... */ }
 ```
 ```rust
-// after (right)
+// after (right) — explicit type-level absence handling
 if let Some(u) = user { /* use u */ }
 ```
-Why: Rust has no `null`; absence is `Option<T>` — compiler forces handling.
+Why: Absence must be encoded and narrowed explicitly (`Option<T>` / `Result<T, E>` in Rust, `strictNullChecks` in TypeScript, `err != nil` in Go).
 
-**5. Do NOT: Elide lifetimes unsafely**
+**5. Do NOT: Elide borrowed output lifetimes or hold locks across `.await`**
 ```rust
-// before (wrong)
-fn longest(x: &str, y: &str) -> &str { x }
+// before (wrong) — ambiguous borrowed return lifetime
+fn longest(x: &str, y: &str) -> &str { if x.len() > y.len() { x } else { y } }
 ```
 ```rust
-// after (right)
+// after (right) — explicit lifetime specifier tying output borrow to inputs
 fn longest<'a>(x: &'a str, y: &'a str) -> &'a str { if x.len() > y.len() { x } else { y } }
 ```
-Why: Borrow checker requires explicit `'a` when output borrows input.
+Why: Explicit ownership and lifetime bounds (`'a` in Rust; `defer`/`using`/`with` for I/O handles in Go/TS/Python) prevent dangling references and resource leaks.
 
 ## References
 
-- `references/guardrails-patterns.md` — Level 2 detail for each anti-example (code before/after, signal, Why) — on-demand, not startup cost
-- `./AGENTS.md` Must-read pointer — this skill is first-loaded via `Must-read: .agents/skills/guardrails/SKILL.md before any code touching deps/Docker/HTML/auth`
+- `references/guardrails-patterns.md` — Level 2 detail for each universal guardrail across languages (code before/after, failure signal, remediation)
+- `./AGENTS.md` Chapter 4 & Chapter 8 — cross-cutting security, boundary validation (`FEAR`), and unconditional redaction invariants
 
 ## Gotchas
 
-- Loads first, but only when high-risk surface present — `only reading` anti-triggers prevent bloat on explore tasks
-- Never duplicate domain anti-examples — domain skills link here via `See ../../guardrails/SKILL.md — cross-cutting anti-examples`
-- Single source for cross-cutting: this skill, not `AGENTS.md` body (AGENTS.md only holds the pointer)
+- Loads first, but only when a high-risk surface is present — `only reading` anti-triggers prevent bloat on explore tasks
+- Co-activates cleanly with language-specific skills (such as `rust-systems` or `hypermedia-engine-stacks`) without locking the workspace to a single project
+- Single source for cross-cutting pre-flight checks: keep `SKILL.md` compact and read `references/guardrails-patterns.md` only when deeper pattern detail is needed
