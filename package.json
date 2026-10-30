@@ -1,6 +1,6 @@
 {
   "name": "@meyverick/agentic",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "One-command install and update of the consumer rulebook and its owned agent skills.",
   "type": "module",
   "bin": {
