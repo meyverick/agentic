@@ -3,6 +3,8 @@ import { execFileSync } from "node:child_process";
 import { readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
 
+import { checkModuleDensity } from "./loc-lane.ts";
+
 const root = join(import.meta.dir, "..");
 const failures: string[] = [];
 const git = (...args: string[]): string =>
@@ -87,9 +89,17 @@ for (const name of skills) {
   if (!packedSkills.has(name)) failures.push(`packed artifact is missing skills/${name}`);
 }
 
+// Gate 6: module density on the modules this change touches.
+const density = await checkModuleDensity(root);
+if (density.undeterminable) {
+  console.error("  W module density: cannot determine the changed set; lane skipped");
+}
+for (const warning of density.warnings) console.error(`  W ${warning}`);
+failures.push(...density.failures);
+
 if (failures.length > 0) {
   for (const failure of failures) console.error(`  X ${failure}`);
   console.error("FAIL: package gate");
   process.exit(1);
 }
-console.log(`  ${skills.length} skills validated, ${packed.length} packaged files verified`);
+console.log(`  ${skills.length} skills validated, ${packed.length} packaged files verified, ${density.measured} changed modules measured`);

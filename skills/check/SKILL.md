@@ -72,7 +72,7 @@ A check-gated repository organizes gates in a 2-tier hierarchy:
    - Executes the component's native toolchain matrix (deduced autonomously via package manifests).
    - Validates compile-time asset tracking, the public funding ledger (`.github/FUNDING.yml` + `DEPENDENCIES.md` parity, offline), and performs the clean-clone test. The full (non-`--quick`) lane adds `funding-gate.ts --check --verify-links` so every funding entry resolves (404/5xx fail, 403/429 warn as anti-bot walls). Skip the gate when `gh repo view --json isPrivate -q .isPrivate` prints `true`. Offline contract tests: `bun scripts/funding-gate.test.ts`.
 
-## Diagnostic Matrix: The 9 Failure Classes
+## Diagnostic Matrix: The 10 Failure Classes
 
 When `bun scripts/check.ts` exits non-zero, identify the failure class and apply its self-healing recipe:
 
@@ -86,6 +86,7 @@ When `bun scripts/check.ts` exits non-zero, identify the failure class and apply
 | **6. Cross-Boundary Breach** | Syntax error in embedded JS/DOM contract | Static frontend asset contains undeclared variable or broken handler | Fix the client-side JavaScript/HTML contract in the source file |
 | **7. Native Regression** | Compiler, clippy, eslint, or test failed | Code broke typecheck, linter rules, or unit test assertions | Read compiler diagnostic, fix code or formatting, and re-run |
 | **8. Docs Contract Breach** | `FAIL: missing Spotlight README.md` / `README.md contains technical code/terminal blocks` / `missing or untracked ./wiki/*.md` | Missing `README.md`, fenced code block inside `README.md`, or missing/untracked `wiki/*.md` files | Load `.agents/skills/okf-docs/SKILL.md`, move technical blocks from `README.md` into `./wiki/`, stage `git add README.md wiki/`, and re-run check |
+| **10. LOC Ceiling** | `loc-lane: <file>: N lines exceeds the 500-line ceiling` | A module the change touched grew past 500 physical lines | Prove behaviour green, extract without behaviour change, re-prove; revert the extraction if the second proof fails (see `references/diagnostic-matrix.md`) |
 | **9. Funding Ledger Stale** | `funding-gate: FAIL .github/FUNDING.yml: stale, manifests changed` | A dependency was added, removed, or bumped in a package manifest and the generated ledger was not regenerated | Run `bun scripts/funding-gate.ts --write <repo-dir>`, stage `.github/FUNDING.yml DEPENDENCIES.md`, and re-run check. Never hand-edit either file |
 
 ## Autonomous Self-Healing Playbook

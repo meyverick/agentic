@@ -50,7 +50,9 @@ LOC means the physical line count of a file (wc -l), including comments and blan
 | ----- | ----- | ----- |
 | `Leaf / Atomic Module` | `<= 150 LOC` | Decompose into atomic collaborator modules. |
 | `Cohesive Domain Module` | `<= 300 LOC` | Extract cohesive sub-domain modules. |
-| `State Machine Module` | `<= 500 LOC` (Hard Ceiling) | Flag module for ADR decomposition; `Coding Agent` never refactors module mid-task. |
+| `State Machine Module` | `<= 500 LOC` (Hard Ceiling) | Decompose before the task completes; the check gate fails until it does. Decomposition is an authorized refactor. |
+
+* `LOC Ceiling Enforcement`: `Coding Agent` measures module length for every module a change adds or modifies; a touched module exceeding `500 LOC` SHALL be decomposed before the task is reported complete, and the check gate fails until it passes.
 
 ### Mutation Topological Sort
 
@@ -159,7 +161,7 @@ LOC means the physical line count of a file (wc -l), including comments and blan
 
 ## Chapter 9: Team Workflow, Code Hygiene & Release Discipline
 
-* `Surgical Diffs & Small Pull Requests`: `Commit` and `Pull Request` target single cohesive objective; `Coding Agent` never initiates unrequested wide-scale refactoring mid-task.
+* `Surgical Diffs & Small Pull Requests`: `Commit` and `Pull Request` target single cohesive objective; `Coding Agent` never initiates unrequested wide-scale refactoring mid-task, except the LOC remediation phase mandated by `LOC Ceiling Enforcement`.
 * `Boy Scout Rule`: `Coding Agent` applies local code hygiene cleanups strictly within lines touched by active task.
 * `Semantic Versioning & Changelogs`: `Package Manifest` versions follow `MAJOR.MINOR.PATCH` schema; `Coding Agent` records release changes in `CHANGELOG.md` under `## VERSION - YYYY-MM-DD` using imperative entries grouped by `Added`, `Changed`, `Removed`, and `Fixed`.
 * `Documentation & Public Wiki Release Gate`: Prior to any `git push`, version release, or `CHANGELOG.md` mutation, `Coding Agent` synchronizes `./README.md` (non-technical spotlight readable by any general audience) and `./wiki/` ("Easy to Use, Hard to Master" progressive documentation from beginner to master) for the root orchestrator and all touched `./modules/<package>/` repositories; if and only if the target GitHub repository is public (`isPrivate == false`), `Coding Agent` enables the GitHub Wiki and synchronizes `wiki/` via the `okf-docs` skill's `scripts/sync-wiki.sh`.

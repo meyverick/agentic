@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `README.md` is now a non-technical spotlight; the command surface, ownership marker rules, and rollback semantics moved into the wiki.
 - The check gate now validates the funding ledger in the quick lane and resolves funding links in the full lane.
 - The generated funding ledger lists the GitHub Sponsors page alongside thanks.dev in `custom:`, so the sponsor button does not depend on a Sponsors profile existing at generation time.
+- A module a change touches is now measured: over 500 physical lines fails the gate and blocks completion, 301–500 warns, and an exemption requires a decision record. The rulebook mandates decomposition as an authorized refactor.
 
 ### Fixed
 - The wiki sync script no longer requires `rsync`, which is absent on Windows and aborted the sync after the wiki had already been enabled and cloned; it mirrors with coreutils instead.

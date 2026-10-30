@@ -193,3 +193,35 @@ Either `README.md` is missing, `README.md` contains fenced code/terminal blocks 
    git add README.md wiki/
    bun scripts/check.ts --quick
    ```
+
+## Class 10: Module Over the LOC Ceiling
+
+### Symptoms
+
+```
+loc-lane: big.ts: 512 lines exceeds the 500-line ceiling; decompose before completing the task
+loc-lane: big.ts: 512 lines, exempted by wiki/adr/0003-why-not.md
+loc-lane: mid.ts: 350 lines is in the 301-500 warning band
+```
+
+### Root Cause
+A module the change added or modified exceeds the physical-line ceiling. Only modules the change touches are measured; an untouched oversized module is not reported. Lines are physical, counting comments and blank lines.
+
+### Autonomous Remediation
+Do not report the task complete and do not ask for permission — the rulebook authorizes this decomposition.
+
+1. Finish the behaviour change and get the gate green. That state is the reference for what must not change.
+2. Extract cohesive collaborators into sibling modules inside the same package. Change no behaviour and no public contract. Do not reach the number by deleting documentation, collapsing formatting, or moving code into a barrel that keeps the same responsibility.
+3. Re-run the gate. If the second proof fails, revert the extraction only, keep the behaviour change, and re-run to confirm the revert is clean.
+4. Re-verify:
+   ```bash
+   bun scripts/check.ts --quick
+   ```
+
+A module that genuinely cannot be split without breaking its invariants carries a first-line marker naming a decision record:
+
+```ts
+// loc-exempt: wiki/adr/0003-<name>.md
+```
+
+The named record must exist and explain why the module stays whole. The marker without the record still fails the gate, and the gate names the missing path.
