@@ -1,32 +1,40 @@
 > *Architected and directed by Human Intelligence, **implemented by AI**.*
 
-# Codebase Submodule
+# agentic
 
-This directory is the single codebase submodule (Tier 2) containing the consumer rulebook, the agent skill library, and the installer that reconciles both onto a machine.
+**agentic keeps the written instructions your AI assistant follows identical on every machine you work on — with a single command.**
 
-## Command Surface
+## Why It Matters
 
-The package is invoked as `agentic` from the published artifact. A bare invocation installs.
+An AI coding assistant is only as good as the instructions it was given, and those instructions live in files tucked away in your home directory. They drift. One laptop has the rulebook from three months ago, another has a skill that was retired last week, and a third has the right files but no record of where they came from. Nothing announces the drift; you simply notice that the assistant behaves differently on different machines and cannot say why.
 
-| Command | Effect |
-| --- | --- |
-| `agentic` | Install or update: replace the host rulebooks, delete every skill carrying the ownership marker, place every shipped skill, then stamp the marker. |
-| `agentic install --force` | Same run, but replace unmarked directories that occupy a shipped skill name. Required once on a machine that predates the marker. |
-| `agentic install --dry-run` | Report the rulebook paths and the skills that would be added, replaced, or deleted, and change nothing. |
-| `agentic status` | Report the installed version, marked skills that are no longer shipped, shipped skills that are missing or differ from shipped content, and diverging host rulebooks. Exits non-zero when drift exists. |
+agentic turns that quiet mess into one deliberate act. Run it and every machine agrees again. Run it after a change and the new instructions are everywhere, with nothing left over from before.
 
-Host rulebooks are written to `~/.pi/agent/AGENTS.md` and `~/.gemini/AGENTS.md`. Skills are written to `~/.agents/skills/<name>/`.
+## What It Does For You
 
-## Ownership Marker
+- **One command, no bookkeeping.** It replaces the rulebook and reinstalls the whole skill library. There is no version comparison to read and no patch to apply.
+- **It only touches what it owns.** Skills installed by anything else are left exactly where they are, because ownership is proven by a small marker file rather than assumed from a name.
+- **It tells you when you have drifted.** A status check reports rulebooks that no longer match, skills that were edited locally, and skills that are no longer part of the library.
+- **Undoing an update is dull on purpose.** Install a previous version and that version's rulebook and skill set come back exactly, including the removal of anything newer.
+- **Nothing is hidden.** No background service, no outside dependency, no network access, no scripts running behind your back.
 
-`~/.agents/skills/` is shared with skills owned by other sources. A `.agentic` file at a skill directory's root is the only record that this package owns that directory, and it is the only input to the deletion rule: marked directories are deleted and re-placed on every run, unmarked directories are never touched.
+## Who This Is For
 
-The marker is written by the installer, never committed here, and its presence in the repository is a gate failure. Rolling back is installing a pinned earlier version, which restores that version's rulebook and skill set exactly.
+**People who work on several machines.** The same instructions follow you between them without a sync tool, a dotfiles repository to maintain by hand, or a checklist you will forget.
 
-## Execution Context
+**People who maintain instructions for others.** Publish once, and everyone who installs gets the same rulebook and the same skills, with retired material actually retired instead of lingering.
 
-All build, test, lint, and packaging commands execute with working directory strictly inside this module.
+**People who want an assistant they can reason about.** If you have ever wondered which version of your instructions a machine was really using, this tool makes that question answerable in one command.
 
-## Pre-Push Verification
+## Explore the Documentation
 
-This module provides `./scripts/check.sh` implementing the native verification lane: unit tests, credential and asset tracking, the package gate (untracked markers, skill frontmatter names, packed artifact contents), a hermetic clean-clone sandbox, and a runtime smoke check.
+The full documentation lives in the [wiki](wiki/index.md), organised from first steps to internals:
+
+- [Getting started](wiki/01-getting-started.md) — install it, see it work, understand what landed where.
+- [Guides and workflows](wiki/02-guides-and-workflows.md) — daily use, adoption, rollback, and changing a skill.
+- [Architecture and internals](wiki/03-architecture-and-internals.md) — how the pieces fit and why the ordering matters.
+- [Mastery and extension](wiki/04-mastery-and-extension.md) — extension points, the security model, and diagnostics.
+
+## Support the Tools That Make This Possible
+
+This project is funded through [thanks.dev](https://thanks.dev/u/gh/meyverick) — the same link that keeps the tools it depends on alive. See [CONTRIBUTING.md](CONTRIBUTING.md) for how to report a problem, propose a change, or support the project, and [DEPENDENCIES.md](DEPENDENCIES.md) for the full dependency ledger with each upstream funding page.

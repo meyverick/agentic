@@ -30,6 +30,13 @@ fi
 echo "  asset tracking: OK"
 bun scripts/gates.ts
 echo "  package gate: OK"
+PY="$(command -v python3 || command -v python)"
+if [ "$QUICK" = "--quick" ]; then
+    "$PY" skills/check/scripts/funding-gate.py --check .
+else
+    "$PY" skills/check/scripts/funding-gate.py --check --verify-links .
+fi
+echo "  funding ledger: OK"
 
 # --- Fast Loop Exit Boundary ---
 if [ "$QUICK" = "--quick" ]; then

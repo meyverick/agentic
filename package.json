@@ -11,7 +11,7 @@
     "skills",
     "AGENTS.md"
   ],
-  "license": "MIT",
+  "license": "ISC",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/meyverick/agentic.git"
