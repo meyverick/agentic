@@ -22,6 +22,7 @@ stale_after: 2027-10-30
 | `agentic --help` | Print the command surface. |
 | `agentic --init` | Scaffold the two-tier workspace into the current directory: both tiers, both gates, the documentation skeleton, two local repositories wired as a submodule, and OpenSpec initialised. |
 | `agentic --init --no-openspec` | The same scaffold without the OpenSpec CLI update or its initialisation. |
+| `agentic --init --no-codegraph` | The same scaffold without the code graph CLI update or its index. |
 | `agentic --init --dry-run` | List the files the scaffold would create; writes nothing. |
 | `agentic --no-openspec` | Skip the OpenSpec lane: no CLI update, no OpenSpec skill purge, no placement. |
 | `agentic --force --no-openspec` | Both: take ownership of colliding directories and stay offline. |
@@ -47,6 +48,8 @@ Two things worth knowing before the first run:
 - **The scaffold needs no network and no stack.** It writes no manifests and assumes no language; only the gates require bun.
 
 The `.gitmodules` URL is relative (`./modules`), so it resolves to a sibling repository of the same name once a remote exists. `--no-openspec` skips the CLI update and the `openspec init` step.
+
+A third lane then builds a code graph for the new workspace. It updates the graph CLI globally, reports which executable the path actually resolves, and indexes the scaffold in one non-interactive pass with the background watcher **disabled** — the command returns a directory and an index, never a running process. Because the graph CLI is a Node program, that lane needs Node on the path; it reports the version and warns when Node is newer than the range the tool declares. `--no-codegraph` skips the lane entirely, and the index directory is ignored by the scaffolded repository.
 
 ## The Two Skill Sets
 

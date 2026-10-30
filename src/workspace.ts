@@ -4,13 +4,16 @@ import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import { basename, dirname, join, relative, sep } from "node:path";
 import { spawnSync } from "node:child_process";
 
+import { buildIndex, prepare as prepareCodegraph } from "./codegraph.ts";
 import type { Emit } from "./install.ts";
-import { updateCli, verifyCli } from "./openspec.ts";
+import { ensureGlobal, inspectCli, reportCli } from "./tooling.ts";
+import { CLI_PACKAGE as OPENSPEC_PACKAGE } from "./openspec.ts";
 
 export interface InitOptions {
   force: boolean;
   dryRun: boolean;
   openspec: boolean;
+  codegraph: boolean;
 }
 
 async function templateFiles(dir: string, prefix = ""): Promise<string[]> {
@@ -72,6 +75,7 @@ export async function initWorkspace(target: string, pkgRoot: string, opts: InitO
   if (opts.dryRun) {
     for (const file of files) emit(`scaffold   ${file}`);
     if (opts.openspec) emit("scaffold   openspec/   (openspec init --tools none)");
+    if (opts.codegraph) emit("scaffold   .codegraph/ (index built with the watcher off)");
     emit("dry run: nothing written");
     return 0;
   }
@@ -108,10 +112,8 @@ export async function initWorkspace(target: string, pkgRoot: string, opts: InitO
 
   if (opts.openspec) {
     try {
-      updateCli();
-      const check = verifyCli();
-      emit(`openspec   CLI ${check.version ?? "unknown"} at ${check.path ?? "unresolved"}`);
-      if (check.shadowed) emit("openspec   WARN the resolved CLI is not the copy this run updated");
+      ensureGlobal(OPENSPEC_PACKAGE);
+      reportCli("openspec", "openspec", inspectCli("openspec"), emit);
       const created = run(["openspec", "init", "--tools", "none"], target);
       if (!created.ok) {
         emit(`init       openspec init failed: ${created.message}`);
@@ -124,6 +126,20 @@ export async function initWorkspace(target: string, pkgRoot: string, opts: InitO
     }
   } else {
     emit("openspec   skipped (--no-openspec)");
+  }
+
+  if (opts.codegraph) {
+    try {
+      prepareCodegraph(emit);
+      buildIndex(target);
+      emit("codegraph  index built (watcher off)");
+    } catch (error) {
+      emit(`init       code graph failed: ${(error as Error).message}`);
+      emit("init       scaffold left in place; delete the directory and rerun to start over");
+      return 1;
+    }
+  } else {
+    emit("codegraph  skipped (--no-codegraph)");
   }
 
   const committed = git(["add", "-A"], target);

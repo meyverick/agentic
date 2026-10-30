@@ -1,9 +1,9 @@
 /** OpenSpec CLI + skill lane: acquire upstream, then place with a distinct ownership marker. */
-import { homedir } from "node:os";
-import { basename, dirname, join, relative, sep } from "node:path";
-import { existsSync, realpathSync } from "node:fs";
+import { dirname, join, relative, sep } from "node:path";
+import { existsSync } from "node:fs";
 import { mkdir, readdir, rm, writeFile } from "node:fs/promises";
-import { spawnSync } from "node:child_process";
+
+import { ensureGlobal, inspectCli, reportCli } from "./tooling.ts";
 
 import type { Targets } from "./pkg.ts";
 
@@ -70,38 +70,6 @@ export async function bundlesFromDir(dir: string): Promise<Bundle[]> {
   return bundles.sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0));
 }
 
-export function updateCli(): void {
-  const result = spawnSync("bun", ["add", "-g", CLI_PACKAGE], { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
-  if (result.status !== 0) {
-    throw new Error(`openspec CLI update failed: ${(result.stderr || result.stdout || "").trim().split("\n")[0]}`);
-  }
-}
-
-export interface CliCheck {
-  path: string | null;
-  version: string | null;
-  shadowed: boolean;
-}
-
-export function verifyCli(): CliCheck {
-  const resolved = Bun.which("openspec");
-  if (!resolved) return { path: null, version: null, shadowed: false };
-  // A .cmd shim cannot be spawned directly on Windows; let the shell resolve it there.
-  const probe = spawnSync(resolved, ["--version"], {
-    shell: process.platform === "win32",
-    encoding: "utf8",
-    stdio: ["ignore", "pipe", "pipe"],
-  });
-  const version = probe.stdout?.trim() || null;
-  let shadowed = false;
-  try {
-    shadowed = realpathSync(dirname(resolved)) !== realpathSync(join(homedir(), ".bun", "bin"));
-  } catch {
-    shadowed = true;
-  }
-  return { path: resolved, version, shadowed };
-}
-
 export async function purgeMarked(skillsRoot: string, marker = MARKER): Promise<string[]> {
   const removed: string[] = [];
   if (!existsSync(skillsRoot)) return removed;
@@ -151,9 +119,7 @@ export async function prepare(t: Targets, force: boolean, emit: Emit): Promise<B
     throw new Error("unmarked directories occupy OpenSpec skill names; rerun with --force");
   }
 
-  updateCli();
-  const check = verifyCli();
-  emit(`openspec   CLI ${check.version ?? "unknown"} at ${check.path ?? "unresolved"}`);
-  if (check.shadowed) emit(`openspec   WARN ${basename(check.path ?? "")} resolves ahead of the updated copy in ${join(homedir(), ".bun", "bin")}`);
+  ensureGlobal(CLI_PACKAGE);
+  reportCli("openspec", "openspec", inspectCli("openspec"), emit);
   return bundles;
 }

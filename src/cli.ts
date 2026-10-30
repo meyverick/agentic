@@ -4,7 +4,7 @@ import { initWorkspace } from "./workspace.ts";
 import { homeDir, loadPackage, targets } from "./pkg.ts";
 import { collect, drift, render } from "./status.ts";
 
-const FLAGS = new Set(["--force", "--dry-run", "--no-openspec", "--init", "-h", "--help", "-v", "--version"]);
+const FLAGS = new Set(["--force", "--dry-run", "--no-openspec", "--no-codegraph", "--init", "-h", "--help", "-v", "--version"]);
 const COMMANDS = new Set(["install", "status"]);
 
 export interface Env {
@@ -26,6 +26,7 @@ export function usage(version: string): string[] {
     "  --force       replace unmarked directories that occupy a shipped skill name",
     "  --dry-run     report the plan without touching the filesystem",
     "  --no-openspec skip the OpenSpec CLI update and its skills (install and --init)",
+    "  --no-codegraph skip the code graph CLI update and its index (--init only)",
   ];
 }
 
@@ -65,7 +66,12 @@ export async function run(argv: string[], env: Env): Promise<number> {
     return initWorkspace(
       env.cwd ?? process.cwd(),
       pkg.root,
-      { force: argv.includes("--force"), dryRun: argv.includes("--dry-run"), openspec: !argv.includes("--no-openspec") },
+      {
+        force: argv.includes("--force"),
+        dryRun: argv.includes("--dry-run"),
+        openspec: !argv.includes("--no-openspec"),
+        codegraph: !argv.includes("--no-codegraph"),
+      },
       env.out,
     );
   }

@@ -8,7 +8,7 @@ import { initWorkspace } from "../src/workspace.ts";
 
 const PKG_ROOT = join(import.meta.dir, "..");
 const EPIGRAPH = "> *Architected and directed by Human Intelligence, **implemented by AI**.*";
-const NO_OPENSPEC = { force: false, dryRun: false, openspec: false };
+const NO_OPENSPEC = { force: false, dryRun: false, openspec: false, codegraph: false };
 
 let roots: string[] = [];
 let scaffold: string;
@@ -110,6 +110,24 @@ describe("gate state", () => {
     const result = spawnSync("bun", ["scripts/check.ts", "--quick"], { cwd: scaffold, encoding: "utf8" });
     expect(result.status).toBe(1);
     expect(`${result.stdout}${result.stderr}`).toContain("submodule gate failed: modules");
+  });
+});
+
+describe("code graph lane", () => {
+  test("the opt-out leaves no index and no openspec directory", () => {
+    expect(existsSync(join(scaffold, ".codegraph"))).toBe(false);
+    expect(existsSync(join(scaffold, "openspec"))).toBe(false);
+  });
+
+  // ponytail: the lane installs a global package and indexes; run it on demand, not on every gate.
+  const integration = Boolean(Bun.which("codegraph")) && process.env.AGENTIC_TEST_TOOLING === "1";
+  test.skipIf(!integration)("an enabled lane builds an index and commits none of it", async () => {
+    const target = join(scratch(), "with-graph");
+    const code = await initWorkspace(target, PKG_ROOT, { ...NO_OPENSPEC, codegraph: true }, () => undefined);
+
+    expect(code).toBe(0);
+    expect(existsSync(join(target, ".codegraph", "codegraph.db"))).toBe(true);
+    expect(git(target, "ls-files").includes(".codegraph")).toBe(false);
   });
 });
 

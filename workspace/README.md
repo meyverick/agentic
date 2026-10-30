@@ -18,7 +18,7 @@ TODO: who benefits, and how.
 
 ## Running the Gates
 
-The two gates are TypeScript executed by bun, so bun is the only runtime this scaffold requires. The module gate fails until this project's own format, lint, test, build and smoke commands are added.
+The two gates are TypeScript executed by bun, so bun is the only runtime the gates require. The code index in `.codegraph/` was built at scaffold time by a Node tool; re-indexing later needs Node as well. The module gate fails until this project's own format, lint, test, build and smoke commands are added.
 
 ## Explore the Documentation
 
