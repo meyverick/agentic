@@ -1,0 +1,19 @@
+{
+  "name": "@meyverick/agentic",
+  "version": "0.1.0",
+  "description": "One-command install and update of the consumer rulebook and its owned agent skills.",
+  "type": "module",
+  "bin": {
+    "agentic": "./src/cli.ts"
+  },
+  "files": [
+    "src",
+    "skills",
+    "AGENTS.md"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/meyverick/agentic.git"
+  }
+}

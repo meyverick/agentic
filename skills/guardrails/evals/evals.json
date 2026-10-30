@@ -1,0 +1,49 @@
+{
+  "skill_name": "guardrails",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "I'm about to commit code that handles user auth. Check for security pitfalls.",
+      "expected_output": "Guardrails triggers, lists Anti-example 2 (secret leak) and 1 (on* stripping), shows Do: envx + .gitignore, not commit .env.",
+      "files": [],
+      "assertions": [
+        "Guardrails skill triggered",
+        "Anti-example for secret commit shown",
+        "Correct pattern envx + .gitignore shown"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "I need to update SvelteKit adapter for deployment to distroless.",
+      "expected_output": "Guardrails triggers, shows Anti-example 3: before svelte-adapter-bun vs after @sveltejs/adapter-static + tower-http, with fallback index.html.",
+      "files": [],
+      "assertions": [
+        "Guardrails triggered on deprecated adapter query",
+        "Contrast table includes Before adapter-bun vs After adapter-static",
+        "Why explains Axum serves static, single distroless binary"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Review my Rust code that checks if user is null and handles lifetimes.",
+      "expected_output": "Guardrails triggers, shows Anti-examples 4 (null vs Option) and 5 (lifetime elision) with before/after Rust snippets.",
+      "files": [],
+      "assertions": [
+        "Guardrails triggered on system gotcha",
+        "Anti-example 4: null vs Option shown with if let Some",
+        "Anti-example 5: lifetime 'a correct snippet shown"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "I'm just exploring the codebase, reading the README without modifying anything.",
+      "expected_output": "Guardrails does NOT trigger — only reading, no code touching deps/Docker/HTML/auth. Suggest explore mode, no guardrails load.",
+      "files": [],
+      "assertions": [
+        "Guardrails did NOT trigger on read-only prompt",
+        "Response does not include Anti-examples",
+        "Anti-trigger respected"
+      ]
+    }
+  ]
+}

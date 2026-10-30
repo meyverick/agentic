@@ -1,0 +1,14 @@
+error · src/session.rs:2 · cancellation-safety · replace read_exact with cancel-safe read loop or isolate in worker task
+Refuse: read_exact awaited inside tokio::select! branch.
+Reason: read_exact is cancel-unsafe. When another branch resolves, in-flight partial bytes are dropped and lost from the stream.
+Replace: use cancel-safe AsyncReadExt::read in an accumulating buffer loop, or isolate the reader stream in a dedicated spawned worker task.
+
+error · src/session.rs:5 · strict-provenance · replace integer pointer cast with ptr.with_addr() or ptr.addr()
+Refuse: raw pointer cast through integer intermediate (raw_addr as usize as *mut u8).
+Reason: casting through usize strips pointer provenance, leading to miscompilations and undefined behavior under Stacked Borrows and Tree Borrows.
+Replace: preserve provenance using ptr.with_addr(new_addr) or inspect virtual addresses with ptr.addr().
+
+error · Cargo.toml:12 · abort-containment-conflict · panic = "abort" profile disables catch_unwind shims
+Refuse: catch_unwind boundary shims paired with panic = "abort" release profile.
+Reason: panic = "abort" disables unwinding containment at compile time.
+Replace: configure panic = "unwind" for the foreign FFI profile or propagate C-compatible error codes explicitly without catch_unwind shims.

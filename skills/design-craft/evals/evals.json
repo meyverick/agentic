@@ -1,0 +1,91 @@
+{
+  "skill_name": "design-craft",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Build me a landing page for our new scheduling tool. It looks generic right now and I want it to feel designed.",
+      "expected_output": "Agent activates design-craft, emits a Design Read before the first UI edit (mode Build, subject, audience, job, dials), grounds the direction in the subject rather than the category, and records the dial values it will build against.",
+      "files": [],
+      "assertions": [
+        "Skill activates on a build request",
+        "Design Read emitted before any UI edit",
+        "Dials recorded with explicit 1-10 values",
+        "Direction grounded in subject matter, not category default"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Review this dashboard component for UX, accessibility, and motion quality. Don't change anything yet, just tell me what's wrong.",
+      "expected_output": "Agent activates design-craft in Review mode, reports severity-ranked findings in file:line form with the rule violated and the fix, and makes no edits to the target.",
+      "files": [],
+      "assertions": [
+        "Skill activates on a review request",
+        "Each finding uses the literal `severity · file:line · rule · fix` separator form, carrying severity, file:line, rule, and fix",
+        "No target files modified during review"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Refactor our billing service to use a repository pattern and add a Postgres index for the invoice lookup query.",
+      "expected_output": "Agent does NOT activate design-craft. Backend, API, database, and infrastructure work is out of scope for this skill.",
+      "files": [],
+      "assertions": [
+        "Anti-trigger fires: no design-craft activation for backend work",
+        "No Design Read emitted for a non-visual task"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "Polish the pricing page. Keep the brand.", 
+      "expected_output": "Agent activates design-craft in Polish mode and, when a named anti-slop pattern applies to the existing surface, refuses it explicitly (for example a viewport-height hero, an entrance from zero scale, an eyebrow above every heading, gradient text used as emphasis, or the hero-metric template as the hero) and states the replacement.",
+      "files": [],
+      "assertions": [
+        "Named anti-slop pattern identified and refused by name",
+        "Replacement choice stated rather than silent removal",
+        "Design Read names Polish mode and preserves the incumbent identity"
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "The hero animation feels off. Make it smoother, and keep iterating until it's perfect.",
+      "expected_output": "Agent activates design-craft in Motion mode, answers the animate-or-not question and the easing/duration choice, verifies in bounded passes (build, one batched inspection, one fix pass, at most one confirm round), then stops and reports rather than iterating indefinitely.",
+      "files": [],
+      "assertions": [
+        "Motion decision recorded (whether to animate, easing, duration)",
+        "Verification stops after at most one confirm round",
+        "No unbounded polish loop; open items reported instead"
+      ]
+    },
+    {
+      "id": 6,
+      "prompt": "Which framework should I use for my new site, and can you set up the project scaffold?",
+      "expected_output": "Agent does NOT decide the stack as a design question. Renderer and framework selection is deferred to the project's own rules; the skill either stays inactive or activates only for the visual work after the stack is chosen.",
+      "files": [],
+      "assertions": [
+        "Anti-trigger fires: no design-craft authority claimed over renderer choice",
+        "Stack decision deferred to project rules"
+      ]
+    },
+    {
+      "id": 7,
+      "prompt": "Design a settings page for our admin console.",
+      "expected_output": "Agent produces design guidance that is framework- and library-neutral: it detects the stack from the project, names no framework, styling system, motion library, or component library in its instructions, and derives idiom from the project's conventions or the version-accurate documentation lookup flow.",
+      "files": [],
+      "assertions": [
+        "Body and guidance name no framework or library (agnosticism)",
+        "Stack detected from the project rather than assumed",
+        "Framework idiom deferred to project conventions or a documentation lookup"
+      ]
+    },
+    {
+      "id": 8,
+      "prompt": "Write the release notes and a README changelog section for our new invoice export endpoint.",
+      "expected_output": "Agent does NOT activate design-craft. This is a docs-only request: writing release notes and non-visual copy is an explicit anti-trigger.",
+      "files": [],
+      "assertions": [
+        "Anti-trigger fires: docs-only request does not activate the skill",
+        "No Design Read emitted for a non-visual docs task"
+      ]
+    }
+  ]
+}

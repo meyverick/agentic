@@ -1,0 +1,77 @@
+{
+  "models": {
+    "deepseek-v4.1-flash": {
+      "provider": "opencode-go",
+      "description": "Code-specialized model for implementing well-scoped backend logic, CLI tools, unit tests, and isolated bug fixes where requirements are clear. Not suitable for cross-cutting architectural redesigns or multi-module orchestration.",
+      "levels": ["low", "high", "max"]
+    },
+    "mimo-v2.6-flash": {
+      "provider": "opencode-go",
+      "description": "Low-latency flash model for quick iterative edits, localized code adjustments, and routine scripting within a single module. Not suitable for new feature architectures, SDK integrations, or multi-file changes.",
+      "levels": ["off", "minimal", "low", "medium", "high"]
+    },
+    "muse-spark-1.3-contributor": {
+      "provider": "opencode-go",
+      "description": "High-reasoning contributor model for integrating new subsystems, cross-module feature implementation, SDK adapters, and complex code reviews that must preserve existing codebase conventions.",
+      "levels": ["minimal", "low", "medium", "high", "xhigh"]
+    },
+    "step-5-preview-free": {
+      "provider": "opencode-go",
+      "description": "Free-tier preview model for standalone utility scripts, simple data transformations, and small helper functions with no external system coupling.",
+      "levels": ["low", "medium", "high"]
+    },
+    "longcat-2.5-preview-free": {
+      "provider": "opencode-go",
+      "description": "Free-tier preview model for summarizing, cross-referencing, or updating large markdown documentation sets and specification files without modifying application code.",
+      "levels": ["off", "minimal", "low", "medium", "high"]
+    },
+
+    "poolside/laguna-s-2.1-free": {
+      "provider": "commandcode",
+      "description": "Zero-reasoning free model exclusively for mechanical text edits: fixing typos, adjusting comments, or applying formatting and lint cleanups.",
+      "levels": ["off"]
+    },
+    "inclusionai/ling-3.0-flash-sante:free": {
+      "provider": "commandcode",
+      "description": "Zero-reasoning free flash model for trivial one-line lookups, config flag toggles, and string replacements requiring no control-flow changes.",
+      "levels": ["off"]
+    },
+    "inclusionai/ling-3.1-flash:free": {
+      "provider": "commandcode",
+      "description": "Free-tier general coding model for straightforward bug fixes and small self-contained functions when zero-cost execution is explicitly requested.",
+      "levels": ["off", "low", "medium", "high"]
+    },
+    "stealth/glyph-cluster:free": {
+      "provider": "commandcode",
+      "description": "Free-tier reasoning model for self-contained algorithmic puzzles, data structure implementations, and mathematical logic when zero-cost execution is preferred.",
+      "levels": ["off", "low", "medium", "high", "xhigh"]
+    },
+    "gpt-6-luna": {
+      "provider": "commandcode",
+      "description": "Frontier multi-step reasoning model for complex system architecture, multi-file feature and workflow integration, concurrency, state machines, and cross-cutting refactoring across multiple components.",
+      "levels": ["off", "low", "medium", "high", "xhigh", "max"]
+    },
+
+    "gemini-3.5-flash-lite": {
+      "provider": "google",
+      "description": "Lightweight model for small documentation edits, README updates, configuration tweaks, and minor single-function fixes.",
+      "levels": ["minimal", "low", "medium", "high"]
+    },
+    "gemini-3.8-flash": {
+      "provider": "google",
+      "description": "Fast full-stack model for standard web UI components, REST API handlers, and CRUD feature development following established patterns.",
+      "levels": ["low", "medium", "high"]
+    },
+    "gemini-4-argon": {
+      "provider": "google",
+      "description": "Advanced reasoning model for formal specification synthesis, security and invariant verification, and greenfield system design from architectural specs.",
+      "levels": ["low", "medium", "high"]
+    },
+
+    "mimo-v2.6-pro": {
+      "provider": "xiaomi-token-plan-ams",
+      "description": "Production refactoring model for hardening existing services, migrating APIs, and updating type contracts across interconnected modules.",
+      "levels": ["off", "minimal", "low", "medium", "high"]
+    }
+  }
+}

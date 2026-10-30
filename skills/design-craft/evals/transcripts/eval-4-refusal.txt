@@ -1,0 +1,13 @@
+Design Read: Polish · pricing page · buyers comparing plans · persuade/convert · dials v/m/d = 6/3/4
+
+**1. Gradient text on a headline or stat**
+Refuse: gradient-filled headline text (brand hue ramp across the words).
+Replace: flat brand color on the headline; emphasis carried by weight and size — one weight step up for the key phrase, no color shift. Brand survives as hue, not as gradient.
+
+**2. Hero-metric template (big number, small label, supporting stats, accent) as the hero**
+Refuse: big-number + label + stat row + accent underline/tint standing in for a hero.
+Replace: composition grounded in the subject — the pricing decision itself: plan name and price in the headline tier, three-tier comparison as the visible object, single primary CTA in first viewport. Supporting stats demoted to a caption row under the plans (or dropped if they repeat plan facts), accent spent once on the CTA, not on a metric.
+
+Both are refusal-list rules, not brief-proof — brief wins elsewhere (palette, type, brand marks), these two do not earn an exemption.
+
+Skipped: eyebrow ration check, contrast sweep — no markup to verify. Share the page HTML if you want the full review pass.
