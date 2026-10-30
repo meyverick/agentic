@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.5.0 - 2026-10-30
+
+### Changed
+- Post-task learnings are staged in the machine-scoped inbox at `~/.agents/learnings/<domain>.md` instead of a directory inside each project, so one curation pass reads every project's struggles and repeated prevention rules collapse to one finding. The rulebook names `~/.agents/` as the agent home, the scaffold no longer ships a learnings directory, and the curator defaults to the new path. **Migration**: move an existing `learnings/*.md` into `~/.agents/learnings/` and delete the project directory; nothing reads the old location.
+
+### Fixed
+- The learning parser now reads the documented `### Field` headings as well as the older `**Field:**` form, which the corpus has always used. Field extraction previously returned empty text, so every entry fell back to its title for the deduplication fingerprint and repeats could never match.
+
 ## 0.4.0 - 2026-10-30
 
 ### Added

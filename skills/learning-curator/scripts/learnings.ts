@@ -27,7 +27,11 @@ export interface Learning {
 
 function extractField(block: string, field: string): string {
   const escaped = field.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  const pattern = new RegExp(`\\*\\*${escaped}:\\*\\*\\s*([\\s\\S]*?)(?=\\n\\s*\\*\\*[A-Za-z &]+:\\*\\*|$)`);
+  // Entries are documented with `### Field` headings; older ones used `**Field:**`. Accept both
+  // forms, and stop at whichever form the next field takes.
+  const pattern = new RegExp(
+    `(?:\\*\\*${escaped}:\\*\\*|#{2,6}\\s*${escaped})\\s*([\\s\\S]*?)(?=\\n\\s*(?:\\*\\*[A-Za-z &]+:\\*\\*|#{2,6}\\s)|$)`,
+  );
   const match = pattern.exec(block);
   return match ? match[1].replace(/\s+/g, " ").trim() : "";
 }
@@ -87,6 +91,8 @@ export interface Candidate {
 }
 
 export interface Evaluated extends Omit<Learning, "rule_tokens" | "all_tokens" | "norm_rule"> {
+  /** First entry in the corpus carrying the same normalised prevention rule, or null. */
+  duplicate_of: string | null;
   agents_md_rule_overlap: number;
   already_integrated_in: string | null;
   suggested_action: string;
@@ -127,6 +133,7 @@ export async function evaluateLearnings(learnings: Learning[], skills: Skill[], 
   }
 
   const results: Evaluated[] = [];
+  const firstSeen = new Map<string, string>();
   for (const item of learnings) {
     const agentsOverlap = ratio(item.rule_tokens, agentsTokens, item.rule_tokens.size);
     let integrated: string | null = null;
@@ -172,7 +179,11 @@ export async function evaluateLearnings(learnings: Learning[], skills: Skill[], 
       hint = "Evaluate 4-Gate AGENTS.md Filter vs. new skill in ~/.agents/skills/";
     }
 
+    const origin = firstSeen.get(item.fingerprint_full);
+    if (origin === undefined) firstSeen.set(item.fingerprint_full, `${item.file} (${item.date})`);
+
     results.push({
+      duplicate_of: origin ?? null,
       file: item.file,
       domain: item.domain,
       date: item.date,

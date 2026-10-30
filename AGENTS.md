@@ -20,7 +20,8 @@ status: stable
 
 ## Chapter 1: Identity, Workspace Topology & Execution Boundaries
 
-* `Tier 1 Root Orchestrator`: Parent `<project>-workspace` repository at `./` holding `Coding Agent` configuration, orchestration metadata, environment definitions, `./references/` tracked reference library, and `./learnings/` empirical staging inbox.
+* `Agent Home`: Machine-scoped directory at `~/.agents/` holding the installed skill catalog at `~/.agents/skills/` and the empirical staging inbox at `~/.agents/learnings/`; `Agent Home` sits outside every workspace tier and is shared by every project on the machine.
+* `Tier 1 Root Orchestrator`: Parent `<project>-workspace` repository at `./` holding `Coding Agent` configuration, orchestration metadata, environment definitions, `./references/` tracked reference library.
 * `Tier 2 Codebase Submodule`: Primary codebase Git submodule at `./modules/` holding application source code, domain packages, and native toolchains; internal directory layout of `./modules/` follows project requirements without mandated subfolder taxonomy.
 * `Tier 1 Reference Library`: Tracked `./references/` directory in `Tier 1 Root Orchestrator` (never git-ignored) holding static reference files and external upstream repositories; `Coding Agent` registers any cloned repository inside `./references/<repo>` strictly as a branch-tracking Git submodule (`git submodule add -b <default-branch> <url> ./references/<repo>`) so workspace clones and updates resolve to the latest upstream version (`git submodule update --init --remote`), and never executes raw `git clone` inside `./references/`.
 * `Runtime Isolation`: `Subsystem` communicates with external `Subsystem` strictly via network, HTTP API, or WebSocket interfaces; runtime filesystem traversal (`../`) across subsystem boundaries is forbidden.
@@ -85,7 +86,7 @@ LOC means the physical line count of a file (wc -l), including comments and blan
 | `Queues & Async Architecture` | `.agents/skills/scalability/SKILL.md` | Persistent queues, background workers, backpressure control, async workloads. |
 | `Cross-Cutting Security` | `.agents/skills/guardrails/SKILL.md` | Input validation, secret redaction, authorization boundary enforcement. |
 | `Specialized Stacks & Deployment` | `.agents/skills/<domain>/SKILL.md` | CI/CD pipeline mutations, platform configuration, framework deployment recipes. |
-| `Empirical Learning Curation` | `~/.agents/skills/learning-curator/SKILL.md` | Curating `./learnings/*.md` struggles into `AGENTS.md` invariants or `~/.agents/skills/` updates, splits, and new holocrons. |
+| `Empirical Learning Curation` | `~/.agents/skills/learning-curator/SKILL.md` | Curating `~/.agents/learnings/*.md` struggles into `AGENTS.md` invariants or `~/.agents/skills/` updates, splits, and new holocrons. |
 
 # Part II: Software Engineering Invariants
 
@@ -167,14 +168,14 @@ LOC means the physical line count of a file (wc -l), including comments and blan
 * `Documentation & Public Wiki Release Gate`: Prior to any `git push`, version release, or `CHANGELOG.md` mutation, `Coding Agent` synchronizes `./README.md` (non-technical spotlight readable by any general audience) and `./wiki/` ("Easy to Use, Hard to Master" progressive documentation from beginner to master) for the root orchestrator and all touched `./modules/<package>/` repositories; if and only if the target GitHub repository is public (`isPrivate == false`), `Coding Agent` enables the GitHub Wiki and synchronizes `wiki/` via the `okf-docs` skill's `scripts/sync-wiki.sh`.
 * `Public Funding Ledger`: Every public repository (`isPrivate == false`) carries `.github/FUNDING.yml` whose first funding key is `github: [<repo_owner>]`, plus `thanks_dev: u/gh/<repo_owner>`, and a root `DEPENDENCIES.md` enumerating every declared dependency with its upstream funding link; `Coding Agent` generates both artifacts exclusively via the `check` skill's `scripts/funding-gate.ts --write` and gates them at Slot 4 via `funding-gate.ts --check` (harness resolves visibility first with `gh repo view --json isPrivate` and skips private repositories); `Coding Agent` never hand-edits either file and never drops or omits a dependency; the thanks.dev support link appears in `README.md` and `CONTRIBUTING.md` and is asserted by the gate; identical owner-only `FUNDING.yml` and `CONTRIBUTING.md` defaults belong in the owner's public `.github` repository, while the per-repository dependency ledger never does; `CREDITS.md` stays reserved for human contributors; private repositories and read-only `./references/<repo>` submodules are exempt.
 * `Funding Entry Liveness`: `funding-gate.ts --check` verifies structure offline; the non-`--quick` lane additionally runs `funding-gate.ts --check --verify-links` so every `FUNDING.yml` entry resolves over the network (`404`, `410`, `5xx`, and unreachable fail; `401`, `403`, `429` warn as anti-bot walls); `Coding Agent` reports a dead entry instead of shipping it.
-* `Post-Task Empirical Retrospection`: Following task execution containing diagnostic failures, execution blockers, or specification misunderstandings, `Coding Agent` evaluates task performance and appends structured root-cause entry to `Tier 1 Root Orchestrator` thematic staging file `./learnings/<domain>.md`; zero-incident task executions skip `./learnings/` mutation.
-* `Learning Staging & Deduplication`: `Coding Agent` maintains `./learnings/` strictly as staging inbox for curation; `Coding Agent` inspects target `./learnings/<domain>.md` prior to mutation to prevent duplicate rules and derives strictly project-agnostic prevention invariants.
+* `Post-Task Empirical Retrospection`: Following task execution containing diagnostic failures, execution blockers, or specification misunderstandings, `Coding Agent` evaluates task performance and appends structured root-cause entry to the `Agent Home` thematic staging file `~/.agents/learnings/<domain>.md`, creating that directory on first append; zero-incident task executions skip inbox mutation.
+* `Learning Staging & Deduplication`: `Coding Agent` maintains `~/.agents/learnings/` strictly as one machine-scoped staging inbox shared by every project; `Coding Agent` inspects the target `~/.agents/learnings/<domain>.md` prior to mutation to prevent duplicate rules, including duplicates another project staged under the same domain, and derives strictly project-agnostic prevention invariants.
 
-### Empirical Learning Staging Schema (`./learnings/<domain>.md`)
+### Empirical Learning Staging Schema (`~/.agents/learnings/<domain>.md`)
 
 | Schema Field | Target Attribute | Formatting & Content Constraint |
 | ----- | ----- | ----- |
-| `Thematic File` | `./learnings/<domain>.md` | Lowercase kebab-case domain identifier (`database.md`, `concurrency.md`, `toolchain.md`, `security.md`, `ui.md`). |
+| `Thematic File` | `~/.agents/learnings/<domain>.md` | Lowercase kebab-case domain identifier (`database.md`, `concurrency.md`, `toolchain.md`, `security.md`, `ui.md`). |
 | `Situation & Blocker` | `Symptom & Context` | Exact diagnostic failure, execution blocker, or specification misunderstanding; zero secrets or host paths. |
 | `Applied Solution` | `Resolution Mechanism` | Concrete code, configuration, or workflow mutation resolving blocker using explicit entity names. |
 | `Prevention Rule` | `Derived Invariant` | Universal, project-agnostic factual triple (`Subject -> Predicate -> Object`) preventing recurrence. |

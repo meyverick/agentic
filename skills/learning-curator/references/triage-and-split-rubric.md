@@ -39,7 +39,7 @@ When evaluating a learning entry against an existing global skill in `~/.agents/
 
 ## Section 3: Anatomy of a Learning Transformation
 
-Each learning in `./learnings/<domain>.md` contains three structured fields. Transform them according to the target artifact type:
+Each learning in `~/.agents/learnings/<domain>.md` contains three structured fields. Transform them according to the target artifact type:
 
 ### A. When Routing to `ELEVATE` (`AGENTS.md`)
 
@@ -107,7 +107,7 @@ Use when `~/.agents/skills/<skill>/SKILL.md` mixes two separate engineering life
 
 ## Section 5: Idempotency & `NO-OP` Verification Protocol
 
-Because `./learnings/*.md` is strictly read-only and never purged after curation:
+Because `~/.agents/learnings/*.md` is strictly read-only and never purged after curation:
 
 1. Check the SHA-256 `Rule Fingerprint` and token overlap score emitted by `scripts/audit-catalog.ts`.
 2. Any learning with `>= 75%` normalized token overlap against `AGENTS.md` or an existing `~/.agents/skills/*/SKILL.md` (or `references/*.md`) is flagged by the script as `CANDIDATE_NO_OP`.

@@ -35,7 +35,7 @@ Every command is safe to run repeatedly. `install` converges; `status` and `--dr
 
 ```
 <project>/
-  README.md · wiki/ · references/ · learnings/
+  README.md · wiki/ · references/
   scripts/check.ts          orchestrator gate: pointers and secrets, delegates to the module
   modules/                  its own repository, registered as a submodule through ./modules
     README.md · wiki/ · CHANGELOG.md
@@ -47,7 +47,7 @@ Two things worth knowing before the first run:
 - **Both gates start red.** The module gate fails naming the native lane it does not have, and the orchestrator gate fails because it delegates to it. Fill in the project's format, lint, test, build and smoke commands to turn both green.
 - **The scaffold needs no network and no stack.** It writes no manifests and assumes no language; only the gates require bun.
 
-The `.gitmodules` URL is relative (`./modules`), so it resolves to a sibling repository of the same name once a remote exists. `--no-openspec` skips the CLI update and the `openspec init` step.
+The `.gitmodules` URL is relative (`./modules`), so it resolves to a sibling repository of the same name once a remote exists. The scaffold writes no learnings inbox: post-task learnings are staged on the machine rather than the repository, so a project clone carries only the project. `--no-openspec` skips the CLI update and the `openspec init` step.
 
 A third lane then builds a code graph for the new workspace. It updates the graph CLI globally, reports which executable the path actually resolves, and indexes the scaffold in one non-interactive pass with the background watcher **disabled** — the command returns a directory and an index, never a running process. Because the graph CLI is a Node program, that lane needs Node on the path; it reports the version and warns when Node is newer than the range the tool declares. `--no-codegraph` skips the lane entirely, and the index directory is ignored by the scaffolded repository.
 

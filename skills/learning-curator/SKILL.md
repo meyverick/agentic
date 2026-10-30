@@ -1,23 +1,23 @@
 ---
 name: learning-curator
-description: Curates empirical development struggles from ./learnings/*.md into permanent architectural immunity by auditing ~/.agents/skills/ and AGENTS.md to propose rulebook elevations, upgrade existing skills, split overloaded skills (>500 lines or multi-domain), or create new skills. Trigger when the user asks to process, curate, promote, or convert learnings into skills or rulebook updates. Never modifies or deletes files inside ./learnings/ and never targets local project skill directories outside ~/.agents/skills/.
+description: Use when the user asks to process, curate, promote, or convert staged empirical learnings into skills or rulebook updates. Reads the shared machine-scoped inbox at ~/.agents/learnings/*.md, audits ~/.agents/skills/ and AGENTS.md, and proposes rulebook elevations, upgrades, splits of skills over 500 lines or multi-domain, or new skills. Never modifies or deletes staged entries, and never targets project-local skill directories outside ~/.agents/skills/.
 ---
 
 # Learning Curator (`learning-curator`)
 
 ## 1. Purpose & Inviolable Constraints
 
-Transform empirical development struggles staged in `./learnings/*.md` into permanent procedural immunity across `AGENTS.md` and the global `~/.agents/skills/` catalog without duplicating guidance, bloating existing skills, or mutating the learning inbox.
+Transform empirical development struggles staged in the shared machine-scoped inbox at `~/.agents/learnings/*.md` into permanent procedural immunity across `AGENTS.md` and the global `~/.agents/skills/` catalog without duplicating guidance, bloating existing skills, or mutating the learning inbox.
 
 ### Inviolable Operational Constraints
 
 | Constraint Identifier | Enforcement Rule |
 | :--- | :--- |
-| `Read-Only Learning Inbox` | Treat `./learnings/*.md` strictly as immutable inputs. Never delete, move, rename, edit, or append status markers inside `./learnings/*.md`. |
+| `Read-Only Learning Inbox` | Treat `~/.agents/learnings/*.md`, the machine-scoped inbox every project appends to, strictly as immutable inputs. Never delete, move, rename, edit, or append status markers inside `~/.agents/learnings/*.md`. |
 | `Global Skill Scope Only` | Inspect, create, upgrade, and split skills exclusively inside `~/.agents/skills/`. Never scan or mutate workspace-local skill folders (`.opencode/skills/`, `./.agents/skills/`). |
 | `Surgical Mutations` | Apply updates to `AGENTS.md` and existing `~/.agents/skills/*/SKILL.md` files via targeted `SEARCH/REPLACE` deltas; never perform blind whole-file overwrites on existing artifacts. |
 | `500-Line Holocron Ceiling` | Every `SKILL.md` in `~/.agents/skills/` must remain strictly under `500` physical lines (`wc -l`). Skills reaching `450+` lines during an upgrade must undergo reference extraction or sibling splitting. |
-| `Idempotent Re-Execution` | Because `./learnings/*.md` remains untouched after curation, verify whether each learning's `Prevention Rule` is already codified in `AGENTS.md` or `~/.agents/skills/` before proposing mutations. |
+| `Idempotent Re-Execution` | Because `~/.agents/learnings/*.md` remains untouched after curation, verify whether each learning's `Prevention Rule` is already codified in `AGENTS.md` or `~/.agents/skills/` before proposing mutations. |
 
 ---
 
@@ -39,10 +39,10 @@ Every staged learning entry (`Situation & Blocker`, `Applied Solution`, `Prevent
 
 ### Phase 1: Deterministic Intake & Catalog Inventory
 
-1. Run the bundled deterministic audit script to inventory `./learnings/*.md`, `~/.agents/skills/`, and `./AGENTS.md`:
+1. Run the bundled deterministic audit script to inventory `~/.agents/learnings/*.md`, `~/.agents/skills/`, and `./AGENTS.md`:
    ```bash
    bun scripts/audit-catalog.ts \
-     --learnings-dir ./learnings \
+     --learnings-dir ~/.agents/learnings \
      --skills-dir ~/.agents/skills \
      --agents-md ./AGENTS.md \
      --format markdown
@@ -55,7 +55,7 @@ Every staged learning entry (`Situation & Blocker`, `Applied Solution`, `Prevent
 ### Phase 2: Semantic Deduplication & Triage Classification
 
 1. Consult `references/triage-and-split-rubric.md` to score domain affinity and transform each learning's components (`Situation & Blocker`, `Applied Solution`, `Prevention Rule`).
-2. Group related learnings across `./learnings/*.md` that target the same destination skill so cohesive upgrades, reference extractions, or sibling splits occur in a single atomic pass.
+2. Group related learnings across `~/.agents/learnings/*.md` that target the same destination skill so cohesive upgrades, reference extractions, or sibling splits occur in a single atomic pass.
 3. Construct the **Curation Triage Table** (Section 4) mapping every learning entry to its chosen routing action (`NO-OP`, `ELEVATE`, `UPGRADE`, `SPLIT`, or `CREATE`), target path, and structural transformation plan.
 4. If the user asked for a dry run or proposal, present the Curation Triage Table and await confirmation. If the user requested direct execution, proceed immediately to Phase 3.
 
@@ -88,16 +88,16 @@ Execute the approved routing actions strictly according to target tier rules:
 1. Execute the audit script in verification mode to confirm all global skills in `~/.agents/skills/` have valid frontmatter and remain strictly under `500` physical lines:
    ```bash
    bun scripts/audit-catalog.ts \
-     --learnings-dir ./learnings \
+     --learnings-dir ~/.agents/learnings \
      --skills-dir ~/.agents/skills \
      --agents-md ./AGENTS.md \
      --verify-skills
    ```
-2. Verify that `./learnings/` remains completely untouched:
+2. Verify that `~/.agents/learnings/` remains completely untouched:
    ```bash
-   git status --porcelain ./learnings
+   git status --porcelain ~/.agents/learnings
    ```
-   Output must be empty (`0` modified, added, or deleted files in `./learnings/`).
+   Output must be empty (`0` modified, added, or deleted files in `~/.agents/learnings/`).
 
 ---
 
@@ -120,8 +120,8 @@ Always emit the following structured Markdown summary when reporting curation an
 * **Host vs. Workspace Skill Path Drift**:
   * *Symptom*: `AGENTS.md` or a staged learning entry references `.agents/skills/<domain>/SKILL.md` or `.opencode/skills/<domain>/SKILL.md` as a workspace-relative path.
   * *Remedy*: `learning-curator` operates exclusively on the host global catalog at `~/.agents/skills/`. Never create or modify skills inside workspace-local `.agents/skills/` or `.opencode/skills/`. When proposing Chapter 4 table updates to `AGENTS.md`, preserve the repository's established path convention in `AGENTS.md` while storing the curated skill implementation in `~/.agents/skills/`.
-* **Idempotent Re-Runs on Unmodified `./learnings/`**:
-  * *Symptom*: Running `learning-curator` a second time appends duplicate bullets or duplicate gotcha sections to `~/.agents/skills/<skill>/SKILL.md` because `./learnings/*.md` files are never deleted or marked inline.
+* **Idempotent Re-Runs on Unmodified `~/.agents/learnings/`**:
+  * *Symptom*: Running `learning-curator` a second time appends duplicate bullets or duplicate gotcha sections to `~/.agents/skills/<skill>/SKILL.md` because `~/.agents/learnings/*.md` files are never deleted or marked inline.
   * *Remedy*: Always check both the `audit-catalog.ts` overlap flags and the target file's existing rules before mutating. If the `Prevention Rule` semantics are already present, classify the entry as `NO-OP (Already Integrated)`.
 * **Over-Elevating Situational Rules to `AGENTS.md`**:
   * *Symptom*: Platform-specific or tool-specific workarounds (e.g., Windows `npm.cmd` requiring `shell: true` with `execFile`, or `npm publish` `0.0.0-stage` registry polling) get elevated into `AGENTS.md`, bloating the universal rulebook.

@@ -47,7 +47,6 @@ describe("scaffold layout", () => {
       "wiki/01-getting-started.md",
       "wiki/04-mastery-and-extension.md",
       "references/.gitkeep",
-      "learnings/.gitkeep",
       "scripts/check.ts",
       "modules/README.md",
       "modules/wiki/index.md",
