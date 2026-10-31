@@ -1,0 +1,31 @@
+{
+  "schema": 1,
+  "digest": "sha256:7bae3f954bf1836ec270bd36ff9fe23614e398097a39297339ec5f7c72c8656b",
+  "sources": {
+    "bevy": {
+      "repo": "https://github.com/bevyengine/bevy",
+      "commit": "ae6152152",
+      "verified": "2026-10-31"
+    },
+    "datastar": {
+      "repo": "https://github.com/starfederation/datastar",
+      "commit": "1efcdc3c",
+      "verified": "2026-10-31"
+    },
+    "maud": {
+      "repo": "https://github.com/lambda-fairy/maud",
+      "commit": "42f4789",
+      "verified": "2026-10-31"
+    },
+    "rama": {
+      "repo": "https://github.com/plabayo/rama",
+      "commit": "2fbd04041",
+      "verified": "2026-10-31"
+    },
+    "sqlx": {
+      "repo": "https://github.com/transact-rs/sqlx",
+      "commit": "e5cbd61a",
+      "verified": "2026-10-31"
+    }
+  }
+}

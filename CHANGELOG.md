@@ -5,6 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.7.0 - 2026-10-31
+
+### Added
+- `skills/hypermedia-engine-stacks/scripts/provenance.lock`, the single machine-readable record of the five upstream repositories, their commits, their verification dates, and the local-corpus digest.
+- `bun scripts/docs-corpus.ts --lock <path>`, which refreshes that record from the local corpus.
+- `scripts/gate-verifier.test.ts`, a wiring test proving that a failing skill verifier fails the package gate and that its findings survive the failure path.
+- `wiki/adr/0004-version-free-provenance.md`, recording why provenance left the syllabus and how the lock replaces it.
+
+### Changed
+- **BREAKING**: `skills/hypermedia-engine-stacks/SKILL.md` and its five archives no longer carry release version numbers, commit pins, `Source:` headers, or the corpus digest. Provenance moved to `scripts/provenance.lock`; a consumer that read the `## Pins and Upgrades` matrix now reads the lock instead.
+- The skill verifier's `provenance` and `digest` rules are replaced by `unpinned` — a fenced-code-exempt sweep for `Source:` headers, digests, `repo@sha` pins, and release numbers — and `lock`, which asserts the schema, the five repositories, the commit and date shapes, and exactly one digest. The ceilings, archive links, description cap, transport parity, section order, retired-token sweep, and lifecycle spine are unchanged.
+- `scripts/gates.ts` invokes `skills/hypermedia-engine-stacks/scripts/verify-archives.ts`, so archive drift fails the package gate instead of waiting for a manual run.
+- The archives now document the verified API surface: `PatchSignals::with_only_if_missing`/`set_only_if_missing`, `ExtensionsRef`/`ExtensionsMut`/`FromExtensions` with the static-versus-dynamic state rule, the `service_fn`/`with_connect`/`set_enable_connect_protocol` WSS registration with a bounded outbound queue, `PgListener::recv` versus `try_recv`, the `SqlSafeStr` simple-query path behind `after_connect`, `sanitize_json` returning `PreEscaped<String>`, `impl maud::Render`, a `204`-scoped Datastar terminal row, `#[component(storage = "SparseSet")]`, and the bounded `wasm-bindgen` queue drained through `MessageWriter::write_batch`.
+
+### Removed
+- The `## Pins and Upgrades` matrix and the `Corpus provenance` digest paragraph in `SKILL.md`, both replaced by `scripts/provenance.lock`.
+
+### Fixed
+- `references/rama.md` no longer teaches `.only_if_missing(true)`, which is the field name rather than a builder; it names `.with_only_if_missing(true)` and `.set_only_if_missing(true)`.
+- `references/datastar.md` no longer claims every non-`200` terminal answer is silent: `204 No Content` is silent, while `4xx`/`5xx` dispatch `datastar-fetch` `error` and `retrying` follows the retry mode.
+- `references/maud.md` defines `sanitize_json` before using it, so the `<script>` example is no longer an undefined symbol.
+- `references/sqlx.md` no longer reads `Ok(None)` as an empty poll: `recv()` returns a notification, and only `try_recv()` returns the option that signals a lost connection.
+- `references/rama.md` and `references/bevy.md` name the WSS inbound loop and the bounded browser queue instead of implying either is unnecessary.
+
 ## 0.6.0 - 2026-10-31
 
 ### Added

@@ -97,6 +97,21 @@ if (density.undeterminable) {
 for (const warning of density.warnings) console.error(`  W ${warning}`);
 failures.push(...density.failures);
 
+// Gate 7: the hypermedia skill's own fidelity verifier owns its Markdown ceilings,
+// archive links, provenance lock, unpinned sweep, transport parity, and section order.
+// Its findings are surfaced verbatim; the gate only decides pass or fail.
+const verifier = join(root, "skills/hypermedia-engine-stacks/scripts/verify-archives.ts");
+try {
+  const output = execFileSync("bun", [verifier], { cwd: root, encoding: "utf8", stdio: "pipe" });
+  console.log(`  ${output.trim().split("\n").at(-1)}`);
+} catch (error) {
+  const detail = [(error as { stdout?: string }).stdout, (error as { stderr?: string }).stderr]
+    .map((chunk) => chunk?.trim())
+    .filter(Boolean)
+    .join("\n");
+  failures.push(`skill fidelity verifier failed:\n${detail}`);
+}
+
 if (failures.length > 0) {
   for (const failure of failures) console.error(`  X ${failure}`);
   console.error("FAIL: package gate");

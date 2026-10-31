@@ -7,7 +7,7 @@ description: Use when the task is a Rust-first hypermedia application or simulat
 
 Rust-first architecture for server-rendered applications: Rama is the gateway, SQLx the typed persistence layer, Maud the template compiler, Datastar the client engine, and Bevy WASM plus `rama-ws` the conditional simulation tier. Five per-pillar archives carry the signatures; this syllabus carries the rules.
 
-Fidelity command of record: `bun scripts/verify-archives.ts`. It asserts both Markdown ceilings, archive-link resolution, the provenance headers, the single corpus digest, and the retired-token sweep.
+Fidelity command of record: `bun scripts/verify-archives.ts`. It asserts both Markdown ceilings, archive-link resolution, the provenance lock, the unpinned sweep, the frontmatter description cap, the transport-table parity, the archive section order, the stream-lifecycle spine, and the retired-token sweep.
 
 ## Six-Pillar Matrix
 
@@ -20,7 +20,17 @@ Fidelity command of record: `bun scripts/verify-archives.ts`. It asserts both Ma
 | Simulation | ECS schedules, messages versus events, WASM build, canvas mount | `references/bevy.md` |
 | High-frequency transport | binary/text frames over `rama-ws`, consumed by Bevy | `references/rama.md`, `references/bevy.md` |
 
-Selection boundary: `framework-engine-stacks` owns SvelteKit, Axum, and other stack choices; this skill is the Rust hypermedia alternative. Queue topology belongs to `scalability`; this skill carries only the SSE/WSS transport contract.
+Selection boundary: SvelteKit, React, and Axum work is out of scope. Those are different stack classes — an Axum hypermedia service has its own extractor and SSE surface, and a JS SPA owns rendering that this skill hands to Maud. This skill is the Rust hypermedia stack and does not choose between them.
+
+| Adjacent concern | Shipped owner |
+| --- | --- |
+| Queue topology, worker pools, backpressure, push pipelines | `scalability` |
+| HTML/DOM sinks, secret hygiene, dependency and container hardening | `guardrails` |
+| Rust lint and unsafe policy, async cancellation contracts, verification lanes | `rust-systems` |
+| Interface craft, motion, accessibility review | `design-craft` |
+| Whole-system audits | `systems-auditor` |
+
+This skill carries only the SSE/WSS transport contract and the five pillar archives; it does not restate those owners' rules.
 
 ## Non-Negotiable Hypermedia & Simulation Invariants
 
@@ -43,10 +53,25 @@ Selection boundary: `framework-engine-stacks` owns SvelteKit, Axum, and other st
 | Draining, stream route | `410 Gone` (+ `Retry-After`, proxy-facing) | `datastar-fetch` `error`; `retry: 'auto'` does not retry a 4xx, so the client needs the re-anchor patch |
 | Draining, command route | `503` + `Retry-After` | error event, no retry |
 | Over stream budget | `503` + `Retry-After` | error event, no retry; pair with the same re-anchor patch |
-| Stream ended on purpose | `410`, never `204` | `204` is terminal before the retry gate and before the error dispatch: no event, no retry |
+| Stream ended on purpose | `410`, never `204` | `204` applies no patch and emits no `error` or `retrying` event; `started` and `finished` still fire |
 | Command accepted | `204 No Content` | command routes only; never a stream |
 
-`410` is stream-only: it means permanently gone, and a deploy is not. `Retry-After` is proxy, load-balancer, and browser-facing; the Datastar engine never reads it.
+`410` is stream-only: it means permanently gone, and a deploy is not. `Retry-After` is proxy, load-balancer, and browser-facing; the Datastar engine never reads it. `429` belongs to neither stream state: it is the request-rate lane's answer, from `RatePolicy` or `KeyedRatePolicy` in the gateway archive, and never the budget or drain answer.
+
+## Stream Lifecycle
+
+One ordered sequence, each step carrying the mechanism that enforces it. The owner archive holds the detail; this is the spine, not a second copy of it.
+
+| # | Step | Enforcing mechanism | Owner |
+| --- | --- | --- | --- |
+| 1 | Admit under a stream-owned guard | `ConcurrentTracker::try_access()` on a `ConcurrentCounter`; the guard moves into the stream and `Drop` releases it | `references/rama.md` |
+| 2 | Subscribe, then snapshot | `PgListener::listen` before the snapshot query, merged by id — the reverse order loses any commit landing between the two | `references/sqlx.md` |
+| 3 | Render the shell and first patch | a Maud page opened with `maud::DOCTYPE`, then a `PatchElements` against a deterministic `id` | `references/maud.md` |
+| 4 | Stream patches and keep-alive | `Sse::new(KeepAliveStream::new(..))` over the broadcast receiver, one guard held for the body's life | `references/rama.md` |
+| 5 | Detect lag and resync | `RecvError::Lagged(n)` → drop buffered state, re-query a snapshot, re-render it, count it | `references/sqlx.md` |
+| 6 | Re-anchor the subscription node | a final `PatchElements` replacing the `@get` node, so the engine re-subscribes immediately instead of waiting on the retry ladder | `references/datastar.md` |
+| 7 | Drain, then answer `410` | broadcast an explicit exit; the stream ends on that message, not on a poll of the shutdown guard | `references/rama.md` |
+| 8 | Treat a closed stream as closed | a cleanly closed `200` is never re-requested — only a replaced node or `retry: 'always'` brings it back | `references/datastar.md` |
 
 ## Bounded Streams and Principal Reverification
 
@@ -68,7 +93,16 @@ Selection boundary: `framework-engine-stacks` owns SvelteKit, Axum, and other st
 
 ## Telemetry
 
-Server signals beside the client rule: `open_streams` (current stream budget occupancy), `broadcast_lagged_total` (`RecvError::Lagged` occurrences, i.e. resyncs), `drain_state` (accepting or draining), and `stream_rejections_total` (over-budget and drain-time admission). The client `datastar-fetch` event is the only lifecycle signal; it fires on `document` with `detail.type` = `started`, `finished`, `error`, `retrying`, or `retries-failed`. No per-phase event name exists.
+Server signals beside the client rule, each with the condition it detects. All four ride the wide event emitted by `TraceLayer::on_eos`, the hook that fires when the response body ends — `on_response` fires at handoff and would report every stream as zero-duration.
+
+| Failure mode | Metric | Condition it detects |
+| --- | --- | --- |
+| Streams outlive their budget | `open_streams` | current `ConcurrentCounter` occupancy; at or above the cap with a flat request rate, streams are not ending — a permit leak or a client that never disconnects |
+| Subscriber falls behind the channel | `broadcast_lagged_total` | `RecvError::Lagged` occurrences, i.e. resyncs; a capacity problem, not a database one |
+| Shutdown strands a stream | `drain_state` | accepting versus draining; a stream still open past the drain ceiling means the window is shorter than the stream's own keep-alive |
+| Admission refuses a stream | `stream_rejections_total` | over-budget and drain-time answers, counted by status, so a `503` spike is distinguishable from a `410` deploy |
+
+The client `datastar-fetch` event is the only lifecycle signal; it fires on `document` with `detail.type` = `started`, `finished`, `error`, `retrying`, or `retries-failed`. No per-phase event name exists.
 
 ## Workflow
 
@@ -78,24 +112,28 @@ Server signals beside the client rule: `open_streams` (current stream budget occ
 4. **Render the shell.** Maud components with deterministic `id`s, serialized `data-signals` JSON spliced through escaping (never `PreEscaped`), and a single pre-sized buffer with `Render::render_to` for row lists.
 5. **Fan out events.** One `PgListener::connect(url)` per replica into `tokio::sync::broadcast`; one `ConcurrentCounter`-guarded SSE route per view; `Lagged` triggers a snapshot resync.
 6. **Mount simulation when required.** Bevy canvas with `data-ignore-morph`, `Message` for frame telemetry and `On<E>` for input reactions, `postcard` over `rama-ws` for high-frequency traffic, `CustomEvent` for the HUD.
-7. **Verify.** `bun scripts/verify-archives.ts`, then `bun scripts/gates.ts` in the package and `bun scripts/check.ts --quick` at the workspace root. Run `cargo sqlx prepare --check` in CI.
+7. **Verify.** Consumer lane, available wherever this skill is installed: `bun scripts/verify-archives.ts`, run from the skill directory. Repository-only: the package gate `bun scripts/gates.ts` invokes that verifier, `bun scripts/check.ts` runs the whole lane, and `bun scripts/docs-corpus.ts --lock` refreshes the pin record. None of those three ship in the package. Run `cargo sqlx prepare --check` in CI.
 
 ## Anti-Pattern Matrix
 
 | Anti-pattern | Failure | Instead |
 | --- | --- | --- |
 | `LimitLayer` as the open-stream cap | permit released at response handoff | `ConcurrentCounter` guard owned by the stream |
-| `204` ending a stream | silent terminal: no event, no retry | `410` plus a re-anchor patch |
+| `204` ending a stream | no patch and no `error`, but `started`/`finished` still fire — a silent dead stream | `410` plus a re-anchor patch |
 | Relying on `Retry-After` in the client | the engine never reads it | re-anchor, or `retry: 'always'` |
 | `data-ignore` on the canvas | plugin suppression, not a morph boundary | `data-ignore-morph` on canvas and container |
 | 60 Hz coordinates through signals or HTML | DOM thrashing | binary frames over `rama-ws` |
-| `EventReader` for cross-frame telemetry | buffered lane used as an immediate one | `MessageReader` with `#[derive(Message)]` |
+| Buffered reader on the cross-frame telemetry lane | a two-update buffer used as an immediate one | `MessageReader` with `#[derive(Message)]` |
 | Nested `html!` inside a loop | one allocation per row | `Render::render_to` into one buffer |
 | Hand-concatenated `data-signals` JSON | escaping bypassed | serialize, then splice through Maud |
 | `PgListener::connect_with(&app_pool)` | the listener holds an application-pool connection for its life | `PgListener::connect(url)` |
 | `test_before_acquire(true)` everywhere | a round trip on every checkout | `test_before_acquire(false)` plus `before_acquire` on `meta.idle_for` |
 | Aliased Datastar bundle | every `data-*` attribute is silently dead | serve the embedded unaliased bundle |
 | SQL state without offline metadata | CI cannot build without a database | commit `.sqlx/` and gate `prepare --check` |
+
+## Provenance
+
+`scripts/provenance.lock` is the single pin record: the five repositories, their commits, their verification dates, and the local-corpus digest. This syllabus and its archives stay version-free so a stale release number cannot be mistaken for an observed claim; each archive keeps only its `Re-verify when:` trigger. Read the lock before trusting a claim, and move the pin when you re-verify one.
 
 ## Reference Archives
 
@@ -105,4 +143,4 @@ Server signals beside the client rule: `open_streams` (current stream budget occ
 - `references/datastar.md` — read before changing attributes, signals, actions, morph boundaries, CSP, or retry behaviour.
 - `references/bevy.md` — read before touching ECS schedules, WASM builds, the canvas mount, or the shell bridge.
 
-Corpus provenance: the upstream pins are recorded per archive; the local mirror digest `sha256:7bae3f954bf1836ec270bd36ff9fe23614e398097a39297339ec5f7c72c8656b` is local-corpus scoped, because it also folds the cargo-registry crates. `bun scripts/docs-corpus.ts --check` reports `stale` for the five hand-placed reports; the pins, not the digest, are the durable anchor.
+Provenance lives in `scripts/provenance.lock`, beside this syllabus: the five repositories, their commits, their verification dates, and the local-corpus digest. The digest is local-corpus scoped because it also folds the cargo-registry crates, so the commit pins — not the digest — are the durable anchor. The digest mirrors the recorded corpus snapshot; refresh the corpus and the lock together when you re-verify.
