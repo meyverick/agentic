@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.8.0 - 2026-10-31
+
+### Added
+- `skills/framework-engine-stacks/SKILL.md` returns to the catalog, byte-identical to the copy retired before `0.7.0`: the three-tier SvelteKit-static/Axum-SQLx stack, the Candle in-process inference tier, the Miniplex ECS with Threlte, Babylon.js, PixiJS, and Phaser adapters, the Tauri v2 shell, and the workload selection matrix. The install lane ships 18 skills instead of 17.
+
+### Changed
+- Registry carrier: `0.5.0` through `0.7.2` never reached `@meyverick/agentic`, so this release publishes those lines as well.
+
 ## 0.7.2 - 2026-10-31
 
 ### Changed
