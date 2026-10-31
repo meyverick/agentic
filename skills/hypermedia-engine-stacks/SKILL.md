@@ -7,7 +7,7 @@ description: Use when the task is a Rust-first hypermedia application or simulat
 
 Rust-first architecture for server-rendered applications: Rama is the gateway, SQLx the typed persistence layer, Maud the template compiler, Datastar the client engine, and Bevy WASM plus `rama-ws` the conditional simulation tier. Five per-pillar archives carry the signatures; this syllabus carries the rules.
 
-Fidelity command of record: `bun scripts/verify-archives.ts`. It asserts both Markdown ceilings, archive-link resolution, the provenance lock, the unpinned sweep, the frontmatter description cap, the transport-table parity, the archive section order, the stream-lifecycle spine, and the retired-token sweep.
+Fidelity command of record: `bun scripts/verify-archives.ts` (rule helpers in `scripts/verify-archives-lib.ts`). It asserts both Markdown ceilings, archive-link resolution, the provenance lock, the unpinned sweep, the frontmatter description cap and content, the transport-table parity, the archive section order, the stream-lifecycle spine with resolvable owner archives, and the retired-token sweep.
 
 ## Six-Pillar Matrix
 
@@ -40,11 +40,13 @@ This skill carries only the SSE/WSS transport contract and the five pillar archi
 - **Hybrid simulation boundary**: high-frequency inputs and ticks go directly over `rama-ws` into Bevy; low-frequency HUD, inventory, and menus cross via `CustomEvent` or Datastar signals. A 60 Hz transform stream never touches the DOM.
 - **No shared memory**: `SharedArrayBuffer` and cross-origin memory locks are prohibited between WASM and the DOM. Bound the `wasm-bindgen` queue instead; a hidden tab pauses `requestAnimationFrame` while WSS keeps writing.
 - **Canvas morph boundary**: `data-ignore-morph` on the `<canvas>` **and** its mount container. `data-ignore` suppresses plugin processing and is not a morph boundary. Any `data-on:*` listener that must survive a patch sits on an ancestor outside the morphed region.
-- **Open streams are bounded**: `ConcurrentCounter::new(max)` with the guard moved into the stream, released on `Drop`; over budget answers `503` with `Retry-After`, never `429` and never `204`. `LimitLayer`/`ConcurrentPolicy` cap in-flight `serve()` inputs only, because an SSE response completes at handoff.
+- **Open streams are bounded**: `ConcurrentCounter::new(max)` with the guard moved into the stream, released on `Drop`; over budget answers `503` with `Retry-After`, never `429` and never `204`. That `503` is the route's own mapping — `LimitReached` implements no `IntoResponse` — while `LimitLayer`/`ConcurrentPolicy` cap in-flight `serve()` inputs only and answer `429` on the request lane, because an SSE response completes at handoff.
 - **Streams end by decision**: drain broadcasts an explicit exit, answers new streams `410 Gone` with a proxy-facing `Retry-After`, and re-anchors the `@get` node with a final `PatchElements`. A clean `200` close is not re-requested by the engine.
 - **Authorization is bounded, not re-checked**: an established SSE response cannot re-authorize. Cap the stream lifetime; at expiry re-anchor under a fresh principal check, or answer `410` when the session is gone.
 - **Lag is a resync signal**: `RecvError::Lagged(n)` means drop buffered state, re-query a snapshot, render it, and count it. It is not an error to log and ignore.
-- **CSRF is a gateway layer**: `CsrfLayer` with trusted origins and a rejection response. Datastar ships no CSRF rule, so an application-invented origin check is not a substitute.
+- **Extensions isolate by fork, not by clone**: `Extensions::fork()` gives a child store whose inserts the parent never sees; a clone shares its store, so an insert through a clone is visible to the original handle. A request-local overlay starts with `fork()`.
+- **Routing is case-insensitive unless told otherwise**: `PathMatchPolicy` defaults to `AsciiInsensitive` + `PercentDecoded`, so a security-sensitive path opts into `PathMatchPolicy::STRICT`; specificity breaks a tie, static over capture over catch-all.
+- **CSRF is fetch metadata, not an allow-list**: `CsrfLayer` allows the safe methods, `Sec-Fetch-Site` `same-origin` or `none`, a trusted `Origin`, absent fetch metadata, or an `Origin` authority matching the effective host. `TRACE` and `QUERY` are not exempt, and a proxy that rewrites `Host` or strips `Origin` silently degrades the check. Datastar ships no CSRF rule, so an application-invented origin check is not a substitute.
 
 ## Transport Status
 
@@ -114,6 +116,20 @@ The client `datastar-fetch` event is the only lifecycle signal; it fires on `doc
 6. **Mount simulation when required.** Bevy canvas with `data-ignore-morph`, `Message` for frame telemetry and `On<E>` for input reactions, `postcard` over `rama-ws` for high-frequency traffic, `CustomEvent` for the HUD.
 7. **Verify.** Consumer lane, available wherever this skill is installed: `bun scripts/verify-archives.ts`, run from the skill directory. Repository-only: the package gate `bun scripts/gates.ts` invokes that verifier, `bun scripts/check.ts` runs the whole lane, and `bun scripts/docs-corpus.ts --lock` refreshes the pin record. None of those three ship in the package. Run `cargo sqlx prepare --check` in CI.
 
+## Verification
+
+Five application tests, each the smallest thing that fails if its layer breaks. They assert the transport, not the framework; keep them beside the code they exercise.
+
+| Layer | Test | Command |
+| --- | --- | --- |
+| Gateway | `#[tokio::test]` calling the stream route, asserting `text/event-stream` and at least one `datastar-patch-elements` frame before the body ends | `cargo test --test sse` |
+| Persistence | `#[sqlx::test]` for a migration plus a `query_as!` round trip, against a test database created from `DATABASE_URL` | `cargo test --test db` |
+| Templating | a snapshot assertion on the rendered `Markup`, deterministic ids included | `cargo test --test render` |
+| Simulation | a headless `App` with `MinimalPlugins`, one `app.update()`, asserting the queue drain wrote the message | `cargo test --test sim` |
+| Transport | a `rama` WSS client against the upgrade route, asserting a `postcard` round trip and a clean close | `cargo test --test wss` |
+
+`cargo test --workspace` runs all five. The archive gate is the fidelity lane, not an application test; `cargo sqlx prepare --check` belongs in CI beside both.
+
 ## Anti-Pattern Matrix
 
 | Anti-pattern | Failure | Instead |
@@ -133,7 +149,7 @@ The client `datastar-fetch` event is the only lifecycle signal; it fires on `doc
 
 ## Provenance
 
-`scripts/provenance.lock` is the single pin record: the five repositories, their commits, their verification dates, and the local-corpus digest. This syllabus and its archives stay version-free so a stale release number cannot be mistaken for an observed claim; each archive keeps only its `Re-verify when:` trigger. Read the lock before trusting a claim, and move the pin when you re-verify one.
+`scripts/provenance.lock` is the single pin record: the five repositories, their commits, their verification dates, and the local-corpus digest. The digest is local-corpus scoped because it also folds the cargo-registry crates, so the commit pins — not the digest — are the durable anchor; the digest mirrors the recorded corpus snapshot, and the corpus and lock are refreshed together when a claim is re-verified. This syllabus and its archives stay version-free so a stale release number cannot be mistaken for an observed claim; each archive keeps only its `Re-verify when:` trigger. Read the lock before trusting a claim, and move the pin when you re-verify one.
 
 ## Reference Archives
 
@@ -142,5 +158,3 @@ The client `datastar-fetch` event is the only lifecycle signal; it fires on `doc
 - `references/maud.md` — read before changing templates, escaping, JSON attributes, or `Markup` conversion.
 - `references/datastar.md` — read before changing attributes, signals, actions, morph boundaries, CSP, or retry behaviour.
 - `references/bevy.md` — read before touching ECS schedules, WASM builds, the canvas mount, or the shell bridge.
-
-Provenance lives in `scripts/provenance.lock`, beside this syllabus: the five repositories, their commits, their verification dates, and the local-corpus digest. The digest is local-corpus scoped because it also folds the cargo-registry crates, so the commit pins — not the digest — are the durable anchor. The digest mirrors the recorded corpus snapshot; refresh the corpus and the lock together when you re-verify.

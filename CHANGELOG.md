@@ -5,6 +5,31 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.7.1 - 2026-10-31
+
+### Added
+- `skills/hypermedia-engine-stacks/SKILL.md` gains a `## Verification` section with five application tests — an SSE route asserting `text/event-stream` and a patch frame, `#[sqlx::test]` for a migration plus a `query_as!` round trip, a Maud snapshot, a headless Bevy `App::update`, and a `rama` WSS client round trip — each with its `cargo test` command.
+- Syllabus invariants for `Extensions` fork-versus-clone isolation, `PathMatchPolicy` matching, and the `CsrfLayer` fetch-metadata contract.
+- The skill verifier asserts that the frontmatter description names the six pillars and the SvelteKit/Axum negative boundary, sweeps `datastar-retries-failed` and `.only_if_missing(`, and resolves every lifecycle step's owner archive on disk.
+- `scripts/content-invariants.test.ts` regression cases for the admission mapping, `Extensions` copy, CSRF conditions, routing policy, unkeyed `data-bind`, and the local Datastar actions.
+- `scripts/verify-archives-lib.ts`, the verifier's shared rule module, keeping `verify-archives.ts` under the 300-line cohesive-module band; `scripts/gate-verifier.test.ts` gains cases for the description-content, retired-token, and owner-link assertions.
+
+### Changed
+- `skills/hypermedia-engine-stacks/references/rama.md` documents the admission contract as a mapping: `LimitReached` implements no `IntoResponse`, so the stream route answers `503` + `Retry-After` itself (or via `LimitLayer::with_error_into_response_fn`), while `ConcurrentPolicy` request concurrency keeps the corpus `429`.
+- `references/rama.md` states that `Extensions::fork()` creates an isolated child store while a clone shares it, and names `with_base`, `insert(&self)`, `get_ref_or_insert`, and `AddInputExtensionLayer::overwrite(false)`.
+- `references/rama.md` documents the five `CsrfLayer` allow conditions, `with_insecure_bypass`, the proxy caveat, and that `TRACE` and `QUERY` are not exempt; adds `PathMatchPolicy` and the route-layering methods; and documents `Sse::with_keep_alive` (no keep-alive by default, 15 s `KeepAlive` interval) and `Event::with_retry`.
+- `references/datastar.md` documents `@setAll`, `@toggleAll`, and `@peek`, replaces the plugin list with a contract table (keyed and unkeyed forms plus the `__ifmissing`/`__prop`/`__event`/`__duration`/`__leading`/`__threshold`/`__full`/`__half`/`__exit`/`__once`/`__terse`/`__delay` modifiers), and states that the unkeyed `data-bind` value is the signal name.
+- `references/rama.md` states that `with_endpoint_layer` applies to every route registered after the call and `with_sub_router_make_fn` builds the nested router once at registration; the drain wrapper returns `RouterError` rather than `Infallible`.
+- `references/datastar.md` uses `data-on-signal-patch:filter` and a concrete unkeyed `data-computed` form.
+
+### Fixed
+- `references/rama.md` no longer claims an over-budget stream is answered `503` without showing how the policy error becomes that answer.
+- `references/rama.md` no longer claims a parent never sees a child extension insert without qualifying that a clone shares the store.
+- `references/rama.md` no longer presents `CsrfLayer` as a trusted-origin allow-list alone.
+- `references/datastar.md` no longer marks the unkeyed `data-bind` form absent, and qualifies the engine size as compressed (`~12 KiB` brotli, 13 KiB gzip, 33 KiB raw).
+- `references/datastar.md` states the missing retries-failed event without naming the retired token outside its migration table.
+- `SKILL.md` describes `#[sqlx::test]` against a test database created from `DATABASE_URL`, not the `.sqlx/` compile-time cache, and the fidelity summary names the description-content and owner-link assertions.
+
 ## 0.7.0 - 2026-10-31
 
 ### Added

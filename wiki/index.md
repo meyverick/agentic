@@ -40,6 +40,7 @@ Extension points, the security model and its supply-chain consequence, a diagnos
 - [0002 — Purge then place](adr/0002-purge-then-place.md)
 - [0003 — Per-pillar reference archives](adr/0003-hypermedia-reference-archive-split.md)
 - [0004 — Version-free syllabus with a provenance lock](adr/0004-version-free-provenance.md)
+- [0005 — Audit corrections to the hypermedia syllabus and its fidelity gate](adr/0005-hypermedia-sota-audit.md)
 
 ## Outside This Wiki
 

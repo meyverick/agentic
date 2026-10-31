@@ -2,7 +2,7 @@ Re-verify when: the datastar pin recorded in `scripts/provenance.lock` moves, an
 
 # Datastar — Client Reactivity, Morphing, and Streaming
 
-Datastar is a ~12 KiB TypeScript ESM engine: declarative attributes, a deep reactive signal graph, RFC 7396 merge patching, and Idiomorph DOM morphing over server-sent events. The server owns HTML; the client owns only signals and event wiring.
+Datastar is a TypeScript ESM engine — ~12 KiB over the wire with brotli, 13 KiB gzip, 33 KiB raw: declarative attributes, a deep reactive signal graph, RFC 7396 merge patching, and Idiomorph DOM morphing over server-sent events. The server owns HTML; the client owns only signals and event wiring.
 
 ## Actions and Hypermedia CQRS
 
@@ -11,6 +11,9 @@ Datastar is a ~12 KiB TypeScript ESM engine: declarative attributes, a deep reac
 | `@get` | `GET`, stream | persistent query subscription |
 | `@post` / `@put` / `@patch` / `@delete` | body carries signals | command; empty-bodied success, no patch |
 | `@query` | `QUERY`, JSON body | read without a stream; not a subscription |
+| `@setAll(value, filter?)` | client-only | writes every matching signal, or every signal with no filter; batches and peeks, so an enclosing effect does not re-trigger itself |
+| `@toggleAll(filter?)` | client-only | boolean-negates every matching signal through the same batch-and-peek path |
+| `@peek(() => ..)` | client-only | reads signals without subscribing the enclosing expression to them |
 
 Read side: `@get` opens a persistent SSE stream and applies `datastar-patch-elements` and `datastar-patch-signals` events.
 
@@ -33,14 +36,29 @@ The attribute rule is colon syntax: `data-<plugin>:<key>` is the keyed form and 
 | Plugin | Keyed example | Unkeyed form |
 | --- | --- | --- |
 | `data-signals` | `data-signals:count="0"` | `data-signals="{count: 0}"` (JSON object) |
-| `data-bind` | `data-bind:name` | — |
+| `data-bind` | `data-bind:name` | `data-bind="name"` — the unkeyed value *is* the signal name |
 | `data-on` | `data-on:click="@post('/inc')"` | — |
 | `data-class` | `data-class:active="$open"` | `data-class="{active: $open}"` |
 | `data-attr` | `data-attr:title="$tip"` | `data-attr="{title: $tip}"` |
 
-The remaining plugins: `data-computed` (derived signal), `data-effect` (side effect on dependencies), `data-show` (visibility), `data-text` (text content), `data-style` (inline style), `data-ref` (element reference signal), `data-json-signals` (serialize the store into the DOM), `data-on-intersect` (IntersectionObserver), and `data-on-signal-patch` (signal-patch hook). `data-indicator`, `data-on-interval`, and `data-init` complete the set.
+The rest of the surface, with the form each one accepts and the modifiers it reads. A blank form column means that form is denied, not merely unused.
 
-Modifiers are appended with `__`: `data-on:click__window`, `__document`, `__outside`, `__prevent`, `__stop`, `__once`, `__capture`, `__passive`, `__delay.500ms`, `__debounce.500ms`, `__throttle.200ms`, `__viewtransition`. `data-ignore` also accepts `__self`.
+| Plugin | Keyed form | Unkeyed form | Contract and modifiers |
+| --- | --- | --- | --- |
+| `data-computed` | `data-computed:double` | `data-computed="{double: () => $count * 2}"` | derived signal, recomputed from its dependencies |
+| `data-effect` | — | `data-effect="$count > 10 && save()"` | side effect that reruns when a dependency changes |
+| `data-show` | — | `data-show="$open"` | toggles visibility only; the node stays mounted |
+| `data-text` | — | `data-text="$label"` | writes text content |
+| `data-style` | `data-style:color` | `data-style="{color: $tone}"` | inline style, keyed or object |
+| `data-ref` | `data-ref:form` | `data-ref="form"` | publishes the element as a signal |
+| `data-json-signals` | — | `data-json-signals` | serializes the store into the DOM; `__terse` drops the indentation |
+| `data-on-intersect` | — | `data-on-intersect="loadMore()"` | `IntersectionObserver`; `__full` (whole element visible), `__half` (half visible), `__threshold.75`, `__exit` (fire on leaving instead), `__once` |
+| `data-on-interval` | — | `data-on-interval="tick()"` | `setInterval`; `__duration.1s` sets the period and `__duration.1s.leading` also fires once up front |
+| `data-on-signal-patch` | `data-on-signal-patch:filter` | `data-on-signal-patch="log(patch)"` | runs on every patch, receiving it as `patch`; the filter object lives in the separate `data-on-signal-patch-filter` attribute |
+| `data-indicator` | `data-indicator:busy` | `data-indicator="busy"` | signal that is `true` while a request from that element is in flight |
+| `data-init` | — | `data-init="prefetch()"` | runs when the element mounts; `__delay.500ms` waits first |
+
+Modifiers are appended with `__`: `data-on:click__window`, `__document`, `__outside`, `__prevent`, `__stop`, `__once`, `__capture`, `__passive`, `__delay.500ms`, `__debounce.500ms`, `__throttle.200ms`, `__viewtransition`. `__ifmissing` is `data-signals`-only and keeps an existing signal instead of overwriting it; `__prop` and `__event` are `data-bind`-only and select the property and the event that sync it. `data-ignore` also accepts `__self`.
 
 The `__case` modifier takes exactly `camel`, `snake`, and `pascal` — `data-on:keyup__case.camel`, `data-signals:rowCount__case.snake`, `data-bind:firstName__case.pascal`. `data-on` keys default to `kebab` (`modifyCasing(key, mods, 'kebab')`), and `modifyCasing` treats a name it does not recognise as "leave the key as written", because `caseFns` defines only those three (`library/src/utils/text.ts`). `__case.kebab` is therefore not a value and changes nothing.
 
@@ -84,7 +102,7 @@ Status answers belong to `SKILL.md` and `references/rama.md`; this table is only
 | `openWhenHidden` | `false` on `@get` only; a hidden tab aborts and rebuilds on `visibilitychange` |
 | `requestCancellation` | `'auto'` by default; use `'cleanup'` for a stream anchored on a node a morph can replace |
 
-`datastar-fetch` is the only lifecycle event; it fires on `document` with `detail.type` = `started`, `finished`, `error`, `retrying`, or `retries-failed`. There is no per-phase event name and no `datastar-retries-failed`. Guard on `detail.type`.
+`datastar-fetch` is the only lifecycle event; it fires on `document` with `detail.type` = `started`, `finished`, `error`, `retrying`, or `retries-failed`. There is no per-phase event name and no separate retries-failed event. Guard on `detail.type`.
 
 The default retry ladder is 1 s, 2 s, 4 s, 8 s, 16 s, then 30 s until the tenth attempt — roughly 181 s before `retries-failed`. A drain or an over-budget rejection therefore needs a final `PatchElements` that replaces the `@get` node (immediate re-subscribe) rather than relying on the ladder; `retry: 'always'` is the fallback, not the first choice. On a retry the engine itself resends the last event id it saw as `last-event-id`, which is why the server side of resume is an SSE header and not a query parameter.
 
@@ -108,7 +126,7 @@ So a command *can* patch elements: "commands never patch elements" is a stack ru
 | --- | --- |
 | `data-on-click` | `data-on:click` |
 | `data-signals` with a JS expression string | JSON object (or keyed `data-signals:key`) |
-| `data-bind` without a key | `data-bind:key` |
+| `data-bind` without a signal name | `data-bind:key`, or the unkeyed value as the name |
 | `datastar-retries-failed` event | `data-on:datastar-fetch` with a `detail.type === 'retries-failed'` guard |
 | `data-ignore` as the canvas morph boundary | `data-ignore-morph` on the canvas and its container |
 | hand-written Origin checks in the app | `CsrfLayer` at the gateway; Datastar ships no CSRF rule |

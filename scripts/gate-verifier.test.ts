@@ -87,6 +87,52 @@ describe("verify-archives", () => {
     expect(result.output).toContain("description");
   });
 
+  test("a description missing a pillar fails", () => {
+    const target = copy();
+    const path = join(target, "SKILL.md");
+    const text = readFileSync(path, "utf8");
+    const changed = text.replace(/^description: .*$/m, "description: Use when the task is a Rust-first hypermedia application or simulation shell.");
+    expect(changed).not.toBe(text);
+    writeFileSync(path, changed);
+    const result = run(target);
+    expect(result.status).not.toBe(0);
+    expect(result.output).toContain("does not name 'Rama'");
+  });
+
+  test("a retired token outside a migration table fails", () => {
+    const target = copy();
+    appendFileSync(join(target, "references", "rama.md"), "\ndatastar-retries-failed\n");
+    const result = run(target);
+    expect(result.status).not.toBe(0);
+    expect(result.output).toContain("retired");
+    expect(result.output).toContain("datastar-retries-failed");
+  });
+
+  test("the only_if_missing builder is swept", () => {
+    const target = copy();
+    appendFileSync(join(target, "references", "rama.md"), "\n.only_if_missing(true)\n");
+    const result = run(target);
+    expect(result.status).not.toBe(0);
+    expect(result.output).toContain("retired");
+    expect(result.output).toContain(".only_if_missing(");
+  });
+
+  test("a missing lifecycle owner archive fails", () => {
+    const target = copy();
+    const path = join(target, "SKILL.md");
+    const text = readFileSync(path, "utf8");
+    const changed = text.replace(
+      /^(\| 1 \|[^\n]*)\| `references\/rama\.md` \|$/m,
+      "$1| `references/missing.md` |",
+    );
+    expect(changed).not.toBe(text);
+    writeFileSync(path, changed);
+    const result = run(target);
+    expect(result.status).not.toBe(0);
+    expect(result.output).toContain("spine");
+    expect(result.output).toContain("references/missing.md");
+  });
+
   test("the package gate fails when the verifier fails", () => {
     const target = copyModules();
     appendFileSync(join(target, "skills", "hypermedia-engine-stacks", "references", "rama.md"), "\nSource: `rama@2fbd04041`\n");

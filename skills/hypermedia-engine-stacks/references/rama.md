@@ -9,8 +9,12 @@ Rama owns everything between the socket and a rendered fragment: routing, extrac
 - `Service<Input>` is `async fn serve(&self, input) -> Result<Output, Error>` — a shared reference, no `poll_ready` handshake, so request state is cheap to clone across workers.
 - `Layer::into_layer(inner)` wraps a service; compose outer-to-inner in the order you want them applied.
 - `Router::new_with_state(state)` plus `extract::State<T>` extracts a cloned application state without a global. `match_service!` dispatches a request into per-branch services when one handler would otherwise carry a method match.
+- Matching has a policy, so do not assume case-sensitive. `PathMatchPolicy` defaults to `AsciiInsensitive` + `PercentDecoded`: `/Admin` matches `/admin`, and `%2F` is decoded before comparison. `PathMatchPolicy::STRICT` is `Sensitive` + `Raw`, selected with `Router::new_with_state_and_path_match_policy`. Specificity decides a tie: a static segment wins over a capture, and a capture wins over a catch-all.
+- Layer per route, not only per router: `with_endpoint_layer(..)` applies the endpoint layer to every route registered after the call (earlier routes keep their previous layer), `with_not_found(..)` owns the miss answer, `with_fallback_match_route(..)` registers a route consulted only after nothing else matched, and `with_sub_router_make_fn(..)` builds a nested router once at registration and mounts it under the prefix.
 - Two state kinds, and the split decides where a value lives. **Static** state sits on the service struct or is captured by a closure. **Dynamic** state is injected as an extension on a request, response, or connection that implements `ExtensionsRef`. Clients, pools, and configuration are static; per-request and per-connection facts — a principal, a peer address, a negotiated subprotocol — are dynamic.
-- Extensions are append-only with parent-chain lookup: a child request sees parent inserts, a parent never sees a child insert. `#[derive(Extension)]` plus `AddInputExtensionLayer` is the supported insert path; `ExtensionsRef::extensions()` reads and `ExtensionsMut::extensions_mut()` replaces the store, so a request-local overlay never mutates a store shared by cloned inputs.
+- Extensions are an append-only chain resolved child-first, and the isolation depends on which operation you used. `Extensions::fork()` creates a child with its own top-level store: lookups fall through to the parent, inserts land on the child, and the parent is never structurally mutated. A plain clone is **not** a fork — it shares the same store, so an insert through the clone is visible to the original handle. Existing values stay `Arc`-shared either way, so mutating their interior state is visible from both.
+- The overlay primitives: `insert(&self, ..)` appends and returns a reference, `with_base(&base)` layers this chain over a fallback base for defaults, and `get_ref_or_insert(|| ..)` returns an existing value anywhere in the chain or lazily inserts one.
+- `#[derive(Extension)]` plus `AddInputExtensionLayer::new(..)` is the supported insert path, and `.overwrite(false)` preserves a value already present in the input's chain instead of replacing it. `ExtensionsRef::extensions()` reads and `ExtensionsMut::extensions_mut()` replaces the store.
 - Read a group in one pass instead of one lookup per type: `get_many_ref::<(A, B)>()` borrows, `get_many_arc::<(A, B)>()` returns owned `Arc`s, and `#[derive(FromExtensions)]` over a struct of `Option<&'a T>` fields builds a view of whatever is present (`View::from_extensions(&ext)`). Every slot is `Option`, because optional middleware state is absent unless that middleware ran: handle absence instead of unwrapping.
 - `ReadSignals<T>` is the Datastar signal extractor: `GET`/`DELETE` read the URL-encoded `datastar` query parameter, every other method (including `QUERY`) reads the JSON body.
 - `ReadSignals<Option<T>>` absorbs a missing `?datastar=` because the missing value is coerced to `"null"`. `Option<ReadSignals<T>>` yields `None` when the `Datastar-Request` header is absent. They are different contracts; pick the one you mean.
@@ -27,9 +31,11 @@ Router::new_with_state(state)
 
 ## SSE
 
-`Sse::new(stream)` frames an event stream. Keep-alive uses `KeepAliveStream::new(KeepAlive::new(), inner)`; the corpus example wraps a `stream_fn(move |mut yielder| …)` that yields `Result<Event<_>, _>`.
+`Sse::new(stream)` frames an event stream and installs **no** keep-alive. `Sse::with_keep_alive(KeepAlive::new())` adds one, `KeepAlive::new()` defaults to a 15 s maximum interval, and that 15 s is the floor the drain window has to clear. The inner layer is `KeepAliveStream::new(KeepAlive::new(), inner)`; the corpus example wraps a `stream_fn(move |mut yielder| …)` that yields `Result<Event<_>, _>`.
 
 `Sse::into_response` already sets `Cache-Control: no-cache`, `Content-Type: text/event-stream`, and a `Connection: keep-alive` that is filtered for h2+. Do not hand-roll them.
+
+`Event::with_retry(millis)` writes the SSE `retry:` field, which the Datastar engine reads as its backoff base. It is a reconnect hint, not a status answer, and it never replaces the re-anchor patch.
 
 ```rust
 Sse::new(KeepAliveStream::new(
@@ -112,7 +118,25 @@ Stack rate **outside** concurrency: the `RatePolicy` layer outermost, per-route 
 ### Capacity lane
 
 - `LimitLayer::new(ConcurrentPolicy::max(n))` bounds in-flight `serve()` inputs. An SSE response completes at handoff (`Sse::into_response` is synchronous), so the permit is released **before the first event**: it never bounds open streams, and it is not the stream budget.
-- The open-stream budget is `ConcurrentCounter::new(max)` plus `ConcurrentTracker::try_access()` (the trait must be in scope). Move the returned guard into the stream so `Drop` releases it when the response body ends. Over budget answers `503` + `Retry-After`, because the resource is temporary occupancy rather than a spent budget.
+- The open-stream budget is `ConcurrentCounter::new(max)` plus `ConcurrentTracker::try_access()` (the trait must be in scope). Move the returned guard into the stream so `Drop` releases it when the response body ends.
+- The `503` is an application decision, not a library default. `try_access()` fails with `LimitReached`, which implements no `IntoResponse`; `rama-http` implements it only for `RateLimitReached` (`429`), and the corpus's own handler maps `LimitReached` to `429` because it aborts a request. A stream route therefore maps the error itself, or hands the mapping to the layer:
+
+```rust
+let permit = match counter.try_access() {
+    Ok(guard) => guard,
+    Err(LimitReached) => {
+        return (StatusCode::SERVICE_UNAVAILABLE, [(RETRY_AFTER, "5")]).into_response();
+    }
+};
+
+// or, on the request lane, keep the policy and supply the answer:
+LimitLayer::new(ConcurrentPolicy::max(n))
+    .with_error_into_response_fn(|_err: LimitReached| {
+        Ok::<_, Infallible>((StatusCode::SERVICE_UNAVAILABLE, [(RETRY_AFTER, "5")]).into_response())
+    })
+```
+
+- Keep the lanes apart. `ConcurrentPolicy` is request concurrency and the corpus answers it `429`; the manual stream budget is occupancy and the application answers it `503`. `Retry-After` is proxy-facing in both lanes, and the Datastar engine never reads it.
 
 ### Body cap
 
@@ -120,13 +144,29 @@ The third admission control, and the one that bounds a single request rather tha
 
 ## CSRF
 
-`CsrfLayer::new().add_trusted_origin("https://app.example.com")?` with `.with_rejection_response(..)` is the CSRF mechanism for mutating verbs; rejections default to `403 Forbidden`. `GET`, `HEAD`, and `OPTIONS` are exempt; `QUERY` is deliberately not exempt because it is not CORS-safelisted. Datastar ships no CSRF rule of its own, which is why the gateway layer is mandatory rather than an application-invented origin check.
+`CsrfLayer` is the stateless fetch-metadata scheme: it keeps no per-request token state and decides from `Sec-Fetch-Site` plus `Origin`, comparing origins structurally (host case-insensitive, a default port equal whether written or omitted). `CsrfLayer::new().add_trusted_origin("https://app.example.com")?` with `.with_rejection_response(..)` configures it; a rejection is `403 Forbidden` by default and carries the `ProtectionError` in the response extensions, so a surrounding layer can tell a cross-origin rejection from a conservative fallback rejection.
+
+A request is allowed when any one of five conditions holds:
+
+1. The method is `GET`, `HEAD`, or `OPTIONS`.
+2. `Sec-Fetch-Site` is `same-origin` or `none`.
+3. `Origin` matches a trusted origin.
+4. No usable `Sec-Fetch-Site` and no non-empty `Origin` is present.
+5. The `Origin` authority (host plus port) matches the request's effective host — the request-target authority when present, otherwise the `Host` header.
+
+- `TRACE` and `QUERY` are **not** exempt. The safe-method test is the RFC 9110 safe-ish set rather than `Method::is_safe`, and `QUERY` is deliberately excluded because it is not CORS-safelisted, so browsers preflight it and send `Origin`/`Sec-Fetch-Site` for it to be checked like a body-bearing method.
+- Only `Sec-Fetch-Site` is consulted of the fetch-metadata headers; `Sec-Fetch-Mode` and `Sec-Fetch-Dest` play no part.
+- `with_insecure_bypass(|method, uri| ..)` is an escape hatch that skips the whole decision for the requests it matches. It is a hole, not a configuration knob: keep it to a probe or health path, never to a mutating route.
+- The protection trusts whatever `Origin` and `Host` reach it. A reverse proxy or load balancer that rewrites `Host` to an internal hostname or strips `Origin` silently degrades it: the `Origin`/`Host` fallback stops matching and `Sec-Fetch-Site` alone is left. Configure intermediaries to forward both unchanged.
+- Datastar ships no CSRF rule of its own, which is why the gateway layer is mandatory rather than an application-invented origin check.
 
 ## WebSockets (WSS)
 
 `WebSocketAcceptor::new().into_service(handler)` accepts upgrades over HTTP/1.1 `GET` and over HTTP/2 and HTTP/3 Extended `CONNECT`. Those are two router registrations, not one: `with_get` for the H1 handshake and `with_connect` for the extended-CONNECT handshake, and HTTP/2 only routes the latter after `h2_mut().set_enable_connect_protocol()` runs on the server. `UpgradeLayer` makes the upgrade optional, so a rejected upgrade falls through instead of failing the request.
 
 ```rust
+use rama::extensions::ExtensionsRef as _;      // `ws.extensions()`
+
 // H1 handshake and the H2/H3 extended CONNECT handshake mount the same service.
 Router::new()
     .with_get("/chat", WebSocketAcceptor::new().into_service(service_fn(chat)))
@@ -137,11 +177,21 @@ h2.h2_mut().set_enable_connect_protocol();      // without this, H2 CONNECT is n
 
 // One socket handler: a bounded producer feeds the sink, recv drives the loop.
 async fn chat(mut ws: ServerWebSocket) -> Result<(), Infallible> {
+    // `AppState` is application-supplied: an `AddInputExtensionLayer::new(state)` in the
+    // router's layer stack inserts it on every request the server accepts, and the socket's
+    // extension chain is that request's chain. `get_ref` walks the chain, so insertion has
+    // to happen before the handler runs; its `events` field is the
+    // `broadcast::Sender<Message>` the accepted socket reads.
+    let state = ws.extensions().get_ref::<AppState>().expect("AppState").clone();
+    let mut upstream = state.events.subscribe();                    // broadcast::Receiver<Message>
     let (tx, mut rx) = tokio::sync::mpsc::channel::<Message>(64);   // bounded: a slow consumer
-    // `upstream` is the application's broadcast receiver, supplied by the handler state.
     tokio::spawn(async move {                                       //   backpressures here, not into the heap
-        while let Some(msg) = upstream.recv().await {
-            if tx.send(msg).await.is_err() { break; }
+        loop {
+            match upstream.recv().await {
+                Ok(msg) => if tx.send(msg).await.is_err() { break; },
+                Err(tokio::sync::broadcast::error::RecvError::Lagged(_)) => continue,
+                Err(tokio::sync::broadcast::error::RecvError::Closed) => break,
+            }
         }
     });
     loop {
@@ -176,6 +226,29 @@ async fn chat(mut ws: ServerWebSocket) -> Result<(), Infallible> {
 2. Broadcast an explicit `Exit` message on the event channel; every stream ends on that message rather than on a poll of the guard.
 3. From the first cancelled moment, answer new stream requests `410 Gone` and new commands `503`, both with `Retry-After`.
 4. End the process with `shutdown_with_limit(..)` as the hard ceiling.
+
+```rust
+// One wrapper in front of the router: once shutdown has begun, a new stream is gone for good.
+#[derive(Debug, Clone)]
+struct GracefulRouter { router: Router<Controller>, controller: Controller }
+
+impl Service<Request> for GracefulRouter {
+    type Output = Response;
+    // `Router`'s `Service::Error` is its `E` parameter (default `RouterError`);
+    // wrap the router in `ErrorHandler` instead if the wrapper must return `Infallible`.
+    type Error = rama::http::service::web::router::RouterError;
+
+    async fn serve(&self, input: Request) -> Result<Self::Output, Self::Error> {
+        if self.controller.is_closed() {
+            return Ok(StatusCode::GONE.into_response());
+        }
+        self.router.serve(input).await
+    }
+}
+
+// The exit rides the same broadcast channel as the patches, so the stream ends on data
+// rather than on a poll of the shutdown guard: `enum Message { Exit, Event(DatastarEvent) }`.
+```
 
 `410` is stream-only: `410` means permanently gone and a deploy is not. The drain window must sit above the 15 s keep-alive so idle streams notice the close, and below the proxy idle timeout so the proxy does not reuse a dead connection. The corpus returns a bare `410`; `Retry-After` is guidance for the proxy tier, not a Datastar-read header.
 

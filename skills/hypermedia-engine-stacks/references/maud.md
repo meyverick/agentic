@@ -7,10 +7,12 @@ Re-verify when: the maud pin recorded in `scripts/provenance.lock` moves past th
 ## The Single Buffer
 
 - The macro emits `String::with_capacity(size_hint)` once, where `size_hint` is the byte length of the **stringified token stream** (`input.to_string().len()`, `maud_macros/src/lib.rs`) — not the byte length of the template source. Printing a `TokenStream` inserts separators between tokens, so the number is a heuristic, not a computed total, and rows rendered per request are not part of it.
-- Never re-render a fragment through a second `html!` inside a loop. Render the row once into a reused buffer with `Render::render_to`.
-- `Render::render_to` on `Markup` and `&str` appends with no allocation; the trait's default implementation allocates one intermediate `Markup`. Prefer the inherent implementations.
+- Never re-render a fragment through a second `html!` inside a loop. A per-row `html!` allocates one `Markup` fragment and the `format!` id string; write the row straight into the reused buffer instead.
+- `Render::render_to` on `Markup` and `&str` appends with no allocation; the trait's default implementation allocates one intermediate `Markup`. A hand-written `Render` that writes with `std::fmt::Write` and `maud::Escaper` allocates nothing per row: `write!` formats the static `<li>` markup and the numeric id into the buffer, and `Escaper` escapes the label as it writes. Prefer the inherent implementations; otherwise write directly.
 
 ```rust
+use std::fmt::Write as _;
+
 pub struct RowView<'a> {
     pub id: i64,
     pub label: &'a str,
@@ -18,14 +20,15 @@ pub struct RowView<'a> {
 
 impl maud::Render for RowView<'_> {
     fn render_to(&self, buffer: &mut String) {
-        // One `html!` per row for the fragment; `Markup: Render` then appends it without a second allocation.
-        html! { li id=(format!("row-{}", self.id)) { (self.label) } }.render_to(buffer);
+        let _ = write!(buffer, "<li id=\"row-{}\">", self.id);
+        let _ = write!(maud::Escaper::new(buffer), "{}", self.label);
+        buffer.push_str("</li>");
     }
 }
 
 let mut buffer = String::with_capacity(4_096);
 for row in &rows {
-    row.render_to(&mut buffer);          // no per-row allocation beyond the row's own fragment
+    row.render_to(&mut buffer);          // direct writes: no Markup, no id String, no per-row allocation
 }
 let markup = PreEscaped(buffer);
 ```
@@ -118,7 +121,7 @@ pub fn page(title: &str, body: Markup) -> Markup {
 }
 ```
 
-A **partial** is a function over one row returning `Markup`, with no doctype and no `<html>`: a patched fragment lands inside a document that already exists, so a second doctype is invalid markup. A **bulk** list implements `Render` for the row type and appends through `render_to` into one buffer, as in *The Single Buffer* — one `html!` per row for the fragment, never a second `html!` wrapping it.
+A **partial** is a function over one row returning `Markup`, with no doctype and no `<html>`: a patched fragment lands inside a document that already exists, so a second doctype is invalid markup. A **bulk** list implements `Render` for the row type and appends through `render_to` into one buffer, as in *The Single Buffer* — direct `write!` calls per row, never an `html!` fragment or a second `html!` wrapping it.
 
 - Pass pre-rendered children as `Markup` and splice with `(children)`.
 - Render the shell once per request and stream only the fragments that change; Maud has no partial-render cache, and a re-rendered shell costs a full template pass.

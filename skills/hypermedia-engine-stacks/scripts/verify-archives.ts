@@ -4,8 +4,9 @@
  *
  * Rules, each reported as `<file>: <rule>: <detail>`:
  *   ceiling       SKILL.md <= 250 lines and every references/*.md <= 300 lines
- *   description   frontmatter `description` is non-empty and <= 1024 UTF-16 units
- *                 (the cap the host skill loader applies)
+ *   description   frontmatter `description` is non-empty, <= 1024 UTF-16 units
+ *                 (the cap the host skill loader applies), and names the six
+ *                 pillars plus the SvelteKit/Axum negative boundary
  *   link          every `references/<name>.md` named by SKILL.md resolves on disk
  *                 and all five pillar archives are named
  *   lock          scripts/provenance.lock parses, carries schema 1, the five
@@ -16,13 +17,13 @@
  *                 release version number outside a fenced code block
  *   retired       no `.into_sse_event(`, `data-on-click`, `sqlx-data.json`,
  *                 `ElementPatchMode::Morph`, `SceneRoot`, `getrandom_backend`,
- *                 `idle_for()`, `EventReader`, or `EventWriter` outside a
- *                 migration table
+ *                 `idle_for()`, `datastar-retries-failed`, `.only_if_missing(`,
+ *                 `EventReader`, or `EventWriter` outside a migration table
  *   parity        the transport table in SKILL.md and references/rama.md carry
  *                 the same status keys and the same answer/consequence cells
  *   order         every archive carries its sections in the declared order, its
  *                 retired table last, and SKILL.md keeps all eight lifecycle
- *                 steps with an owner archive each
+ *                 steps with an owner archive that resolves on disk
  *
  * Migration-table exemption: a Markdown table whose nearest heading (or whose
  * header row) names "migration", "retired", or "replacement" may name a retired
@@ -37,149 +38,35 @@
  * substring does not trip the sweep. Punctuation-shaped tokens (`.into_sse_event(`)
  * keep the plain substring match.
  */
-import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync } from "node:fs";
 import { join } from "node:path";
+
+import {
+  ARCHIVE_CEILING,
+  COMMIT_SHAPE,
+  DATE_SHAPE,
+  DESCRIPTION_CAP,
+  DESCRIPTION_TERMS,
+  LOCK_PATH,
+  PILLARS,
+  SKILL_CEILING,
+  frontmatter,
+  frontmatterField,
+  read,
+  sweepRetired,
+  sweepUnpinned,
+  transportRows,
+  wcLines,
+} from "./verify-archives-lib.ts";
 
 const skillRoot = join(import.meta.dir, "..");
 const skillPath = join(skillRoot, "SKILL.md");
 const referencesDir = join(skillRoot, "references");
 
-const SKILL_CEILING = 250;
-const ARCHIVE_CEILING = 300;
-const DESCRIPTION_CAP = 1024;
-const PILLARS = ["rama", "datastar", "maud", "sqlx", "bevy"];
-const LOCK_PATH = "scripts/provenance.lock";
-const COMMIT_SHAPE = /^[0-9a-f]{7,40}$/;
-const DATE_SHAPE = /^\d{4}-\d{2}-\d{2}$/;
-const UNPINNED = [
-  [/^Source:/, "an archive names a `Source:` header; the pin belongs in scripts/provenance.lock"],
-  [/sha256:/, "the corpus digest belongs in scripts/provenance.lock"],
-  [/`[A-Za-z0-9._-]+@[0-9a-f]{7,40}`/, "a `repo@sha` pin belongs in scripts/provenance.lock"],
-  [/\b[vV]?\d+\.\d+(?:\.\d+)?\b/, "a release version number belongs in scripts/provenance.lock"],
-] as const;
-const RETIRED = [
-  [".into_sse_event(", "use try_into_sse_event()", null],
-  ["data-on-click", "use data-on:click", null],
-  ["sqlx-data.json", "the .sqlx/ directory is the offline metadata", null],
-  ["ElementPatchMode::Morph", "use ElementPatchMode::Outer", null],
-  ["SceneRoot", "use WorldAssetRoot", /\bSceneRoot\b/],
-  ["getrandom_backend", "use the wasm_js crate feature of the pinned getrandom", null],
-  ["idle_for()", "read the meta.idle_for field", null],
-  ["EventReader", "use MessageReader with #[derive(Message)]", /\bEventReader\b/],
-  ["EventWriter", "use MessageWriter with #[derive(Message)]", /\bEventWriter\b/],
-] as const;
-
 const failures: string[] = [];
 const fail = (file: string, rule: string, detail: string) => failures.push(`${file}: ${rule}: ${detail}`);
-const read = (path: string): string => readFileSync(path, "utf8");
-// wc -l parity: every authored file ends with a newline.
-const wcLines = (text: string) => text.split("\n").length - 1;
 
-/** The YAML block between the opening and closing `---` fence. */
-function frontmatter(text: string): string | undefined {
-  return /^---\r?\n([\s\S]*?)\r?\n---/.exec(text)?.[1];
-}
 
-/** One top-level frontmatter field, folding a wrapped value onto a single line. */
-function frontmatterField(block: string | undefined, field: string): string | undefined {
-  if (!block) return undefined;
-  const lines = block.split(/\r?\n/);
-  const start = lines.findIndex((line) => line.startsWith(`${field}:`));
-  if (start < 0) return undefined;
-  const value = [lines[start].slice(field.length + 1).trim()];
-  for (const line of lines.slice(start + 1)) {
-    if (/^[A-Za-z0-9_-]+:/.test(line)) break;
-    value.push(line.trim());
-  }
-  return value.join(" ").trim();
-}
-
-/** Mark lines belonging to a migration/retired/replacement table. */
-function migrationLines(lines: string[]): boolean[] {
-  const exempt = new Array<boolean>(lines.length).fill(false);
-  let heading = "";
-  let inFence = false;
-  let inTable = false;
-  let migration = false;
-
-  lines.forEach((line, index) => {
-    if (/^```/.test(line.trim())) {
-      inFence = !inFence;
-      inTable = false;
-      migration = false;
-      return;
-    }
-    if (inFence) return;
-
-    const headingMatch = /^#{1,6}\s+(.*)$/.exec(line);
-    if (headingMatch) {
-      heading = headingMatch[1];
-      inTable = false;
-      migration = false;
-      return;
-    }
-
-    if (line.startsWith("|")) {
-      if (!inTable) {
-        inTable = true;
-        migration = /migration|retir|replacement/i.test(`${heading} ${line}`);
-      }
-      exempt[index] = migration;
-      return;
-    }
-
-    if (line.trim() !== "") {
-      inTable = false;
-      migration = false;
-    }
-  });
-
-  return exempt;
-}
-
-function sweepRetired(path: string, text: string): void {
-  const lines = text.split("\n");
-  const exempt = migrationLines(lines);
-  lines.forEach((line, index) => {
-    if (exempt[index]) return;
-    for (const [token, replacement, boundary] of RETIRED) {
-      const hit = boundary ? boundary.test(line) : line.includes(token);
-      if (hit) fail(`${path}:${index + 1}`, "retired", `names '${token}' outside a migration table; ${replacement}`);
-    }
-  });
-}
-
-/** Lines inside a fenced block, delimiters included. */
-function fencedLines(lines: string[]): boolean[] {
-  const exempt = new Array<boolean>(lines.length).fill(false);
-  let inFence = false;
-  lines.forEach((line, index) => {
-    if (/^\s*(```|~~~)/.test(line)) {
-      exempt[index] = true;
-      inFence = !inFence;
-      return;
-    }
-    exempt[index] = inFence;
-  });
-  return exempt;
-}
-
-/** Nothing outside a fence may claim a release version, a commit pin, or the digest. */
-function sweepUnpinned(path: string, text: string): void {
-  const lines = text.split("\n");
-  const exempt = fencedLines(lines);
-  lines.forEach((line, index) => {
-    if (exempt[index]) return;
-    // `HTTP/1.1` is a protocol name, not a release claim.
-    const probe = line.replace(/HTTP\/\d+(?:\.\d+)?/g, "HTTP/x");
-    for (const [pattern, detail] of UNPINNED) {
-      const token = pattern.exec(probe)?.[0];
-      if (token === undefined) continue;
-      fail(`${path}:${index + 1}`, "unpinned", `names '${token}' outside a fenced block; ${detail}`);
-      return;
-    }
-  });
-}
 
 // --- syllabus -----------------------------------------------------------------
 const skill = read(skillPath);
@@ -205,6 +92,13 @@ if (description === undefined) {
 } else if (description.length > DESCRIPTION_CAP) {
   fail("SKILL.md", "description", `\`description\` is ${description.length} units > ${DESCRIPTION_CAP}`);
 }
+if (description !== undefined) {
+  for (const term of DESCRIPTION_TERMS) {
+    if (!description.includes(term)) {
+      fail("SKILL.md", "description", `does not name '${term}'`);
+    }
+  }
+}
 
 // --- archives -----------------------------------------------------------------
 const archives = readdirSync(referencesDir)
@@ -222,12 +116,12 @@ for (const name of archives) {
     fail(path, "lock", "does not open with a `Re-verify when:` trigger");
   }
 
-  sweepRetired(path, text);
-  sweepUnpinned(path, text);
+  failures.push(...sweepRetired(path, text));
+  failures.push(...sweepUnpinned(path, text));
 }
 
-sweepRetired("SKILL.md", skill);
-sweepUnpinned("SKILL.md", skill);
+failures.push(...sweepRetired("SKILL.md", skill));
+failures.push(...sweepUnpinned("SKILL.md", skill));
 
 // --- provenance lock ------------------------------------------------------------
 const covered = new Set(archives.map((name) => name.replace(/\.md$/, "")));
@@ -276,27 +170,6 @@ function checkLock(): void {
 checkLock();
 
 // --- cross-document parity -----------------------------------------------------
-const TRANSPORT_HEADER = /^\|\s*State\s*\|\s*Answer\s*\|\s*Datastar consequence\s*\|$/;
-
-interface TransportRow {
-  key: string;
-  answer: string;
-  consequence: string;
-}
-/** Rows of the `State | Answer | Datastar consequence` table, keyed positionally. */
-function transportRows(text: string): TransportRow[] {
-  const lines = text.split(/\r?\n/);
-  const head = lines.findIndex((line) => TRANSPORT_HEADER.test(line));
-  if (head < 0) return [];
-  const rows: TransportRow[] = [];
-  for (const line of lines.slice(head + 2)) {
-    if (!line.startsWith("|")) break;
-    const cells = line.split("|").slice(1, -1).map((cell) => cell.trim());
-    if (cells.length >= 3) rows.push({ key: cells[0], answer: cells[1], consequence: cells[2] });
-  }
-  return rows;
-}
-
 const GATEWAY = "references/rama.md";
 const syllabusRows = transportRows(skill);
 const gatewayRows = transportRows(read(join(referencesDir, "rama.md")));
@@ -336,6 +209,10 @@ const SECTION_ORDER = {
 
 for (const [name, anchors] of Object.entries(SECTION_ORDER)) {
   const path = `references/${name}`;
+  if (!existsSync(join(referencesDir, name))) {
+    fail(path, "order", "does not exist, so its sections cannot be checked");
+    continue;
+  }
   const lines = read(join(referencesDir, name)).split(/\r?\n/);
   let previous = -1;
   let previousAnchor = "";
@@ -371,7 +248,13 @@ if (!spine) {
   for (const step of steps) {
     const [, , rawLabel] = step.split("|");
     const label = rawLabel?.trim() ?? step;
-    if (!/references\/[a-z]+\.md/.test(step)) fail("SKILL.md", "spine", `step '${label}' names no owner archive`);
+    const owners = [...step.matchAll(/references\/([a-z0-9-]+)\.md/g)].map((match) => match[1]);
+    if (owners.length === 0) fail("SKILL.md", "spine", `step '${label}' names no owner archive`);
+    for (const owner of owners) {
+      if (!existsSync(join(referencesDir, `${owner}.md`))) {
+        fail("SKILL.md", "spine", `step '${label}' names references/${owner}.md, which does not exist`);
+      }
+    }
   }
 }
 
