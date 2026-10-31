@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.7.2 - 2026-10-31
+
+### Changed
+- Publishes `0.5.0` through `0.7.1` to the registry for the first time. `0.4.0` was the last release that reached `@meyverick/agentic`, so this patch is the carrier for the four-version line rather than a change of its own.
+
 ## 0.7.1 - 2026-10-31
 
 ### Added
