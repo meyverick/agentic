@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.6.0 - 2026-10-31
+
+### Added
+- Five per-pillar reference archives for the `hypermedia-engine-stacks` skill: `references/rama.md`, `references/datastar.md`, `references/maud.md`, `references/sqlx.md`, and `references/bevy.md`, each carrying its upstream pin, a `Re-verify when:` trigger, and the verified API surface for that pillar.
+- `skills/hypermedia-engine-stacks/scripts/verify-archives.ts`, a zero-dependency fidelity gate for both Markdown ceilings, archive-link resolution, provenance headers, the single corpus digest, and the retired-token sweep.
+- `wiki/adr/0003-hypermedia-reference-archive-split.md`, recording the split, the five pins, and the report corrections that motivated it.
+
+### Changed
+- **BREAKING**: the `hypermedia-engine-stacks` reference archive paths changed. The two mixed bridge files are gone; every `references/<name>.md` link must point at one of the five pillar archives.
+- The `hypermedia-engine-stacks` syllabus is rewritten around a six-pillar matrix, one transport-status table, the stream-owned connection budget, the bounded principal contract, the retained/retired invariant table, and the telemetry gauges. The corpus digest is recorded once in `SKILL.md`; each archive records its own pin.
+
+### Removed
+- `skills/hypermedia-engine-stacks/references/postgres-listen-notify.md` and `skills/hypermedia-engine-stacks/references/bevy-datastar-bridge.md`, superseded by `references/sqlx.md`, `references/rama.md`, and `references/bevy.md`.
+
+### Fixed
+- The skill no longer teaches the nonexistent `ElementPatchMode::Morph` or `.into_sse_event()` conversions, the pre-v1 `data-on-click` attribute, `sqlx-data.json`, `SceneRoot`, the pre-0.4 `getrandom_backend` cfg, or the `idle_for()` method. It now names `try_into_sse_event()`, `data-on:click`, `.sqlx/`, `WorldAssetRoot`, the `wasm_js` feature, and the `meta.idle_for` field.
+- The canvas boundary is documented as `data-ignore-morph` on the canvas and its container rather than `data-ignore`, and the SSE drain contract documents that a clean `200` close is not re-requested, so a final `PatchElements` re-anchor is required.
+
 ## 0.5.0 - 2026-10-30
 
 ### Changed

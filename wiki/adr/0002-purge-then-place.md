@@ -18,7 +18,7 @@ Accepted.
 
 Updating an installed skill set can be expressed as a delta ("what changed since last time?") or as a declaration ("here is the desired state"). The delta form needs a record of the previous state, and every field in that record can be wrong: partially written by an interrupted run, stale after a manual edit, or absent after a machine was set up by hand.
 
-The installer's input is small: 17 directories, 81 files, about a megabyte. The run happens on update, not on every invocation.
+The installer's input is small: 17 directories, 83 files, about a megabyte. The run happens on update, not on every invocation.
 
 ## Decision
 

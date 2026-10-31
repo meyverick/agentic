@@ -1,82 +1,108 @@
 ---
 name: hypermedia-engine-stacks
-description: Recommend, scaffold, and enforce the Rust-first hypermedia architecture (Rama, SQLx, Maud, Datastar) with conditional Bevy WASM simulation and Rama WSS transport. Use when designing web applications, selecting backend or frontend stacks, scaffolding real-time SSE/WebSocket pipelines, or embedding interactive 2D/3D WASM canvases. Do not use for legacy Node.js, Bun, or SPA framework scaffolding.
+description: Use when the task is a Rust-first hypermedia application or simulation shell: a Rama gateway with SSE, SQLx typed queries and LISTEN/NOTIFY fan-out, Maud server-rendered HTML, Datastar signals and morphing, a Bevy WASM canvas, or binary rama-ws telemetry. Task-shaped triggers include an SSE dashboard, a WASM canvas embedded in server-rendered HTML, PostgreSQL notify fan-out, a graceful drain of open streams, a stream connection budget, and a SQLx offline metadata drift gate. Do not use for SvelteKit, React, or any JS SPA stack; do not use for Axum-based hypermedia, which has its own extractor and SSE surface.
 ---
 
 # Hypermedia & Engine Stacks
 
-## Summary
-Guidance and architectural rules for scaffolding the workspace's Rust-first hypermedia and simulation stack. Every tier prioritizes compile-time verification, zero-cost server-side HTML generation, event-driven streaming, and strict separation between DOM hypermedia and high-frequency canvas simulations.
+Rust-first architecture for server-rendered applications: Rama is the gateway, SQLx the typed persistence layer, Maud the template compiler, Datastar the client engine, and Bevy WASM plus `rama-ws` the conditional simulation tier. Five per-pillar archives carry the signatures; this syllabus carries the rules.
+
+Fidelity command of record: `bun scripts/verify-archives.ts`. It asserts both Markdown ceilings, archive-link resolution, the provenance headers, the single corpus digest, and the retired-token sweep.
+
+## Six-Pillar Matrix
+
+| Pillar | Owns | Archive |
+| --- | --- | --- |
+| Gateway and transport | routing, extraction, SSE framing, WSS upgrade, limits, CSRF, drain | `references/rama.md` |
+| Persistence and fan-out | compile-time SQL, pools, migrations, `LISTEN/NOTIFY` to `broadcast` | `references/sqlx.md` |
+| Templating | compile-time HTML, escaping, single-buffer rendering | `references/maud.md` |
+| Client reactivity | signals, actions, CQRS commands, Fat Morphing, retry | `references/datastar.md` |
+| Simulation | ECS schedules, messages versus events, WASM build, canvas mount | `references/bevy.md` |
+| High-frequency transport | binary/text frames over `rama-ws`, consumed by Bevy | `references/rama.md`, `references/bevy.md` |
+
+Selection boundary: `framework-engine-stacks` owns SvelteKit, Axum, and other stack choices; this skill is the Rust hypermedia alternative. Queue topology belongs to `scalability`; this skill carries only the SSE/WSS transport contract.
 
 ## Non-Negotiable Hypermedia & Simulation Invariants
-- **Zero-JS Server Runtime**: Deliver web interfaces and APIs exclusively through the Rust hypermedia stack (Rama + SQLx + Maud + Datastar). Never introduce Node.js, Bun, or external SSR runtimes.
-- **Compile-Time Persistence Lock-In**: Standardize relational persistence on PostgreSQL via SQLx compile-time macros (`query!`, `query_as!`). Never construct dual-engine abstraction layers or `#[cfg]` database feature gates. For isolated local/edge sub-projects requiring SQLite, decouple reactivity via in-process `tokio::sync::broadcast` channels.
-- **Event-Driven Reactivity Only**: Client polling is prohibited. Stream state transitions via Rama Datastar SSE (`PatchElements`, `PatchSignals`) triggered by PostgreSQL `LISTEN/NOTIFY` or in-process broadcast channels.
-- **Hybrid Simulation Boundary**: When embedding a Bevy WASM `<canvas>` inside a Maud/Datastar shell:
-  - Route high-frequency simulation traffic (inputs, transforms, authoritative ticks) directly between Bevy WASM and Rama WSS endpoints, bypassing the DOM.
-  - Route low-frequency UI coordination (HUD, inventory, menus, scores) via window `CustomEvent` dispatches or Datastar signal mutations through `wasm-bindgen`.
-  - Never use `SharedArrayBuffer` or shared memory layouts between WASM and the DOM.
 
-## Core Mental Model & Preferred Tiers
-- **Backend & Gateway (Rama)**: Manages HTTP routing, modular middleware, connection lifecycles, native Datastar Server-Sent Events (`rama::http::sse::datastar`), and WebSocket (`WSS`) upgrades.
-- **Persistence (SQLx + PostgreSQL)**: Enforces compile-time verified asynchronous queries (`query!`, `query_as!`), connection pooling, and schema migrations locked to PostgreSQL. Drives multi-instance reactivity via native `LISTEN/NOTIFY`.
-- **Templating (Maud)**: Generates type-safe, zero-allocation HTML fragments compiled directly into the Rust binary via `html!` macros.
-- **Client Reactivity (Datastar)**: Provides declarative DOM morphing (`PatchElements`), reactive client-side signals (`PatchSignals`), and zero-build hypermedia interactivity without Virtual DOM overhead.
-- **High-Frequency Simulation (Conditional Bevy WASM)**: Executes local physics prediction, continuous rendering, and interactive 2D/3D scenes inside a Maud-rendered `<canvas>` when declarative DOM morphing is insufficient.
-- **High-Frequency Transport (Conditional Rama WSS)**: Streams raw binary or JSON WebSocket frames directly between Rama and Bevy WASM for sub-frame multiplayer inputs, cursors, and low-latency telemetry.
+- **Zero-JS server runtime**: every byte of HTML comes from Maud through Rama. No Node.js, Bun, or external SSR runtime in the serving path.
+- **Compile-time PostgreSQL lock-in**: `query!`/`query_as!` against PostgreSQL, `.sqlx/` committed, `cargo sqlx prepare --check` in CI. No dual-engine trait, no `#[cfg]` database gate. The isolated SQLite fallback publishes to the same in-process `broadcast` channel and never emulates `LISTEN/NOTIFY` in SQL.
+- **Event-driven reactivity only**: push state over SSE or WSS. Polling, `setInterval` refetches, and Datastar interval actions are prohibited as state transport.
+- **Hybrid simulation boundary**: high-frequency inputs and ticks go directly over `rama-ws` into Bevy; low-frequency HUD, inventory, and menus cross via `CustomEvent` or Datastar signals. A 60 Hz transform stream never touches the DOM.
+- **No shared memory**: `SharedArrayBuffer` and cross-origin memory locks are prohibited between WASM and the DOM. Bound the `wasm-bindgen` queue instead; a hidden tab pauses `requestAnimationFrame` while WSS keeps writing.
+- **Canvas morph boundary**: `data-ignore-morph` on the `<canvas>` **and** its mount container. `data-ignore` suppresses plugin processing and is not a morph boundary. Any `data-on:*` listener that must survive a patch sits on an ancestor outside the morphed region.
+- **Open streams are bounded**: `ConcurrentCounter::new(max)` with the guard moved into the stream, released on `Drop`; over budget answers `503` with `Retry-After`, never `429` and never `204`. `LimitLayer`/`ConcurrentPolicy` cap in-flight `serve()` inputs only, because an SSE response completes at handoff.
+- **Streams end by decision**: drain broadcasts an explicit exit, answers new streams `410 Gone` with a proxy-facing `Retry-After`, and re-anchors the `@get` node with a final `PatchElements`. A clean `200` close is not re-requested by the engine.
+- **Authorization is bounded, not re-checked**: an established SSE response cannot re-authorize. Cap the stream lifetime; at expiry re-anchor under a fresh principal check, or answer `410` when the session is gone.
+- **Lag is a resync signal**: `RecvError::Lagged(n)` means drop buffered state, re-query a snapshot, render it, and count it. It is not an error to log and ignore.
+- **CSRF is a gateway layer**: `CsrfLayer` with trusted origins and a rejection response. Datastar ships no CSRF rule, so an application-invented origin check is not a substitute.
 
-## Architectural Selection Matrix
+## Transport Status
 
-| Workload Domain | Recommended Architecture & Engine | Rationale & Trade-offs |
-| :--- | :--- | :--- |
-| Full-Stack Web Application | Rama + Maud + Datastar | Eliminates client bundle builds and JS SSR runtimes via server-streamed hypermedia. |
-| Relational Persistence | PostgreSQL + SQLx (`migrations/`) | Guarantees compile-time SQL verification via `sqlx-data.json` and zero-broker pub/sub. |
-| Real-Time UI & State Sync | PostgreSQL `LISTEN/NOTIFY` + Rama Datastar SSE | Pushes surgical DOM fragments and signal updates across instances without polling. |
-| Local/Edge Embedded Storage | SQLite + SQLx + `tokio::sync::broadcast` | Standalone fallback for isolated CLI/edge tools; decouples events from DB engine. |
-| Interactive 2D/3D Simulation | Maud `<canvas>` + Bevy WASM | Native ECS execution and WebGL2/WebGPU rendering isolated from DOM layout cycles. |
-| Sub-Frame Multiplayer & Telemetry | Rama WSS + Bevy WASM | Bypasses DOM and SSE framing for high-tick binary/JSON state synchronization. |
-| Shell-to-Canvas HUD Coordination | Datastar Signals + DOM `CustomEvent` (`wasm-bindgen`) | Low-frequency bridge for menus, inventory, and scores without shared memory locks. |
-| Heavy Background Compute | Rust (Tokio `spawn_blocking` / Rayon) | Offloads CPU-intensive work from async Rama request and stream reactors. |
+| State | Answer | Datastar consequence |
+| --- | --- | --- |
+| Draining, stream route | `410 Gone` (+ `Retry-After`, proxy-facing) | `datastar-fetch` `error`; `retry: 'auto'` does not retry a 4xx, so the client needs the re-anchor patch |
+| Draining, command route | `503` + `Retry-After` | error event, no retry |
+| Over stream budget | `503` + `Retry-After` | error event, no retry; pair with the same re-anchor patch |
+| Stream ended on purpose | `410`, never `204` | `204` is terminal before the retry gate and before the error dispatch: no event, no retry |
+| Command accepted | `204 No Content` | command routes only; never a stream |
 
-## Database & Reactivity Doctrine
-1. **Strict PostgreSQL Lock-In**:
-   - Bind SQLx `query!` and `query_as!` macros directly to PostgreSQL.
-   - Never construct dual-engine abstraction traits or maintain parallel `#[cfg]` feature gates across SQLite and PostgreSQL.
-2. **Zero-Broker Pub/Sub**:
-   - Hook `sqlx::postgres::PgListener` directly into Rama SSE pipelines to broadcast `PatchElements` and `PatchSignals` upon database state transitions.
-3. **Decoupled Embedded Exception**:
-   - When an isolated sub-project strictly requires embedded SQLite, never emulate `LISTEN/NOTIFY` in SQL. Route application events through an in-process `tokio::sync::broadcast` channel feeding the Rama SSE responder.
+`410` is stream-only: it means permanently gone, and a deploy is not. `Retry-After` is proxy, load-balancer, and browser-facing; the Datastar engine never reads it.
 
-## Hybrid Simulation Boundary (Bevy WASM + Datastar)
-When a view requires continuous 60+ FPS rendering or physics alongside standard UI controls:
-1. **High-Frequency Path (Direct Rama WSS)**:
-   - Connect Bevy WASM directly to Rama's WebSocket endpoint.
-   - Stream player inputs, entity transforms, and authoritative server ticks over binary (Postcard/Bincode) or compact JSON frames, bypassing JavaScript and Datastar entirely.
-2. **Low-Frequency Path (DOM `CustomEvent` & Signals)**:
-   - Render the surrounding HUD, lobbies, pause menus, and inventory panels using Maud and Datastar.
-   - Cross the WASM-to-DOM boundary exclusively via window `CustomEvent` dispatches or Datastar signal updates invoked through `wasm-bindgen` / `web-sys`.
-3. **Prohibition of Shared Memory Buffers**:
-   - Never use `SharedArrayBuffer` or cross-origin memory locks between Bevy WASM and the DOM. UI-frequency updates gain zero measurable throughput from shared memory while incurring severe synchronization fragility.
+## Bounded Streams and Principal Reverification
 
-## Operational Workflow
-1. **Scope Intake & Schema Definition**
-   - Determine whether the feature is pure hypermedia (Maud + Datastar) or requires a hybrid simulation canvas (Bevy WASM + WSS).
-   - Author expand-contract SQL migrations in `migrations/` and verify queries against PostgreSQL.
-2. **View & Handler Assembly**
-   - Author modular Maud components using the `html!` macro with embedded Datastar attributes (`data-signals`, `data-on-click`, `data-bind`).
-   - Register routes and middleware in the Rama service stack, mounting SSE endpoints for reactive subscriptions.
-3. **Simulation & Transport Wiring (If Applicable)**
-   - Mount a dedicated Rama WebSocket upgrade handler for sub-frame simulation traffic.
-   - Compile the Bevy target to `wasm32-unknown-unknown` via `wasm-bindgen` and mount the canvas inside a Maud container with `data-ignore` to prevent Datastar morphing collisions.
-4. **Offline Metadata & CI Verification**
-   - Execute `cargo sqlx prepare --workspace` prior to committing so CI verifies all SQL macros hermetically without a live database.
+- Admit with the `ConcurrentCounter` guard inside the stream; the guard is the budget, not a request-layer permit.
+- Cap the stream lifetime (a value inside the proxy idle timeout) and treat expiry as a re-subscription, not a mid-stream check: emit a final `PatchElements` that replaces the `@get` node, or answer `410` when the session is gone.
+- `openWhenHidden: false` on `@get` already forces one rebuild per tab on `visibilitychange`; the lifetime bound rides that re-subscribe instead of inventing a second one.
+- Prefer the re-anchor over `retry: 'always'`: the ladder is 1 s → 30 s over ten attempts (~181 s) before `retries-failed`, while a replaced node re-subscribes immediately.
 
-## Anti-Patterns & Edge Cases
-- **Client Polling**: Never use `setInterval` or Datastar polling loops to fetch state updates; push mutations exclusively over Rama Datastar SSE or WSS.
-- **Unprotected Canvas Morphing**: Always annotate the parent element of a Bevy `<canvas>` with `data-ignore` (or preserve keys) so Datastar `PatchElements` morphs do not destroy the active WebGL/WebGPU context.
-- **Blocking the Async Reactor**: Never run synchronous file I/O, cryptographic hashing, or heavy simulation steps inside Rama request handlers; delegate to `tokio::task::spawn_blocking` or a Rayon pool.
-- **DOM Thrashing on High-Tick Data**: Never stream 60Hz entity coordinates through Datastar signals or Maud HTML fragments; route continuous telemetry over Rama WSS directly into Bevy.
+## Retained and Retired Invariants
+
+| Shipped invariant | Status | Home |
+| --- | --- | --- |
+| Zero-JS server runtime | carried | this syllabus |
+| PostgreSQL compile-time lock-in | carried | `references/sqlx.md` |
+| Polling prohibition | carried | this syllabus |
+| Hybrid simulation boundary | carried and sharpened to the `Message`/`Event` lane rule | `references/bevy.md` |
+| `SharedArrayBuffer` prohibition | carried, with the bounded-queue replacement | `references/bevy.md` |
+| Canvas morph boundary | rewritten: `data-ignore` → `data-ignore-morph` on canvas **and** container | `references/datastar.md`, `references/bevy.md` |
+
+## Telemetry
+
+Server signals beside the client rule: `open_streams` (current stream budget occupancy), `broadcast_lagged_total` (`RecvError::Lagged` occurrences, i.e. resyncs), `drain_state` (accepting or draining), and `stream_rejections_total` (over-budget and drain-time admission). The client `datastar-fetch` event is the only lifecycle signal; it fires on `document` with `detail.type` = `started`, `finished`, `error`, `retrying`, or `retries-failed`. No per-phase event name exists.
+
+## Workflow
+
+1. **Scope the tier.** Pick the matrix row; write the one-line boundary (hypermedia only, or canvas plus WSS).
+2. **Shape the data.** Append expand-contract migrations; write `query!`/`query_as!`; run `cargo sqlx prepare --workspace -- --all-targets --all-features` in the same commit.
+3. **Wire the gateway.** `Router::new_with_state`, `ReadSignals` per the method rule, `CsrfLayer`, a request-concurrency `LimitLayer`, and the `ConcurrentCounter` stream budget. Commands answer `204`; streams answer `410` at drain.
+4. **Render the shell.** Maud components with deterministic `id`s, serialized `data-signals` JSON spliced through escaping (never `PreEscaped`), and a single pre-sized buffer with `Render::render_to` for row lists.
+5. **Fan out events.** One `PgListener::connect(url)` per replica into `tokio::sync::broadcast`; one `ConcurrentCounter`-guarded SSE route per view; `Lagged` triggers a snapshot resync.
+6. **Mount simulation when required.** Bevy canvas with `data-ignore-morph`, `Message` for frame telemetry and `On<E>` for input reactions, `postcard` over `rama-ws` for high-frequency traffic, `CustomEvent` for the HUD.
+7. **Verify.** `bun scripts/verify-archives.ts`, then `bun scripts/gates.ts` in the package and `bun scripts/check.ts --quick` at the workspace root. Run `cargo sqlx prepare --check` in CI.
+
+## Anti-Pattern Matrix
+
+| Anti-pattern | Failure | Instead |
+| --- | --- | --- |
+| `LimitLayer` as the open-stream cap | permit released at response handoff | `ConcurrentCounter` guard owned by the stream |
+| `204` ending a stream | silent terminal: no event, no retry | `410` plus a re-anchor patch |
+| Relying on `Retry-After` in the client | the engine never reads it | re-anchor, or `retry: 'always'` |
+| `data-ignore` on the canvas | plugin suppression, not a morph boundary | `data-ignore-morph` on canvas and container |
+| 60 Hz coordinates through signals or HTML | DOM thrashing | binary frames over `rama-ws` |
+| `EventReader` for cross-frame telemetry | buffered lane used as an immediate one | `MessageReader` with `#[derive(Message)]` |
+| Nested `html!` inside a loop | one allocation per row | `Render::render_to` into one buffer |
+| Hand-concatenated `data-signals` JSON | escaping bypassed | serialize, then splice through Maud |
+| `PgListener::connect_with(&app_pool)` | the listener holds an application-pool connection for its life | `PgListener::connect(url)` |
+| `test_before_acquire(true)` everywhere | a round trip on every checkout | `test_before_acquire(false)` plus `before_acquire` on `meta.idle_for` |
+| Aliased Datastar bundle | every `data-*` attribute is silently dead | serve the embedded unaliased bundle |
+| SQL state without offline metadata | CI cannot build without a database | commit `.sqlx/` and gate `prepare --check` |
 
 ## Reference Archives
-- **PostgreSQL Event Streaming & Broadcast Fallback**: Consult `references/postgres-listen-notify.md` when wiring `PgListener` or `tokio::sync::broadcast` into Rama Datastar SSE endpoints.
-- **Bevy WASM & Datastar Interop Patterns**: Consult `references/bevy-datastar-bridge.md` when bridging Bevy ECS events with Datastar signals and Rama WebSockets.
+
+- `references/rama.md` — read before touching routing, SSE framing, the stream budget, CSRF, WSS upgrades, compression, or drain.
+- `references/sqlx.md` — read before adding SQL, tuning the pool, writing a migration, or wiring `PgListener`.
+- `references/maud.md` — read before changing templates, escaping, JSON attributes, or `Markup` conversion.
+- `references/datastar.md` — read before changing attributes, signals, actions, morph boundaries, CSP, or retry behaviour.
+- `references/bevy.md` — read before touching ECS schedules, WASM builds, the canvas mount, or the shell bridge.
+
+Corpus provenance: the upstream pins are recorded per archive; the local mirror digest `sha256:7bae3f954bf1836ec270bd36ff9fe23614e398097a39297339ec5f7c72c8656b` is local-corpus scoped, because it also folds the cargo-registry crates. `bun scripts/docs-corpus.ts --check` reports `stale` for the five hand-placed reports; the pins, not the digest, are the durable anchor.

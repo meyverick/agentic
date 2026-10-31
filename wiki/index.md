@@ -38,6 +38,7 @@ Extension points, the security model and its supply-chain consequence, a diagnos
 
 - [0001 — Marker-based ownership](adr/0001-marker-based-ownership.md)
 - [0002 — Purge then place](adr/0002-purge-then-place.md)
+- [0003 — Per-pillar reference archives](adr/0003-hypermedia-reference-archive-split.md)
 
 ## Outside This Wiki
 

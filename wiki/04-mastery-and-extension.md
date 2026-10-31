@@ -68,7 +68,7 @@ The real exposure is not the code, it is the channel. This package distributes i
 
 ## Cost Model
 
-Installation is linear in the number of shipped files: one digest pass over the package, one directory copy per skill, and two rulebook writes. On the current set that is 81 files and roughly a megabyte, dominated by file-system calls rather than computation. There is no caching layer, and none is warranted — the command runs on update, not on every invocation.
+Installation is linear in the number of shipped files: one digest pass over the package, one directory copy per skill, and two rulebook writes. On the current set that is 83 files and roughly a megabyte, dominated by file-system calls rather than computation. There is no caching layer, and none is warranted — the command runs on update, not on every invocation.
 
 `status` is the same linear pass plus one digest per installed skill. It is cheap enough to run in a pre-commit hook.
 
