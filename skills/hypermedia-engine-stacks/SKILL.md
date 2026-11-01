@@ -1,6 +1,6 @@
 ---
 name: hypermedia-engine-stacks
-description: Use when the task is a Rust-first hypermedia application or simulation shell: a Rama gateway with SSE, SQLx typed queries and LISTEN/NOTIFY fan-out, Maud server-rendered HTML, Datastar signals and morphing, a Bevy WASM canvas, or binary rama-ws telemetry. Task-shaped triggers include an SSE dashboard, a WASM canvas embedded in server-rendered HTML, PostgreSQL notify fan-out, a graceful drain of open streams, a stream connection budget, and a SQLx offline metadata drift gate. Do not use for SvelteKit, React, or any JS SPA stack; do not use for Axum-based hypermedia, which has its own extractor and SSE surface.
+description: Use when the task is a Rust-first hypermedia application or simulation shell — a Rama gateway with SSE, SQLx typed queries and LISTEN/NOTIFY fan-out, Maud server-rendered HTML, Datastar signals and morphing, a Bevy WASM canvas, or binary rama-ws telemetry. Task-shaped triggers include an SSE dashboard, a WASM canvas embedded in server-rendered HTML, PostgreSQL notify fan-out, a graceful drain of open streams, a stream connection budget, and a SQLx offline metadata drift gate. Do not use for SvelteKit, React, or any JS SPA stack; do not use for Axum-based hypermedia, which has its own extractor and SSE surface.
 ---
 
 # Hypermedia & Engine Stacks

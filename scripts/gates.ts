@@ -32,6 +32,15 @@ for (const name of skills) {
     continue;
   }
   const frontmatter = /^---\r?\n([\s\S]*?)\r?\n---/.exec(text)?.[1];
+  if (frontmatter === undefined) failures.push(`skills/${name}: missing frontmatter block`);
+  else {
+    try {
+      Bun.YAML.parse(frontmatter);
+    } catch (error) {
+      const reason = error instanceof Error ? error.message.split("\n")[0] : String(error);
+      failures.push(`skills/${name}: frontmatter is not parseable YAML: ${reason}`);
+    }
+  }
   const declared = frontmatter ? /^name:\s*['"]?([^'"\n]+?)['"]?\s*$/m.exec(frontmatter)?.[1] : undefined;
   if (!declared) failures.push(`skills/${name}: frontmatter has no name`);
   else if (declared.trim() !== name) {

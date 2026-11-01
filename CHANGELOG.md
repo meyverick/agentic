@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.8.1 - 2026-10-31
+
+### Fixed
+- `skills/hypermedia-engine-stacks/SKILL.md` frontmatter parses as YAML again: the unquoted `description` held a `simulation shell: a Rama gateway` colon-space, which YAML reads as a nested mapping, so a strict loader rejected the whole block and the skill failed to load. The colon is an em dash now.
+- `scripts/gates.ts` Gate 2 parses every skill frontmatter with `Bun.YAML.parse` and fails the package gate on a parse error, so a hand-rolled `name:` regex can no longer pass a block that the installer's reader refuses.
+
 ## 0.8.0 - 2026-10-31
 
 ### Added
